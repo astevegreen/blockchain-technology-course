@@ -76,6 +76,9 @@ The helper keeps running through `stop all` (so the page works again after the
 next start) until the host restarts or `kill "$(cat .runtime/hosting-runner/runner.pid)"`
 from `dynamic-labs/`. Its log is `.runtime/hosting-runner/runner.log`; each
 command's output is kept in `.runtime/hosting-runner/jobs/` (the last 20).
-On Docker Desktop (Windows or macOS) a socket file may not pass through the
-bind mount; the page then says the runner is unavailable and lists the
-commands to run at the shell instead.
+Under WSL with Docker Desktop the socket in `/tmp` passes through the bind mount
+(walked 12 Nov 2026). On Docker Desktop for macOS that is untried and may fail; the page
+then says the runner is unavailable and lists the commands to run at the shell instead.
+`HOSTING_RUNNER_SOCKET_DIR` moves the socket folder. The folder is mode 711 and the socket
+file is open to any local account, so on a shared host the secret is the only gate: the script
+refuses a folder another account owns or a link in its place.

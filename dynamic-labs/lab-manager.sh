@@ -977,7 +977,7 @@ build_lane_images() {
 
 # The host-side runner behind the quiz engine's lab hosting page (quiz-engine-v2/app/hosting_runner.py). It runs here
 # as whoever ran this script, so the page's buttons do exactly what this script does at the shell; the quiz engine
-# reaches it only through a socket file in .runtime/hosting-runner/, never the Docker socket (quiz-engine-v2/README.md,
+# reaches it only through a socket file in a per-user folder under /tmp, never the Docker socket (quiz-engine-v2/README.md,
 # "Lab hosting"). It keeps running across `stop all`, so the page works again after the next start.
 start_hosting_runner() {
     local runner_dir="${RUNTIME_DIR}/hosting-runner"
@@ -995,14 +995,23 @@ start_hosting_runner() {
     fi
     mkdir -p "${runner_dir}"
     chmod 711 "${runner_dir}" 2>/dev/null || true
-    mkdir -p "${socket_dir}"
-    chmod 711 "${socket_dir}" 2>/dev/null || true
+    # /tmp is shared, so the folder's name is guessable: create it mode 700, never follow a link, and refuse a
+    # folder someone else owns (they could swap in their own listener and read the runner secret).
+    if [[ ! -e "${socket_dir}" && ! -L "${socket_dir}" ]]; then
+        mkdir -m 700 "${socket_dir}" 2>/dev/null || true
+    fi
+    if [[ ! -d "${socket_dir}" || -L "${socket_dir}" || ! -O "${socket_dir}" ]]; then
+        echo "  WARNING: ${socket_dir} is not a folder you own; the quiz engine's lab hosting page will say the runner is unavailable."
+        return 0
+    fi
+    chmod 711 "${socket_dir}"
     HOSTING_RUNNER_SOCKET_DIR="${socket_dir}"
     if [[ -f "${pid_file}" ]]; then
         pid="$(cat "${pid_file}" 2>/dev/null || true)"
     fi
     if [[ "${pid}" =~ ^[0-9]+$ ]] && kill -0 "${pid}" 2>/dev/null \
-        && tr '\0' ' ' < "/proc/${pid}/cmdline" 2>/dev/null | grep -q hosting_runner; then
+        && tr '\0' ' ' < "/proc/${pid}/cmdline" 2>/dev/null | grep -q hosting_runner \
+        && [[ -S "${socket_dir}/runner.sock" ]]; then
         return 0
     fi
 
@@ -1037,7 +1046,7 @@ start_project() {
     build_lane_images "${dir}"
     if [[ "${target}" == "quiz" || "${target}" == "quiz-engine-v2" ]]; then
         start_hosting_runner
-        QUIZ_ENGINE_HOSTING_RUNNER_DIR="${HOSTING_RUNNER_SOCKET_DIR:-${RUNTIME_DIR}/hosting-runner}" \
+        QUIZ_ENGINE_HOSTING_RUNNER_DIR="${HOSTING_RUNNER_SOCKET_DIR:-}" \
             QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=shared INSTRUCTOR_AUTH_MODE=shared compose_up_cmd "${dir}" "${cmd[@]}"
     else
         compose_up_cmd "${dir}" "${cmd[@]}"

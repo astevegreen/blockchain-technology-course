@@ -28,6 +28,11 @@ class LabManagerQuizEngineV2Tests(unittest.TestCase):
         # The quiz engine faces students' network: it gets the runner's socket folder, never Docker's socket.
         self.assertNotIn("docker.sock", compose)
         self.assertIn(":/run/hosting-runner", compose)
+        # The runner binds its socket in the folder the engine mounts (a Linux path: WSL cannot bind on /mnt/c),
+        # and the script refuses a shared-/tmp folder it does not own.
+        self.assertIn('--socket-dir "${socket_dir}"', script)
+        self.assertIn('QUIZ_ENGINE_HOSTING_RUNNER_DIR="${HOSTING_RUNNER_SOCKET_DIR:-}"', script)
+        self.assertIn('-L "${socket_dir}" || ! -O "${socket_dir}"', script)
         # deploy generates the secret, and an older env file gains it on the next deploy.
         self.assertIn("HOSTING_RUNNER_SECRET=${HOSTING_RUNNER_SECRET}", credentials)
         self.assertEqual(credentials.count('HOSTING_RUNNER_SECRET="$(runtime_random_hex 32)"'), 2)

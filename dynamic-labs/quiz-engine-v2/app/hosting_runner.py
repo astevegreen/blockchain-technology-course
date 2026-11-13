@@ -3,7 +3,7 @@
 It runs on the lab host, never in a container: `./lab-manager.sh start quiz-engine-v2` starts it in the background.
 It holds no Docker socket of its own; it runs `lab-manager.sh` exactly as an instructor at the host's shell would,
 and only three ways: `start <lab|all>`, `stop <lab|all>` and `status all`, for the labs `lab-manager.sh list` names.
-It listens on a Unix socket file in `.runtime/hosting-runner/`, which `compose.yaml` mounts into the quiz engine, so
+It listens on a Unix socket file in a per-user folder under /tmp (`--socket-dir`), which `compose.yaml` mounts into the quiz engine, so
 nothing on any network can reach it, and every request carries HOSTING_RUNNER_SECRET, which `lab-manager.sh deploy`
 generates into `.runtime/runtime-secrets.env`. Why this and not the Docker socket: README.md, "Lab hosting".
 
