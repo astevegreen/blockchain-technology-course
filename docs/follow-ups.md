@@ -15,9 +15,6 @@ slide index), which is never listed here.
 
 ## Lessons
 
-- `docs/quality-rubric.md:139`: the first-time reader read is briefed to know "the earlier lessons and the
-  glossary", but the writing standard's reader (owner, 12 Nov 2026) knows only what earlier lessons taught and looks
-  glossary terms up. Align the brief. [12 Nov 2026, applying the writing-standard review]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]

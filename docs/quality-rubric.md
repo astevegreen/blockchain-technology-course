@@ -136,8 +136,9 @@ Until students sit the course, criteria 4 to 12 and 14 are judgements. Three kin
 
 **Before any student: the first-time reader read.** A reader who knows only what the course has taught so far
 reads one lesson or lab in order and marks every place they would get lost, with which of criterion 5's questions
-it fails. The first reader can be a model agent, briefed to know nothing beyond the earlier lessons and the
-glossary, so this can run on every lesson at little cost. It is a proxy, and people outrank it.
+it fails. The first reader can be a model agent, briefed to know only what the earlier lessons taught and to
+look glossary terms up rather than know them (`docs/writing-standard.md`, "Who the reader is"), so this can run on
+every lesson at little cost. It is a proxy, and people outrank it.
 
 **With people: dry runs, then pilots.**
 - Two or three people like the audience think aloud through a lesson and its lab, saying where they lost the
