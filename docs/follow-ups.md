@@ -15,6 +15,10 @@ slide index), which is never listed here.
 
 ## Lessons
 
+- `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:200`: "Sendin tested 20 to 80 inputs" does not
+  say whether these are the detector's settings or sweeps the paper observed; check `sendin_detectingcoldstorage_2018`
+  through the `source` skill. Line 511: "It marketed Paxful" has no clear subject; check `doj_paxful_2025` for who
+  did the marketing. [12 Nov 2026, writing-standard trial rewrite of 04-FO]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
