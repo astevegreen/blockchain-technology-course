@@ -29,8 +29,10 @@ What a learner already knows is the most important single factor in what they le
 - **The language review.** The full pass over existing text runs day by day, once that day's content is final
   (owner, 12 Nov 2026; `docs/build-spec.md`).
 - **Its limits.** It changes wording only. Facts, figures, citations, dates, examples and what a slide teaches stay
-  as they are. When clear wording needs a content change (a missing step, a term never taught), that goes to the
-  owner as a question. Slide titles stay within about 48 characters.
+  as they are. When clear wording needs a content change, adding is the writer's call and cutting is the owner's
+  (owner, 12 Nov 2026; CLAUDE.md rule 4): a missing step or a term never taught is added, sourced and written to
+  this standard, while a cut, a split or a changed fact goes to the owner as a question. Slide titles stay within
+  about 48 characters.
 
 ## Facts and the sentences that link them
 

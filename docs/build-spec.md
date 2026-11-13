@@ -135,6 +135,11 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced. It is
   how lessons speak, not a writing format students are taught or graded on (Direction 4).
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
+- New teaching material needs no owner approval when it comes from a reputable source and meets
+  `docs/quality-rubric.md` and `docs/writing-standard.md` (owner, 12 Nov 2026: "I want Claude to be free to add
+  teaching material without needing my approval-- as long as it adds material according to our SOP (I.e. pulling
+  from a legitimate and trustworthy source and writing according to our rubric criteria)"). Cutting, splitting or
+  replacing material is still the owner's decision.
 
 ## A lab
 - Browser only, over HTTPS on port 443: students install nothing. This describes the class host (one shared host
