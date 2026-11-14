@@ -39,9 +39,6 @@ slide index), which is never listed here.
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);
   settle them when 04-BF is rebuilt. [13 Nov 2026, 05-FO rebuild]
-- No quiz bank tests the rebuilt 08-EF's new slides: the two checks (who can stop funds; out of an optimistic
-  rollup in minutes), "Intents: you name the result, a relayer pays it", the worked bridge-type reading, the Bitget
-  practice and answers, and the review. [13 Nov 2026, 08-EF rebuild]
 - 01-FO's hidden "Bridges & Swaps" laundering-flow diagram (USDC to DEX to ETH to instant exchange to Monero) was
   not carried into 08-EF, which teaches bridge types, not flows; it fits day 8's cross-chain trace or day 9. Its
   sources `salisu_blockchainforensicsmodern_2023` and `lin_tracktraceautomatically_2025` went with it.
