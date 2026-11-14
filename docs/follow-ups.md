@@ -107,8 +107,5 @@ slide index), which is never listed here.
   `lesson_terms/*.yml`, so those dates are neither tagged nor listed when a fact changes.
   [12 Nov 2026, "Sources in the speaker notes" build]
 
-- `tools/pointer_check.py`: a link to an old anchor kept as `[]{#old-id}` on a visible slide is flagged "not a visible slide"
-  (`HREF_TITLE` slugs come only from heading text); and `SLIDE_TITLE` looks for the lesson code only 160 characters
-  before the title, so a code after it or on the next line is missed or bound to an earlier sentence. [14 Nov 2026, rail audit of wave 1]
 
 ## Notion and documents

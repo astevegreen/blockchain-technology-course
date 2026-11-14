@@ -82,6 +82,8 @@ SLIDE_TITLE = re.compile(r"\bslides?\s+" + QUOTE)
 LEAD_TITLE = re.compile(QUOTE + r"\s*\(?`?(?:slide\s+)?(?:in|of|from)?\s*`?lessons/[\w/]+?/(\d{2}-[A-Z]{2})\b")
 HREF_TITLE = re.compile(
     r"title:\s*" + QUOTE + r"\s*,?\s*href:\s*[\"']([^\"']*?lessons/[\w/]+?/(\d{2}-[A-Z]{2})-[\w-]+\.html)#/([^\"']+)[\"']")
+EXPLICIT_ID = re.compile(r"\{[^}]*#([\w-]+)[^}]*\}")  # {#old-id} on a heading or an empty span kept for old links
+SENTENCE_END = re.compile(r"(?<=[.;!?])\s+(?=[A-Z0-9(*`\"])|\n\s*\n")
 FRONT_TITLE = re.compile(r"^title:\s*[\"']?(.*?)[\"']?\s*$", re.MULTILINE)
 
 
@@ -112,6 +114,7 @@ class Lesson:
     lines: list[tuple[int, str]] = field(default_factory=list)  # (1-based line, visible text)
     visible: set[str] = field(default_factory=set)  # slide titles, normalised
     hidden: set[str] = field(default_factory=set)
+    anchors: set[str] = field(default_factory=set)  # explicit {#id} anchors on visible lines, slug-keyed
     subject: str = ""  # the lesson's own title, from its front matter
 
     @property
@@ -253,6 +256,7 @@ def load_course(root: Path = LESSONS, sheet: Path = RUN_SHEET) -> Course:
         front = FRONT_TITLE.search(text[:2000])
         lesson.subject = norm_title(front.group(1)) if front else ""
         lesson.hidden = {norm_title(t) for t, shows in titles if not shows} - lesson.visible
+        lesson.anchors = {slug_key(a) for _, line in lesson.lines for a in EXPLICIT_ID.findall(line)}
         lessons[lesson.code] = lesson
     return Course(lessons, taught)
 
@@ -498,6 +502,23 @@ def check_bank(path: Path, course: Course) -> list[str]:
     return out
 
 
+def code_near(text: str, start: int, end: int) -> str | None:
+    """The lesson code in the same sentence as a quoted title: the last one before it (up to 160 characters), else the
+    first one after it in the same sentence, which may wrap onto the next line.
+    A code in another sentence or paragraph is not this title's."""
+    before = text[max(0, start - 160):start]
+    cuts = list(SENTENCE_END.finditer(before))
+    if cuts:
+        before = before[cuts[-1].end():]
+    codes = CODE.findall(before)
+    if codes:
+        return codes[-1]
+    after = text[end:end + 160]
+    stop = SENTENCE_END.search(after)
+    codes = CODE.findall(after[:stop.start()] if stop else after)
+    return codes[0] if codes else None
+
+
 def prose_titles(text: str, course: Course) -> list[tuple[int, str, Lesson | None]]:
     """(line, title, lesson) for each slide title a prose or page file names; lesson is None when none is named."""
     found: dict[tuple[int, str], Lesson | None] = {}
@@ -513,8 +534,8 @@ def prose_titles(text: str, course: Course) -> list[tuple[int, str, Lesson | Non
     for m in LEAD_TITLE.finditer(text):
         found.setdefault((line_of(m.start()), m.group(1)), course.lessons.get(m.group(2)))
     for m in SLIDE_TITLE.finditer(text):
-        codes = CODE.findall(text[max(0, m.start() - 160):m.start()])
-        found.setdefault((line_of(m.start()), m.group(1)), course.lessons.get(codes[-1]) if codes else None)
+        code = code_near(text, m.start(), m.end())
+        found.setdefault((line_of(m.start()), m.group(1)), course.lessons.get(code) if code else None)
     return [(line, re.sub(r"\s+", " ", title), les) for (line, title), les in sorted(found.items())]
 
 
@@ -531,7 +552,7 @@ def check_prose(path: Path, course: Course) -> list[str]:
             out.append(f"{rel}:{line}: {problem}")
     for m in HREF_TITLE.finditer(text):
         lesson = course.lessons.get(m.group(3))
-        if lesson and slug_key(m.group(4)) not in {slug_key(t) for t in lesson.visible}:
+        if lesson and slug_key(m.group(4)) not in {slug_key(t) for t in lesson.visible} | lesson.anchors:
             out.append(f"{rel}:{text.count(chr(10), 0, m.start()) + 1}: link #{m.group(4)} is not a visible "
                        f"slide of {lesson.code}")
     return out

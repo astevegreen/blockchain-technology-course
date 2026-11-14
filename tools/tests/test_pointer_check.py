@@ -207,6 +207,34 @@ class PointerCheckTest(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertIn("Old Mempool Slide", found[0])
 
+    def test_href_to_an_old_anchor_kept_on_a_visible_slide_passes(self) -> None:
+        self.write("b/02-BF-bitcoin.qmd", lesson("Bitcoin", (
+            "## Mining a Candidate Block\n\n[]{#old-mining-slide}\n\nMining.\n\n"
+            "::: {.content-hidden}\n## Old Mempool Slide {#hidden-id}\n\n[]{#hidden-span}\n:::\n")))
+
+        def page(slug: str) -> str:
+            return ('{ title: "Mining a Candidate Block", href: "../../../lessons/b/02-BF-bitcoin.html#/%s" }' % slug) + chr(10)
+        self.assertEqual(self.prose(page("old-mining-slide")), [])
+        self.assertTrue(any("not a visible slide" in f for f in self.prose(page("hidden-span"))))
+        self.assertTrue(any("not a visible slide" in f for f in self.prose(page("hidden-id"))))
+
+    def test_slide_title_binds_to_the_lesson_code_in_its_own_sentence(self) -> None:
+        old, ok = '"Old Mempool Slide"', '"Mining a Candidate Block"'
+        # a code before the title in the same sentence
+        self.assertEqual(len(self.prose("See 02-BF slide %s now.\n" % old)), 1)
+        # a code after the title on the same line
+        self.assertEqual(len(self.prose("Open the slide %s of 02-BF.\n" % old)), 1)
+        self.assertEqual(self.prose("Open the slide %s of 02-BF.\n" % ok), [])
+        # a code in an earlier sentence is not this title's: no lesson named, so any lesson's slide will do
+        self.assertEqual(self.prose("Day 2 is 01-CM. Open the slide %s.\n" % ok), [])
+        # a code on the next line is not this title's either
+        self.assertEqual(self.prose("Open the slide %s.\n02-BF is next.\n" % ok), [])
+        # a sentence that starts with a code ends the title's sentence; a wrapped sentence does not
+        self.assertEqual(self.prose("Open the slide %s. 02-BF is next.\n" % ok), [])
+        self.assertEqual(len(self.prose("Open the slide %s\nof 02-BF.\n" % old)), 1)
+        # a code after the title on the same line is found even when an earlier sentence names another lesson
+        self.assertEqual(len(self.prose("Day 2 is 01-CM. Open the slide %s of 02-BF.\n" % old)), 1)
+
     def test_main_fails_when_only_out_of_lesson_titles_are_stale(self) -> None:
         from unittest import mock
         with mock.patch.object(pc, "load_course", return_value=self.title_course()),                 mock.patch.object(pc, "check_titles", return_value=["card.md: stale title"]),                 mock.patch.object(pc, "check_lesson", return_value=[]):
