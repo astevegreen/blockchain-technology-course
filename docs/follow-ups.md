@@ -99,11 +99,6 @@ slide index), which is never listed here.
   [14 Nov 2026, wave 5a]
 
 ## Quizzes and instructor tools
-- **The pretest page hides three things from the marker.** `/instructor/pretest`
-  (`dynamic-labs/quiz-engine-v2/app/blueprints/pretest.py`) does not say when a judgement made on the page differs from
-  the uploaded mark for the same answer, nor when the bank's `lab_gates` changed since marking (every day is worked
-  out again from today's bank), nor which bank file failed to load (its items then show no model answer).
-  [14 Nov 2026, reviewer on the marking aid]
 
 ## Tooling and rules
 - **The parenthesis date format reaches the lessons only.** `tools/asof.py` reads `blockchain-course/lessons/`;

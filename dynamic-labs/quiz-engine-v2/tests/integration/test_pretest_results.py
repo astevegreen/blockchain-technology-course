@@ -186,3 +186,57 @@ def test_written_marks_are_in_the_full_export(app):
     from app.migrate import FULL_EXPORT_TABLES
 
     assert "pretest_written_marks" in FULL_EXPORT_TABLES
+
+
+def test_a_judgement_that_differs_from_the_upload_is_flagged(app_factory, tmp_path):
+    from app.blueprints.pretest import pretest_table
+
+    app = _pretest_app(app_factory, tmp_path)
+    client = app.test_client()
+    payload = _with_written()
+    payload["students"][0]["items"]["q91"] = "wrong"
+    payload["students"][0]["days"]["1"] = "worked example"
+    _upload(client, payload)
+    _judge(client, [0, 1])
+    with app.app_context():
+        written = pretest_table()["written"][0]
+    assert written["mark"] == "right" and written["uploaded_mark"] == "wrong"
+    page = client.get("/instructor/pretest", headers=HEADERS).get_data(as_text=True)
+    assert "(the uploaded mark was wrong)" in page
+    _judge(client, [0])  # now agrees with the upload: no flag
+    with app.app_context():
+        assert pretest_table()["written"][0]["uploaded_mark"] is None
+
+
+def test_lab_gates_changed_since_marking_are_flagged(app_factory, tmp_path):
+    from app.blueprints.pretest import pretest_table
+
+    app = _pretest_app(app_factory, tmp_path)
+    client = app.test_client()
+    _upload(client, _with_written())
+    with app.app_context():
+        assert pretest_table()["gates_changed"] == []
+    bank = json.loads(json.dumps(PRETEST_BANK))
+    bank["metadata"]["lab_gates"]["1"] = ["q90"]  # day 1 now gated on q90, which the upload marked right
+    (tmp_path / "quizes" / "pretest" / "pretest_week1-quiz-bank.json").write_text(json.dumps(bank), encoding="utf-8")
+    with app.app_context():
+        assert pretest_table()["gates_changed"] == ["1"]
+    page = client.get("/instructor/pretest", headers=HEADERS).get_data(as_text=True)
+    assert "may have changed since" in page
+
+
+def test_a_bank_file_that_fails_to_load_is_named(app_factory, tmp_path):
+    from app.blueprints.pretest import pretest_table
+
+    app = _pretest_app(app_factory, tmp_path)
+    pretest = tmp_path / "quizes" / "pretest"
+    (pretest / "pretest_week2-quiz-bank.json").write_text("{ not json", encoding="utf-8")
+    (pretest / "pretest_week3-quiz-bank.json").write_text(json.dumps({"questions": [{"day": 1}]}), encoding="utf-8")
+    client = app.test_client()
+    _upload(client, _with_written())
+    with app.app_context():
+        table = pretest_table()
+    assert table["bank_found"]  # week 1 still loads
+    assert table["bank_failed"] == ["pretest_week2-quiz-bank.json", "pretest_week3-quiz-bank.json"]
+    page = client.get("/instructor/pretest", headers=HEADERS).get_data(as_text=True)
+    assert "pretest_week2-quiz-bank.json" in page and "did not load" in page

@@ -89,8 +89,12 @@ def answer_digest(text):
     return hashlib.sha256(" ".join(text.split()).encode("utf-8")).hexdigest()[:12]
 
 
-def load_pretest_bank(quizes_dir=None):
-    """{"items": {id: item}, "gates": {day: [ids]}} from the pretest banks, or None when none is mounted."""
+def load_pretest_bank(quizes_dir=None, failed=None):
+    """{"items": {id: item}, "gates": {day: [ids]}} from the pretest banks, or None when none is mounted.
+
+    A bank file that cannot be read or is not in the bank's form is left out; pass a list as `failed` to get the
+    names of those files, so the page can say its model answers and day starts lack them.
+    """
     quizes_dir = Path(quizes_dir) if quizes_dir else _quizes_dir()
     paths = sorted(quizes_dir.glob(PRETEST_GLOB)) if quizes_dir.is_dir() else []
     if not paths:
@@ -99,13 +103,16 @@ def load_pretest_bank(quizes_dir=None):
     for path in paths:
         try:
             bank = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            meta = bank.get("metadata", {})
+            file_items = {q["id"]: q for q in bank.get("questions", [])}
+            lab_gates = meta.get("lab_gates", {})
+            file_gates = {str(day): list(lab_gates.get(day, ids)) for day, ids in meta.get("days", {}).items()}
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            if failed is not None:
+                failed.append(path.name)
             continue
-        meta = bank.get("metadata", {})
-        for q in bank.get("questions", []):
-            items[q["id"]] = q
-        for day, ids in meta.get("days", {}).items():
-            gates[str(day)] = list(meta.get("lab_gates", {}).get(day, ids))
+        items.update(file_items)
+        gates.update(file_gates)
     return {"items": items, "gates": gates} if items else None
 
 
@@ -201,40 +208,51 @@ def replace_pretest_results(form, students, *, imported_by=None, conn=None):
 def pretest_table(conn=None, quizes_dir=None):
     """The page's data: day columns, a row per student, and the written answers to judge.
 
-    {"days": [...], "rows": [{"name", "cells"}], "written": [...], "bank_found": bool, "form", "imported_at"}.
+    {"days": [...], "rows": [{"name", "cells"}], "written": [...], "bank_found": bool, "bank_failed": [names],
+    "gates_changed": [days], "form", "imported_at"}.
     A judgement made here replaces the item's uploaded mark, and each day is worked out again from the items
-    with the marker's rule; without the bank, the uploaded days stand as they are.
+    with the marker's rule; without the bank, the uploaded days stand as they are. Three things are flagged
+    rather than hidden: a judgement here that differs from the uploaded right/wrong mark ("uploaded_mark" on
+    the written answer), a day whose uploaded start today's bank gates would not give from the uploaded marks
+    (the bank's lab_gates changed since marking), and a bank file that failed to load.
     """
     conn = conn or get_db()
     rows = conn.execute(
         "SELECT student_name, bank_form, days_json, items_json, written_json, imported_at FROM pretest_results "
         "ORDER BY student_name COLLATE NOCASE"
     ).fetchall()
-    bank = load_pretest_bank(quizes_dir)
+    bank_failed = []
+    bank = load_pretest_bank(quizes_dir, failed=bank_failed)
     judged = written_judgements(conn)
-    parsed, written = [], []
+    parsed, written, gates_changed = [], [], set()
     for r in rows:
         name = r["student_name"]
         cells = json.loads(r["days_json"])
         items = json.loads(r["items_json"])
+        uploaded_items = dict(items)
         answers = json.loads(r["written_json"] or "{}")
         for qid, text in sorted(answers.items(), key=lambda kv: int(kv[0][1:])):
             mark = judged.get((name.casefold(), qid, answer_digest(text)))
             if mark:
                 items[qid] = mark
             item = (bank or {}).get("items", {}).get(qid, {})
+            uploaded = uploaded_items.get(qid)
             written.append({
                 "student": name,
                 "item_id": qid,
                 "answer": text,
                 "mark": items.get(qid, "unmarked"),
                 "judged_here": bool(mark),
+                "uploaded_mark": uploaded if mark and uploaded in ("right", "wrong") and uploaded != mark else None,
                 "day": item.get("day"),
                 "stem": item.get("question_stem"),
                 "answer_key": item.get("answer_key") or [],
                 "explanation": item.get("explanation"),
             })
         if bank:
+            gates_changed.update(
+                d for d, v in cells.items() if d in bank["gates"] and day_entry(uploaded_items, bank["gates"][d]) != v
+            )
             cells = {d: day_entry(items, bank["gates"][d]) if d in bank["gates"] else v for d, v in cells.items()}
         parsed.append((name, cells))
     days = sorted({d for _, cells in parsed for d in cells}, key=int)
@@ -247,6 +265,8 @@ def pretest_table(conn=None, quizes_dir=None):
         ],
         "written": written,
         "bank_found": bank is not None,
+        "bank_failed": bank_failed,
+        "gates_changed": sorted(gates_changed, key=int),
         "form": rows[0]["bank_form"] if rows else None,
         "imported_at": rows[0]["imported_at"] if rows else None,
     }
@@ -323,6 +343,15 @@ PRETEST_TEMPLATE = """
     <button type="submit">Import</button>
   </form>
   <h2>Students</h2>
+  {% if table.bank_failed %}
+    <p role="alert">These pretest bank files did not load, so their model answers and day gates are missing
+    below: {{ table.bank_failed|join(", ") }}. Fix the file and reload this page.</p>
+  {% endif %}
+  {% if table.gates_changed %}
+    <p role="alert">Day {{ table.gates_changed|join(", ") }}: from the uploaded marks, today's pretest bank gates
+    give a different start than the upload says, so the bank's <code>lab_gates</code> may have changed since
+    marking. The table uses today's gates; mark again with the marker and re-upload to be sure.</p>
+  {% endif %}
   {% if table.rows %}
     <p>{{ table.rows|length }} students, imported {{ table.imported_at }}.</p>
     <table id="pretest-table">
@@ -353,7 +382,7 @@ PRETEST_TEMPLATE = """
     {% else %}
       {% for w in table.written %}
         <form method="post" action="{{ url_for('pretest.pretest_mark_written') }}" class="pretest-written">
-          <h3>{{ w.student }}: {{ w.item_id }}{% if w.day %} (day {{ w.day }}){% endif %}, {{ w.mark }}{% if w.judged_here %} (judged here){% endif %}</h3>
+          <h3>{{ w.student }}: {{ w.item_id }}{% if w.day %} (day {{ w.day }}){% endif %}, {{ w.mark }}{% if w.judged_here %} (judged here){% endif %}{% if w.uploaded_mark %} <strong>(the uploaded mark was {{ w.uploaded_mark }})</strong>{% endif %}</h3>
           <input type="hidden" name="student_name" value="{{ w.student }}">
           <input type="hidden" name="item_id" value="{{ w.item_id }}">
           {% if w.stem %}<p>{{ w.stem }}</p>{% endif %}
