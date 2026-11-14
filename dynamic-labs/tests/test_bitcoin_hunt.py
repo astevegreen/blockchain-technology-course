@@ -146,6 +146,72 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(res.status_code, 503)
 
 
+ADDR = "bcrt1qhuntminer"
+WALLET = f"-rpcwallet={hunt.SEED_WALLET}"
+MINER_NODES = {"bitcoin-instructor-1": {f"{WALLET} getnewaddress": ADDR, f"generatetoaddress 1 {ADDR}": "[]",
+                                        f"generatetoaddress 2 {ADDR}": "[]", "getblockcount": "102"}}
+
+
+class SoloMineTest(unittest.TestCase):
+    """On a student's own machine (LANE_MODE=student-local) the page mines the hunt's blocks; the classroom refuses."""
+
+    def client(self, solo: bool, nodes: dict = MINER_NODES):
+        app = _app(nodes)
+        self.addCleanup(app.config["patcher"].stop)
+        patcher = mock.patch.object(hunt, "student_local_mode", return_value=solo)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return app.test_client()
+
+    def test_mode_says_solo_only_on_the_launcher(self) -> None:
+        self.assertEqual(self.client(True).get("/api/bitcoin/hunt/mode").get_json(), {"solo": True})
+        self.assertEqual(self.client(False).get("/api/bitcoin/hunt/mode").get_json(), {"solo": False})
+
+    def test_solo_mines_one_or_two(self) -> None:
+        c = self.client(True)
+        for blocks in (1, 2):
+            res = c.post("/api/bitcoin/hunt/mine", json={"blocks": blocks, "session": SESSION})
+            self.assertEqual(res.status_code, 200, res.get_json())
+            self.assertEqual(res.get_json(), {"ok": True, "height": 102})
+        calls = [" ".join(call.args[1:]) for call in hunt.node_rpc.call_args_list]
+        self.assertIn(f"generatetoaddress 1 {ADDR}", calls)
+        self.assertIn(f"generatetoaddress 2 {ADDR}", calls)
+
+    def test_classroom_refuses_to_mine(self) -> None:
+        res = self.client(False).post("/api/bitcoin/hunt/mine", json={"blocks": 1, "session": SESSION})
+        self.assertEqual(res.status_code, 403)
+        self.assertEqual(hunt.node_rpc.call_count, 0)
+
+    def test_solo_refusals(self) -> None:
+        c = self.client(True)
+        self.assertEqual(c.post("/api/bitcoin/hunt/mine", json={"blocks": 1, "session": "nope"}).status_code, 401)
+        for blocks in (0, 3, 100, True, "1", None):
+            res = c.post("/api/bitcoin/hunt/mine", json={"blocks": blocks, "session": SESSION})
+            self.assertEqual(res.status_code, 400, blocks)
+        self.assertEqual(hunt.node_rpc.call_count, 0)
+
+    def test_unloaded_wallet_is_loaded_again(self) -> None:
+        answers = {"n": 0}
+
+        def flaky(container, *args):
+            joined = " ".join(args)
+            if joined == f"{WALLET} getnewaddress" and answers["n"] == 0:
+                answers["n"] += 1
+                raise hunt.NodeError("Requested wallet does not exist or is not loaded")
+            if joined == f"loadwallet {hunt.SEED_WALLET}":
+                return "{}"
+            return MINER_NODES[container][joined]
+
+        c = self.client(True)
+        hunt.node_rpc.side_effect = flaky
+        res = c.post("/api/bitcoin/hunt/mine", json={"blocks": 1, "session": SESSION})
+        self.assertEqual(res.get_json(), {"ok": True, "height": 102})
+
+    def test_silent_node_is_a_503(self) -> None:
+        res = self.client(True, {}).post("/api/bitcoin/hunt/mine", json={"blocks": 1, "session": SESSION})
+        self.assertEqual(res.status_code, 503)
+
+
 class VendoredShellTest(unittest.TestCase):
     """The page is served by lane-service, which cannot reach the course site, so it carries copies of the shared
     shell. They must stay the same as blockchain-course/assets/labs/shared/: copy them over after a shell change."""

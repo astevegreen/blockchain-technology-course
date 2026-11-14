@@ -115,7 +115,6 @@ slide index), which is never listed here.
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
-- The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
 - The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which
   reaches the bitcoin, final-trace, wallet and hide-and-trace labs only when the owner next rebuilds the base image
   (student-release, `rebuild_bases`); until then their dashboards may show "Offline". After that rebuild, drop the

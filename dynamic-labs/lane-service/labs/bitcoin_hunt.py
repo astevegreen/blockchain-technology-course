@@ -11,6 +11,11 @@ checks each pasted pair:
   either way.
 
 The check answers right or wrong with a reason and never sends the expected value back.
+
+The hunt needs blocks mined mid-game: one after fact 5, two before the twist. In the classroom the instructor mines
+them from the run sheet. On a student's own machine (the course launcher, LANE_MODE=student-local) there is no
+instructor, so the page asks lane-service to mine them on the lab's instructor node (/api/bitcoin/hunt/mine); the
+classroom refuses that call, so no student mines the class chain.
 Served under /api/bitcoin/hunt/, which the router already sends to lane-service in the classroom and in the
 student launcher, so no router change is needed.
 """
@@ -25,12 +30,16 @@ from typing import Callable, Optional
 
 from flask import Blueprint, jsonify, request, send_from_directory
 
+from generic_lanes import student_local_mode
+
 PAGE_DIR = Path(__file__).with_name("bitcoin_hunt")
 INSTRUCTOR_CONTAINER = os.environ.get("BITCOIN_INSTRUCTOR_CONTAINER", "bitcoin-instructor-1")
 DATADIR = "/home/user/.bitcoin"
 BLOCK = 5
 FACTS = ("count", "hash", "time", "ntx", "confirmations", "rerun")
 SESSION_RE = re.compile(r"^[0-9a-f-]{36}$")
+SEED_WALLET = os.environ.get("BITCOIN_SEED_WALLET", "instructor_seed")  # the seed's wallet (bitcoin-instructor-seed.sh)
+MINE_BLOCKS = (1, 2)  # the action's one block and the twist's two
 
 _HASH_RE = re.compile(r"\b[0-9a-fA-F]{64}\b")
 _GETBLOCKHASH5_RE = re.compile(r"\bgetblockhash\s+[\"']?5[\"']?(?![\w.])")
@@ -116,8 +125,7 @@ def line_problem(fact: str, line: str, truth: dict, previous: Optional[int] = No
     if abs(n - own) > 1:
         return "That count is not your node's: run getblock on block 5 again and paste its line."
     if fact == "rerun" and previous is not None and (n <= previous or own <= previous):
-        return ("The count has not grown since your fact 5. Wait for the instructor to mine a block, "
-                "then run getblock again.")
+        return "The count has not grown since your fact 5. Once a new block is mined, run getblock again."
     return None
 
 
@@ -140,6 +148,18 @@ def gather_truth(fact: str, student_container: Optional[str]) -> dict:
     return truth
 
 
+def mine(blocks: int) -> int:
+    """Mine blocks on the instructor's node, to its seed wallet (loaded again after a restart); returns the new height."""
+    wallet = f"-rpcwallet={SEED_WALLET}"
+    try:
+        address = node_rpc(INSTRUCTOR_CONTAINER, wallet, "getnewaddress")
+    except NodeError:
+        node_rpc(INSTRUCTOR_CONTAINER, "loadwallet", SEED_WALLET)
+        address = node_rpc(INSTRUCTOR_CONTAINER, wallet, "getnewaddress")
+    node_rpc(INSTRUCTOR_CONTAINER, "generatetoaddress", str(blocks), address)  # as the run sheet mines
+    return int(node_rpc(INSTRUCTOR_CONTAINER, "getblockcount"))
+
+
 def register(blueprint: Blueprint, resolve_station: Callable[[str], Optional[str]],
              container_name_fn: Callable[[str], str]) -> None:
     """Add the hunt page and its checker to the Bitcoin lab's blueprint."""
@@ -151,6 +171,29 @@ def register(blueprint: Blueprint, resolve_station: Callable[[str], Optional[str
     @blueprint.route("/api/bitcoin/hunt/<path:name>", methods=["GET"])
     def bitcoin_hunt_asset(name: str):
         return send_from_directory(PAGE_DIR, name)
+
+    @blueprint.route("/api/bitcoin/hunt/mode", methods=["GET"])
+    def bitcoin_hunt_mode():
+        # solo: the student's own machine, where the page mines the hunt's blocks itself.
+        return jsonify({"solo": student_local_mode()})
+
+    @blueprint.route("/api/bitcoin/hunt/mine", methods=["POST"])
+    def bitcoin_hunt_mine():
+        if not student_local_mode():
+            return jsonify({"ok": False, "reason": "In the classroom the instructor mines the hunt's blocks."}), 403
+        body = request.get_json(silent=True) or {}
+        session = str(body.get("session") or request.cookies.get("bitcoin_session") or "").lower()
+        if not (SESSION_RE.match(session) and resolve_station(session)):
+            return jsonify({"ok": False, "reason": "Open the hunt from your Bitcoin lab's panel bar."}), 401
+        blocks = body.get("blocks")
+        if blocks not in MINE_BLOCKS or isinstance(blocks, bool):
+            return jsonify({"ok": False, "reason": "The hunt mines one block or two."}), 400
+        try:
+            height = mine(blocks)
+        except (NodeError, ValueError) as exc:
+            return jsonify({"ok": False, "reason": "The lab's instructor node did not answer just now; try again in "
+                                                   "a moment.", "detail": str(exc)[:200]}), 503
+        return jsonify({"ok": True, "height": height})
 
     @blueprint.route("/api/bitcoin/hunt/check", methods=["POST"])
     def bitcoin_hunt_check():

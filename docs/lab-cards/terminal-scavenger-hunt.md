@@ -68,7 +68,9 @@ Left out, for the owner to see:
 - The class chain is mined fresh at each lab start (the instructor node mines 11 blocks), so the hashes and times
   differ every run. The hunt sheet names facts, not answers, and each answer is checked against the student's
   own screen, as the orientation's question 2 already is. The hunt checker reads the instructor's node for the
-  same fact; the instructor mines the action's one block and the twist's two from a short run sheet.
+  same fact; the instructor mines the action's one block and the twist's two from a short run sheet. On a
+  student's own machine (the course launcher), with no instructor, the page mines them on that machine's
+  instructor node: a button for the one block, and the two on its own once the re-run is accepted (14 Nov 2026).
 - Fact 3 uses block 5's time, not a payment's: the chain has no payments on day 1 (newly mined coins cannot be
   spent for 100 blocks), so a fee fact is left out.
 

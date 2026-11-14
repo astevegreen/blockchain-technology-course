@@ -250,6 +250,19 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
         line = next(row for row in block.splitlines() if '"confirmations"' in row)
         self.assertTrue(check(fact="confirmations", command=f"{cli} getblock {block5}", line=line)["ok"])
 
+        # Who mines the hunt's blocks: the instructor in the classroom (lane-service refuses), the page on the launcher.
+        mode = self.student_session.get(f"{self.base_url}/api/bitcoin/hunt/mode", timeout=10)
+        self.assertEqual(mode.json(), {"solo": bool(STUDENT_LAUNCHER)})
+        height = int(docker_exec_checked("bitcoin-instructor-1", f"{cli} getblockcount").strip())
+        mined = self.student_session.post(f"{self.base_url}/api/bitcoin/hunt/mine",
+                                          json={"session": claim.uuid, "blocks": 1}, timeout=60)
+        if STUDENT_LAUNCHER:
+            self.assertEqual(mined.status_code, 200, mined.text)
+            self.assertEqual(mined.json(), {"ok": True, "height": height + 1})
+        else:
+            self.assertEqual(mined.status_code, 403, mined.text)
+            self.assertEqual(int(docker_exec_checked("bitcoin-instructor-1", f"{cli} getblockcount").strip()), height)
+
     def test_student_ttyd_executes_real_command(self) -> None:
         claim = self.require_claim()
         expected_pwd = docker_exec_checked(claim.container_name, "pwd").strip()

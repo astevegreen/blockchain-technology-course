@@ -77,6 +77,23 @@
     return m ? parseInt(m[1], 10) : null;
   }
 
+  // On the student's own machine (the course launcher) there is no instructor to mine the hunt's blocks, so the page
+  // asks lane-service to mine them on the lab's instructor node. The classroom answers solo: false and refuses /mine.
+  // SOLO is null until the mode answers, and "unknown" if it never does; the step after fact 5 waits for it.
+  var SOLO = null;
+  var soloKnown = fetch("/api/bitcoin/hunt/mode", { cache: "no-store", credentials: "same-origin" })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("mode " + r.status)); })
+    .then(function (m) { SOLO = !!(m && m.solo === true); })
+    .catch(function () { SOLO = "unknown"; });
+  var mining2 = false;  // page-wide, so a redraw of the step cannot start the twist's two blocks a second time
+  function mine(blocks, done) {
+    fetch("/api/bitcoin/hunt/mine", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ blocks: blocks, session: session }) })
+      .then(function (r) { return r.json(); })
+      .then(done)
+      .catch(function () { done({ ok: false, reason: "The lab did not answer; try again in a moment." }); });
+  }
+
   function check(fact, command, line, done) {
     var body = { fact: fact, command: command, line: line, session: session };
     if (fact === "rerun") body.previous = confirmationsOf("confirmations");
@@ -188,19 +205,59 @@
           }
           function drawAfter() {
             after.innerHTML = "";
-            if (!got("confirmations")) return;
-            after.appendChild(api.el("p", { class: "wait" }, "Tell your instructor you have fact 5. The instructor " +
+            if (!got("confirmations") || SOLO === null) return;  // drawn again once the mode answers
+            if (SOLO === "unknown") {
+              after.appendChild(api.el("p", { class: "warn" }, "The lab did not answer just now; reload the page."));
+              return;
+            }
+            if (SOLO) after.appendChild(soloMine(api));
+            else after.appendChild(api.el("p", { class: "wait" }, "Tell your instructor you have fact 5. The instructor " +
               "mines one block on the class chain (nothing on it mines by itself). Then run getblock on block 5 again."));
             after.appendChild(factBox(api, RERUN, function () { drawAfter(); finish(); }));
             if (got("rerun")) finish();
           }
+          // Solo: the student mines the action's block with a button; the twist's two follow once the rerun is found.
+          function soloMine(api) {
+            var said = api.el("span", { class: "said" }, hunt.mined1 ? "Mined. Run getblock on block 5 again." : "");
+            var btn = api.el("button", { class: "btn", type: "button", disabled: !!hunt.mined1 }, "Mine one block");
+            btn.addEventListener("click", function () {
+              btn.disabled = true;
+              said.textContent = "Mining…";
+              mine(1, function (res) {
+                if (res.ok) { hunt.mined1 = true; save(); said.textContent = "Mined. Run getblock on block 5 again."; }
+                else { btn.disabled = false; said.textContent = res.reason || "Not mined; try again."; }
+              });
+            });
+            return api.el("div", { class: "wait" },
+              api.el("p", null, "You have fact 5. Nothing on this chain mines by itself, so mine one block now: the " +
+                "lab's other node, the one that built the chain, adds it. Then run getblock on block 5 again and see " +
+                "what changed."),
+              api.el("div", { class: "row" }, btn, said));
+          }
           function finish() {
+            mineTwo();
             var before = confirmationsOf("confirmations"), now = confirmationsOf("rerun");
             api.finish({ choice: 1, note: "<p>Block 5's hash, time and one transaction are the same as before. Its " +
               "confirmations went from " + before + " to " + now + ": your node worked them out again from its newest " +
               "block. Facts found: " + factsFound() + " of 5.</p>" });
           }
+          // Solo: the twist's two blocks, mined once the re-run is found; finish runs twice then, so mine them once.
+          function mineTwo() {
+            if (SOLO !== true || hunt.mined2 || mining2) return;
+            mining2 = true;
+            mine(2, function (res) {
+              mining2 = false;
+              if (res.ok) { hunt.mined2 = true; save(); return; }
+              var retry = api.el("button", { class: "btn", type: "button" }, "Mine two blocks");
+              var box = api.el("div", { class: "wait" },
+                api.el("p", null, "Two more blocks are mined here for the steps ahead, and they were not: " +
+                  (res.reason || "the lab did not answer.")), api.el("div", { class: "row" }, retry));
+              retry.addEventListener("click", function () { box.remove(); mineTwo(); });
+              after.appendChild(box);
+            });
+          }
           drawFacts();
+          soloKnown.then(drawAfter);  // the step after fact 5 is drawn once the mode answers
         }
       },
       name: { term: "node query", parts: "node + query",
@@ -214,7 +271,7 @@
         "<li>The confirmations are the explorer's count, from the newest block its node has seen.</li></ul>" +
         "<p>The explorer reads a node too. What differs is the form, and what it works out.</p>" },
       twist: {
-        html: "<p>While you compared, the instructor mined two more blocks. The explorer now shows block 5 with two more " +
+        html: "<p>While you compared, two more blocks were mined on the lab's chain. The explorer now shows block 5 with two more " +
           "confirmations than the count you gave when you ran getblock again.</p>",
         question: "Which is wrong?",
         choices: [

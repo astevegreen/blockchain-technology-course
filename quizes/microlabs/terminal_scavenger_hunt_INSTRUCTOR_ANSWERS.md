@@ -51,6 +51,11 @@ docker exec -u 1000 bitcoin-instructor-1 bitcoin-cli -datadir=/home/user/.bitcoi
 3. Students open the class explorer at block 5, then reach the twist. **Mine two more blocks** (`generatetoaddress
    2 "$ADDR"`) so the explorer shows two more confirmations than their re-run (three more than fact 5).
 
+On a student's own machine (the course launcher) there is no instructor, so the page mines for them: after fact 5 it
+shows a **Mine one block** button, and once the re-run is accepted it mines the twist's two blocks itself, both on
+that machine's `bitcoin-instructor-1`. In the classroom lane-service refuses that call, so the page shows the
+"Tell your instructor" line and you mine as above.
+
 (`instructor_seed` is the wallet
 `bitcoin-instructor-seed.sh` creates; `bitcoin-instructor-1` is the instructor container's name.)
 

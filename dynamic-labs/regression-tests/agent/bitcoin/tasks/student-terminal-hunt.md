@@ -36,6 +36,19 @@ The automated suite checks the checker's answers; this task checks the page.
 7. Tell step: the hint asks for the sentence with no confidence word. Finish; the clock stops and says finished.
 8. Reload: everything above is kept. Restart and confirm: the facts, the score and the clock reset.
 
+## Solo run (the course launcher)
+
+On a machine running the student launcher (`LANE_MODE=student-local`) there is no instructor, and the page mines:
+
+9. After fact 5 the page shows a **Mine one block** button instead of "Tell your instructor". Paste the same
+   confirmations line first: refused. Press the button: it says "Mined", and the re-run `getblock` pasted now is
+   accepted. `getblockcount` on `bitcoin-instructor-1` grew by one.
+10. Once the re-run is accepted, `getblockcount` on `bitcoin-instructor-1` grows by two more without anyone mining;
+    the explorer at block 5 shows two more confirmations than the re-run. Reload: the button stays done and nothing
+    more is mined.
+11. In the classroom (step 4) the page shows no button, and `POST /api/bitcoin/hunt/mine` answers 403 (the
+    automated suite checks this).
+
 ## Pass
 
 Every step behaves as above, with no console errors and no failed requests other than the deliberate wrong pair's
