@@ -95,7 +95,8 @@ command finds each fact) goes in `quizes/`, which students never receive.
   returns the record itself — `lessons/introduction/02-IN-blockchain_at_a_glance.qmd`;
   `@antonopoulos_masteringbitcoin3e_2023` (ch. 3); `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
 - A block's time is set by its miner; confirmations count the blocks on top of it, as seen by one node —
-  `@bitcoin.orgdevelopers_blockchaindeveloper_2024`; `@antonopoulos_masteringbitcoinprogramming_2017`
+  `@bitcoin.orgdevelopers_blockchaindeveloper_2024`; `@antonopoulos_masteringbitcoin3e_2023` (ch. 2, confirmations; ch. 12, "The
+  timestamps set in block headers are set by the miners")
 - Newly mined coins cannot be spent until 100 more blocks are mined —
   `@antonopoulos_masteringbitcoin3e_2023` (ch. 12)
 - The class chain: the instructor node mines 11 blocks at a fresh start; the chain identifies as `main` —

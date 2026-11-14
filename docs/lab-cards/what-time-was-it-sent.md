@@ -74,7 +74,8 @@ real example.
   long time" — `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
 - Each block header names the previous block's hash, which fixes the order — `@bitcoin.orgdevelopers_blockchaindeveloper_2024`
 - Alice's payment: locktime 0; block 277,316, time 1388185914 (27 Dec 2013, 23:11:54 UTC) —
-  `@antonopoulos_masteringbitcoinprogramming_2017`
+  `@antonopoulos_masteringbitcoinprogramming_2017` (2nd edition kept: the 3rd edition no longer prints this
+  transaction)
 - Confidence words, never a percentage — `@odni_icd203_2015` (the course scale, build spec "Confidence scale")
 
 ## Approval

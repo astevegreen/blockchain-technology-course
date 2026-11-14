@@ -102,7 +102,8 @@ real.
 - Miners choose which transactions go in a block; one left out waits in the mempool — the day 1 ③ slide "Delay
   may mean congestion, not censorship", from `@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024`;
   `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
-- Block 277,316 holds Alice's payment — `@antonopoulos_masteringbitcoinprogramming_2017`; its previous block hash
+- Block 277,316 holds Alice's payment — `@antonopoulos_masteringbitcoinprogramming_2017` (2nd edition kept: the 3rd edition only assumes Alice's
+  payment is in a block it uses as an example); its previous block hash
   `0000000000000002a7bbd25a417c0374cc55261021e8a9ca74442b01284f0569` and its own hash with 15 leading zeros —
   `@mempoolspace_block277316_2026` (as of 10 Nov 2026)
 - About 698,000 blocks on top: the tip was block 975,384 — `@mempoolspace_block975384_2026` (as of
