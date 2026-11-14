@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Saves what the explorer shows for the day-3 chain's history (blocks 0-17) as one HTML page:
-the lab's fallback when Otterscan or the node is down in class. It reads the same node calls
-Otterscan makes (plus the contract reads the mint page makes), so its answers match the explorer's.
+"""Saves what the explorer shows for the day-3 chain as HTML pages: the lab's fallback when
+Otterscan or the node is down in class. The first page holds the worksheet's history (blocks 0-17);
+the second, the Spot the fake game's blocks 18-30. It reads the same node calls Otterscan makes (plus
+the contract reads the mint page makes), so its answers match the explorer's.
 
-Usage: capture_pages.py <node url> <addresses.env> <output html>
+Usage: capture_pages.py <node url> <addresses.env> <output html> [<game output html>]
 The regression tests run it against the live chain and compare the result with the committed
-page, which proves the fallback still answers the worksheet the same way.
+pages, which proves the fallback still answers the worksheet and the game the same way.
+
+The game page finds its tokens on the chain (the contracts that emit transfers in blocks 18-30) and
+never reads the instructor's answers, so, like the explorer, it labels no token: it shows each one's
+creator, what it answers and its verified source, the evidence the game asks for.
 """
 
 import datetime
@@ -16,8 +21,11 @@ import sys
 import time
 import urllib.request
 from decimal import Decimal
+from pathlib import Path
 
 LAST_BLOCK = 17
+GAME_FIRST, GAME_LAST = 18, 30  # the Spot the fake game
+SOURCIFY = Path(__file__).resolve().parent / "sourcify" / "contracts" / "full_match" / "31337"
 IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
 METHODS = {
     "0x40c10f19": "mint(address,uint256)", "0xa9059cbb": "transfer(address,uint256)",
@@ -25,7 +33,7 @@ METHODS = {
     "0xd0def521": "mint(address,string)", "0x095ea7b3": "approve(address,uint256)",
     "0x50fd7367": "list(uint256,uint256)", "0xd96a094a": "buy(uint256)",
     "0xc4d66de8": "initialize(address)", "0x23b872dd": "transferFrom(address,address,uint256)",
-    "0x6352211e": "ownerOf(uint256)",
+    "0x6352211e": "ownerOf(uint256)", "0x1794bb3c": "initialize(address,address,uint256)",
 }
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 APPROVAL = "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"
@@ -76,8 +84,8 @@ def eth(wei):
     return units(wei, 18)
 
 
-def cusd(raw):
-    return f"{int(Decimal(raw) / Decimal(10**6)):,}" if raw % 10**6 == 0 else units(raw, 6)
+def cusd(raw, decimals=6):
+    return f"{int(Decimal(raw) / Decimal(10**decimals)):,}" if raw % 10**decimals == 0 else units(raw, decimals)
 
 
 def gwei(wei):
@@ -125,13 +133,18 @@ class Page:
         self.order = list(names.items())
         self.names = {addr.lower(): label for addr, label in names.items()}
         self.checksummed = {addr.lower(): addr for addr in names}
+        self.tokens = {}  # token contract (lowercase) -> (symbol, decimals); any other is cUSD
         self.parts = []
+
+    def addr(self, address):
+        """An address as addresses.env spells it when it is named there, else as the node gives it."""
+        return self.checksummed.get(address.lower(), address)
 
     def who(self, address):
         if not address:
             return ""
         label = self.names.get(address.lower())
-        address = self.checksummed.get(address.lower(), address)
+        address = self.addr(address)
         return f"{address} ({label})" if label else address
 
     def section(self, anchor, title, rows, extra=""):
@@ -148,7 +161,8 @@ class Page:
             what = f"Transfer: badge {int(topics[3], 16)} from {self.who(topic_address(topics[1]))}" \
                    f" to {self.who(topic_address(topics[2]))}"
         elif event == TRANSFER:
-            what = f"Transfer: value {int(data, 16)} ({cusd(int(data, 16))} cUSD) from " \
+            symbol, decimals = self.tokens.get(by.lower(), ("cUSD", 6))
+            what = f"Transfer: value {int(data, 16)} ({cusd(int(data, 16), decimals)} {symbol}) from " \
                    f"{self.who(topic_address(topics[1]))} to {self.who(topic_address(topics[2]))}"
         elif event == APPROVAL and len(topics) == 4:
             what = f"Approval: {self.who(topic_address(topics[1]))} lets {self.who(topic_address(topics[2]))}" \
@@ -179,13 +193,21 @@ def word(address):
     return address.lower().replace("0x", "").rjust(64, "0")
 
 
-def capture(page, addrs):
+def fetch_blocks(first, last):
+    """Each block from first to last with its transactions and their receipts."""
     head = int(rpc("eth_blockNumber"), 16)
-    if head < LAST_BLOCK:
-        raise SystemExit(f"node is at block {head}; the course chain has {LAST_BLOCK}")
-    txs = []
-    for number in range(LAST_BLOCK + 1):
+    if head < last:
+        raise SystemExit(f"node is at block {head}; the course chain has {last}")
+    blocks = []
+    for number in range(first, last + 1):
         block = rpc("eth_getBlockByNumber", hex(number), True)
+        blocks.append((block, [(tx, rpc("eth_getTransactionReceipt", tx["hash"])) for tx in block["transactions"]]))
+    return blocks
+
+
+def render_blocks(page, blocks):
+    for block, _ in blocks:
+        number = int(block["number"], 16)
         rows = [
             row("Block", number),
             row("Timestamp", f"{utc(int(block['timestamp'], 16))} (Unix {int(block['timestamp'], 16)})"),
@@ -197,66 +219,73 @@ def capture(page, addrs):
             for tx in block["transactions"]
         )
         page.section(f"block-{number}", f"Block {number}", rows, f"<ul>{links}</ul>" if links else "")
-        txs.extend(block["transactions"])
 
-    for tx in txs:
-        receipt = rpc("eth_getTransactionReceipt", tx["hash"])
-        number = int(tx["blockNumber"], 16)
-        ok = receipt["status"] == "0x1"
-        price = int(receipt["effectiveGasPrice"], 16)
-        used = int(receipt["gasUsed"], 16)
-        rows = [
-            row("Transaction hash", tx["hash"], code=True),
-            row("Status", "Success" if ok else "Fail"),
-            row("Block", number),
-            row("From", page.who(tx["from"]), code=True),
-        ]
-        if receipt.get("contractAddress"):
-            rows.append(row("To", f"[Contract creation] {page.who(receipt['contractAddress'])}", code=True))
+    for _, mined in blocks:
+        for tx, receipt in mined:
+            render_tx(page, tx, receipt)
+
+
+def render_tx(page, tx, receipt):
+    number = int(tx["blockNumber"], 16)
+    ok = receipt["status"] == "0x1"
+    price = int(receipt["effectiveGasPrice"], 16)
+    used = int(receipt["gasUsed"], 16)
+    rows = [
+        row("Transaction hash", tx["hash"], code=True),
+        row("Status", "Success" if ok else "Fail"),
+        row("Block", number),
+        row("From", page.who(tx["from"]), code=True),
+    ]
+    if receipt.get("contractAddress"):
+        rows.append(row("To", f"[Contract creation] {page.who(receipt['contractAddress'])}", code=True))
+    else:
+        rows.append(row("To", page.who(tx["to"]), code=True))
+    if not ok:
+        rows.append(row("Error", revert_reason(rpc("ots_getTransactionError", tx["hash"]))))
+    rows += [
+        row("Value", f"{eth(int(tx['value'], 16))} ETH"),
+        row("Transaction fee", f"{eth(used * price)} ETH"),
+        row("Nonce", int(tx["nonce"], 16)),
+    ]
+    selector = tx["input"][:10]
+    if receipt.get("contractAddress"):
+        rows.append(row("Input data", f"contract bytecode, {(len(tx['input']) - 2) // 2} bytes"))
+    elif tx["input"] != "0x":
+        rows.append(row("Method", METHODS.get(selector, selector)))
+        if selector == "0xd0def521":  # mint(address,string): show the metadata, as the explorer decodes it
+            rows.append(row("Input: to", page.who("0x" + tx["input"][34:74]), code=True))
+            rows.append(row("Input: uri", abi_string("0x" + tx["input"][10:], 1), code=True))
         else:
-            rows.append(row("To", page.who(tx["to"]), code=True))
-        if not ok:
-            rows.append(row("Error", revert_reason(rpc("ots_getTransactionError", tx["hash"]))))
-        rows += [
-            row("Value", f"{eth(int(tx['value'], 16))} ETH"),
-            row("Transaction fee", f"{eth(used * price)} ETH"),
-            row("Nonce", int(tx["nonce"], 16)),
-        ]
-        selector = tx["input"][:10]
-        if receipt.get("contractAddress"):
-            rows.append(row("Input data", f"contract bytecode, {(len(tx['input']) - 2) // 2} bytes"))
-        elif tx["input"] != "0x":
-            rows.append(row("Method", METHODS.get(selector, selector)))
-            if selector == "0xd0def521":  # mint(address,string): show the metadata, as the explorer decodes it
-                rows.append(row("Input: to", page.who("0x" + tx["input"][34:74]), code=True))
-                rows.append(row("Input: uri", abi_string("0x" + tx["input"][10:], 1), code=True))
-            else:
-                rows.append(row("Input data", tx["input"], code=True))
-        for step in rpc("ots_traceTransaction", tx["hash"]):
-            if step["depth"] == 0 and step["type"] in ("CALL", "CREATE"):
-                continue  # the transaction itself
-            method = METHODS.get(step.get("input", "")[:10], "")
-            rows.append(row(
-                "Trace",
-                f"{'  ' * step['depth']}{step['type']} {page.who(step['from'])} -> {page.who(step['to'])}"
-                + (f" {method}" if method else "")
-                + (f", {eth(int(step['value'], 16))} ETH" if step.get("value") and int(step["value"], 16) else ""),
-                code=True,
-            ))
-        internal = rpc("ots_getInternalOperations", tx["hash"])
-        # Anvil lists the transaction's own top-level transfer or creation first; Erigon, whose
-        # answers Otterscan expects, lists only what the code did. Drop it to match.
-        if internal and internal[0]["from"].lower() == tx["from"].lower():
-            internal = internal[1:]
-        for op in internal:
-            rows.append(row(
-                "Internal transfer",
-                f"{eth(int(op['value'], 16))} ETH from {page.who(op['from'])} to {page.who(op['to'])}",
-                code=True,
-            ))
-        for log in receipt["logs"]:
-            rows.append(row(f"Log {int(log['logIndex'], 16)}", page.log_text(log), code=True))
-        page.section(f"tx-{tx['hash']}", f"Transaction in block {number}", rows)
+            rows.append(row("Input data", tx["input"], code=True))
+    for step in rpc("ots_traceTransaction", tx["hash"]):
+        if step["depth"] == 0 and step["type"] in ("CALL", "CREATE"):
+            continue  # the transaction itself
+        method = METHODS.get(step.get("input", "")[:10], "")
+        rows.append(row(
+            "Trace",
+            f"{'  ' * step['depth']}{step['type']} {page.who(step['from'])} -> {page.who(step['to'])}"
+            + (f" {method}" if method else "")
+            + (f", {eth(int(step['value'], 16))} ETH" if step.get("value") and int(step["value"], 16) else ""),
+            code=True,
+        ))
+    internal = rpc("ots_getInternalOperations", tx["hash"])
+    # Anvil lists the transaction's own top-level transfer or creation first; Erigon, whose
+    # answers Otterscan expects, lists only what the code did. Drop it to match.
+    if internal and internal[0]["from"].lower() == tx["from"].lower():
+        internal = internal[1:]
+    for op in internal:
+        rows.append(row(
+            "Internal transfer",
+            f"{eth(int(op['value'], 16))} ETH from {page.who(op['from'])} to {page.who(op['to'])}",
+            code=True,
+        ))
+    for log in receipt["logs"]:
+        rows.append(row(f"Log {int(log['logIndex'], 16)}", page.log_text(log), code=True))
+    page.section(f"tx-{tx['hash']}", f"Transaction in block {number}", rows)
+
+
+def capture(page, addrs):
+    render_blocks(page, fetch_blocks(0, LAST_BLOCK))
 
     at = hex(LAST_BLOCK)
     for address, label in page.order:
@@ -302,6 +331,147 @@ def capture(page, addrs):
     page.section("reads", f"Contract reads at block {LAST_BLOCK}", rows)
 
 
+def verified(address):
+    """The Sourcify record the explorer reads for a contract: (target file, contract, {file: text}), or None."""
+    folders = SOURCIFY.iterdir() if SOURCIFY.is_dir() else []
+    folder = next((d for d in folders if d.name.lower() == address.lower()), None)
+    if folder is None:
+        return None
+    meta = json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
+    (target, contract), = meta["settings"]["compilationTarget"].items()
+    files = {f.relative_to(folder / "sources").as_posix(): f.read_text(encoding="utf-8")
+             for f in sorted((folder / "sources").rglob("*")) if f.is_file()}
+    return target, contract, files
+
+
+def read_or_fail(to, data, at):
+    try:
+        return call(to, data, at)
+    except RuntimeError:  # the call reverts: the contract has no such function
+        return None
+
+
+def game_history(address, mined):
+    """The game's transactions an address sent, received or created, or that moved its tokens, oldest first."""
+    address = address.lower()
+    hits = []
+    for tx, receipt in mined:
+        moved = any(log["topics"] and log["topics"][0] == TRANSFER
+                    and address in (topic_address(x).lower() for x in log["topics"][1:3])
+                    for log in receipt["logs"])
+        ends = (tx["from"].lower(), (tx["to"] or "").lower(), (receipt.get("contractAddress") or "").lower())
+        if moved or address in ends:
+            hits.append(tx)
+    return hits
+
+
+def capture_game(page):
+    """The Spot the fake game's blocks, then its tokens, other contracts, accounts and source files."""
+    blocks = fetch_blocks(GAME_FIRST, GAME_LAST)
+    mined = [pair for _, pairs in blocks for pair in pairs]
+    at = hex(GAME_LAST)
+    senders = {tx["from"].lower() for tx, _ in mined}
+    created = {r["contractAddress"].lower() for _, r in mined if r.get("contractAddress")}
+    # The tokens are the contracts that emit ERC-20 transfers; the seats, the accounts that receive them
+    # without sending a transaction of their own, in the order they first do (the issuer's mint goes
+    # out in seat order, seat 1 first).
+    tokens, seats = [], []
+    for _, receipt in mined:
+        for log in receipt["logs"]:
+            if log["topics"] and log["topics"][0] == TRANSFER and len(log["topics"]) == 3:
+                if log["address"].lower() not in tokens:
+                    tokens.append(log["address"].lower())
+                to = topic_address(log["topics"][2]).lower()
+                if to not in senders and to not in seats and int(to, 16):
+                    seats.append(to)
+    tokens.sort()
+    for token in tokens:
+        page.tokens[token] = (abi_string(call(token, "0x95d89b41", at), 0), int(call(token, "0x313ce567", at), 16))
+    for number, seat in enumerate(seats, 1):
+        page.names[seat] = f"Seat {number}"
+    render_blocks(page, blocks)
+
+    sources = {}  # (file, its text) -> the contracts verified with that exact text
+    nav = []
+
+    def contract_rows(address):
+        creator = rpc("ots_getContractCreator", address)
+        rows = [
+            row("Address", page.addr(address), code=True),
+            row("Kind", "Contract (has code)"),
+            row("Created by", page.who(creator["creator"]), code=True),
+            row("Creation transaction", creator["hash"], code=True),
+        ]
+        slot = topic_address(rpc("eth_getStorageAt", address, IMPLEMENTATION_SLOT, at))
+        if int(slot, 16):
+            rows.append(row("Proxy: implementation slot", page.who(slot), code=True))
+        record = verified(address)
+        if record:
+            target, contract, files = record
+            rows.append(row("Verified source", f"{target}, contract {contract} (exact match; the file is under "
+                                               "Verified source files)"))
+            for name, text in files.items():
+                sources.setdefault((name, text), []).append(address)
+        else:
+            rows.append(row("Verified source", "none"))
+        return rows
+
+    for token in tokens:
+        rows = contract_rows(token)
+        symbol, decimals = page.tokens[token]
+        rows.append(row(f"name() at block {GAME_LAST}", abi_string(call(token, "0x06fdde03", at), 0)))
+        rows.append(row(f"symbol() at block {GAME_LAST}", symbol))
+        rows.append(row(f"decimals() at block {GAME_LAST}", decimals))
+        owner = read_or_fail(token, "0x8da5cb5b", at)
+        rows.append(row(f"owner() at block {GAME_LAST}",
+                        page.who(topic_address(owner)) if owner else "the call fails: the contract has no owner()",
+                        code=bool(owner)))
+        supply = int(call(token, "0x18160ddd", at), 16)
+        rows.append(row(f"totalSupply() at block {GAME_LAST}", f"{supply} ({cusd(supply, decimals)} {symbol})"))
+        page.section(f"address-{token}", f"Token contract {page.addr(token)}", rows)
+        nav.append((f"address-{token}", f"Token {page.addr(token)}"))
+
+    for other in sorted(created - set(tokens)):
+        page.section(f"address-{other}", f"Contract {page.addr(other)}", contract_rows(other))
+        nav.append((f"address-{other}", f"Contract {page.addr(other)}"))
+
+    # The accounts that sent the game's transactions (named ones first), then the seats.
+    for account in sorted(senders, key=lambda a: (a not in page.names, page.names.get(a, ""), a)) + seats:
+        rows = [
+            row("Address", page.addr(account), code=True),
+            row("Kind", "Account (no code)"),
+            row(f"Balance at block {GAME_LAST}", f"{eth(int(rpc('eth_getBalance', account, at), 16))} ETH"),
+        ]
+        for token in tokens:
+            symbol, decimals = page.tokens[token]
+            raw = int(call(token, "0x70a08231" + word(account), at), 16)
+            rows.append(row(f"Token {page.addr(token)}: balanceOf at block {GAME_LAST}",
+                            f"{raw} ({cusd(raw, decimals)} {symbol})"))
+        items = "".join(
+            f'<li>block {int(tx["blockNumber"], 16)}: <a href="#tx-{esc(tx["hash"])}">'
+            f'<code>{esc(tx["hash"])}</code></a></li>'
+            for tx in game_history(account, mined)
+        )
+        extra = f"<p>Transactions in blocks {GAME_FIRST}-{GAME_LAST} that it sent or received, or that moved its " \
+                f"tokens:</p><ul>{items}</ul>"
+        label = page.names.get(account)
+        page.section(f"address-{account}", label or f"Account {page.addr(account)}", rows, extra)
+        nav.append((f"address-{account}", label or f"Account {page.addr(account)}"))
+
+    parts = []
+    for number, ((name, text), where) in enumerate(sorted(sources.items()), 1):
+        listed = ", ".join(f'<a href="#address-{esc(a)}"><code>{esc(page.addr(a))}</code></a>' for a in where)
+        parts.append(f'<h3 id="source-{number}">{esc(name)}</h3><p>Verified for: {listed}</p>'
+                     f'<pre><code>{esc(text)}</code></pre>')
+    page.parts.append(
+        '<section id="sources"><h2>Verified source files</h2><p>Each file the explorer shows on a contract\'s '
+        'Contract tab, once for each exact text, with every contract verified with that text.</p>'
+        + "".join(parts) + "</section>"
+    )
+    nav.append(("sources", "Verified source files"))
+    return nav
+
+
 TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -325,7 +495,41 @@ nav li {{ display: inline; margin-right: .75rem; }}
 <p class="note">Use this page when the explorer or the course chain is down. It shows the fields the
 explorer shows for the chain's saved history, read from the same node, and what the contracts answer
 at block {last}. Your worksheet questions have the same answers here. For Part 2, read the
-<a href="mint-run.html">recorded mint</a>.</p>
+<a href="mint-run.html">recorded mint</a>. The Spot the fake game, blocks 18-30, has
+<a href="spot-the-fake.html">its own saved page</a>.</p>
+<nav><ul>{nav}</ul></nav>
+{body}
+</body>
+</html>
+"""
+
+
+GAME_TEMPLATE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saved explorer pages: Spot the fake</title>
+<style>
+body {{ font-family: system-ui, sans-serif; max-width: 72rem; margin: 0 auto; padding: 1rem; color: #1b1b1b; }}
+h1 {{ font-size: 1.5rem; }} h2 {{ font-size: 1.1rem; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem; }}
+h3 {{ font-size: 1rem; margin-top: 1.5rem; }}
+table {{ border-collapse: collapse; width: 100%; }}
+th {{ text-align: left; vertical-align: top; width: 16rem; padding: .25rem .5rem .25rem 0; font-weight: 600; }}
+td {{ padding: .25rem 0; word-break: break-all; white-space: pre-wrap; }}
+code {{ font-size: .9em; }}
+pre {{ background: #f4f4f4; padding: .5rem 1rem; overflow-x: auto; }}
+nav li {{ display: inline; margin-right: .75rem; }}
+.note {{ background: #fff6dd; padding: .5rem 1rem; border-left: 4px solid #e0a800; }}
+</style>
+</head>
+<body>
+<p class="crumbs"><a href="../lab/">Worksheet</a> | <a href="index.html">Saved pages, blocks 0-17</a></p>
+<h1>Saved explorer pages: Spot the fake, blocks {first}-{last}</h1>
+<p class="note">Use this page when the explorer or the course chain is down. It shows the fields the
+explorer shows for blocks {first} to {last}, read from the same node: each token contract's creator,
+what it answers at block {last} and its verified source, then what every seat holds. Find your seat
+by its number (seat N is account 9 + N) or by its address.</p>
 <nav><ul>{nav}</ul></nav>
 {body}
 </body>
@@ -335,7 +539,7 @@ at block {last}. Your worksheet questions have the same answers here. For Part 2
 
 def main():
     global URL
-    URL, env_path, out_path = sys.argv[1:]
+    URL, env_path, out_path, *game_path = sys.argv[1:]
     addrs, names = {}, {}
     with open(env_path, encoding="utf-8") as f:
         for line in f:
@@ -352,6 +556,14 @@ def main():
     with open(out_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(TEMPLATE.format(nav=nav, body="\n".join(page.parts), last=LAST_BLOCK))
     print(f"saved {out_path}")
+    if game_path:
+        game = Page(names)
+        links = capture_game(game)
+        nav = "".join(f'<li><a href="#block-{n}">Block {n}</a></li>' for n in range(GAME_FIRST, GAME_LAST + 1))
+        nav += "".join(f'<li><a href="#{esc(anchor)}">{esc(label)}</a></li>' for anchor, label in links)
+        with open(game_path[0], "w", encoding="utf-8", newline="\n") as f:
+            f.write(GAME_TEMPLATE.format(nav=nav, body="\n".join(game.parts), first=GAME_FIRST, last=GAME_LAST))
+        print(f"saved {game_path[0]}")
 
 
 if __name__ == "__main__":

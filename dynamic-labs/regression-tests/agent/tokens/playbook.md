@@ -109,6 +109,10 @@ addresses are in `dynamic-labs/tokens/quizes/spot-the-fake.env`.
    page answers Account 0, its creator is Account 7. Answer "no" and confirm the answer and why
    appear. On the tell step, write a sentence with a confidence word and confirm the example
    shows. Check console errors and failed network requests.
+6. Open `/fallback/` and follow its "its own saved page" link to `spot-the-fake.html`. Confirm the blocks
+   18-30 navigation works, each token's section shows the same creator, creation block and verified source
+   as step 2, Token 1's `owner()` row says the call fails, the fourth token's `owner()` row names Account 0
+   while its creator is Account 7, and "Seat 1" lists four token balances. No section calls a token real or fake.
 
 ## Not Covered Here
 

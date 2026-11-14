@@ -45,5 +45,6 @@ docker network create "$tag" >/dev/null
 docker run -d --name "${tag}-anvil" --network "$tag" -v "$here:/chain:ro" "$FOUNDRY" \
     "anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json" >/dev/null
 docker run --rm --network "$tag" -v "$lab:/lab" "$PY" python /lab/chain/capture_pages.py \
-    "http://${tag}-anvil:8545" /lab/chain/addresses.env /lab/gateway/static/fallback/index.html
-echo "rebuilt: course-chain.json, addresses.env, quizes/spot-the-fake.env, sourcify/, gateway/static/fallback/index.html"
+    "http://${tag}-anvil:8545" /lab/chain/addresses.env /lab/gateway/static/fallback/index.html \
+    /lab/gateway/static/fallback/spot-the-fake.html
+echo "rebuilt: course-chain.json, addresses.env, quizes/spot-the-fake.env, sourcify/, gateway/static/fallback/index.html, gateway/static/fallback/spot-the-fake.html"

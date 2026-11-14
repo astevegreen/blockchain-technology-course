@@ -39,8 +39,8 @@ The router's `routes/tokens-host.conf` splits that host the same way as the expl
 ## The chain
 
 `chain/build-chain.sh` rebuilds everything from `chain/src/` with Docker only:
-the chain, `addresses.env`, `sourcify/` and `gateway/static/fallback/index.html` (written by
-`chain/capture_pages.py` from the new chain). The block-by-block steps are in
+the chain, `addresses.env`, `sourcify/` and the saved pages `gateway/static/fallback/index.html`
+(blocks 0-17) and `spot-the-fake.html` (blocks 18-30), written by `chain/capture_pages.py` from the new chain. The block-by-block steps are in
 `quizes/build-steps.sh`, which sits with the instructor answers because its comments say what
 each block is for. Block times are fixed (genesis 16 Sep 2026 14:00:00 UTC, then 12 s apart) and
 the accounts come from Anvil's public test phrase.
@@ -58,8 +58,9 @@ Blocks 18 to 30 hold the day's last game, `blockchain-course/assets/labs/spot-th
 `docs/lab-cards/spot-the-fake.md`). Every seat holds four tokens that all answer Course Pound, cGBP, 6 decimals:
 one issued by Account 0 behind the lab's own `DollarProxy` (`chain/src/CoursePound.sol`), and three made by
 Account 7 (one from `chain/src/PlainToken.sol`, two from copies of the issuer's code). Pairs tell them apart by
-the contract creator Otterscan shows and the verified source. The worksheet's blocks 0 to 17 are unchanged, and
-the saved pages stop at block 17. Which token is which is in `quizes/SPOT_THE_FAKE_ANSWERS.md`; the build writes their
+the contract creator Otterscan shows and the verified source. The worksheet's blocks 0 to 17 are unchanged.
+The game's saved page, `fallback/spot-the-fake.html`, shows what the explorer shows for blocks 18 to 30 and,
+like the explorer, labels no token. Which token is which is in `quizes/SPOT_THE_FAKE_ANSWERS.md`; the build writes their
 addresses to `quizes/spot-the-fake.env`, and `addresses.env` leaves them out because students receive it.
 The mint page's "Ask the contracts" asks any token for its name, symbol, decimals and owner.
 

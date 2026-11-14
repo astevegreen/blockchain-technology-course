@@ -202,8 +202,6 @@ slide index), which is never listed here.
   lab pages (`blockchain-course/assets/labs/*/index.html`, `run-labs.qmd`), `assets/mindmap.html` and the glossary
   `lesson_terms/*.yml`, so those dates are neither tagged nor listed when a fact changes.
   [12 Nov 2026, "Sources in the speaker notes" build]
-- The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
-  so the day 3 game needs the live lab [11 Nov 2026, building the game]
 
 - The glossary lists "Access control (smart contracts)" only as an alias of the permissioned-ledger entry (04-DS);
   the Find the line card (`docs/lab-cards/find-the-line.md`, line 5) wants the alias given its own definition (who a

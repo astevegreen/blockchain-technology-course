@@ -128,6 +128,7 @@ class TokensLiveRegressionTests(unittest.TestCase):
 
     def test_lab_pages_are_served(self) -> None:
         for path in ["/lab/", "/lab/lab.css", "/sign/", "/sign/mint.js", "/fallback/", "/fallback/mint-run.html",
+                     "/fallback/spot-the-fake.html",
                      "/vendor/ethers/ethers.umd.min.js"]:
             self.assertEqual(get(path).status_code, 200, path)
 
@@ -226,16 +227,17 @@ class TokensLiveRegressionTests(unittest.TestCase):
         self.assertEqual(owner.lower(), ADDRESSES["A2"].lower())
 
     def test_saved_pages_still_match_the_chain(self) -> None:
-        committed = STATIC / "fallback" / "index.html"
         with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / "index.html"
             subprocess.run(
                 [sys.executable, str(LAB / "chain" / "capture_pages.py"), f"{BASE_URL}/rpc",
-                 str(LAB / "chain" / "addresses.env"), str(out)],
-                check=True, env={**os.environ, "CAPTURE_HOST": HOST}, capture_output=True, timeout=300,
+                 str(LAB / "chain" / "addresses.env"), str(Path(tmp) / "index.html"),
+                 str(Path(tmp) / "spot-the-fake.html")],
+                check=True, env={**os.environ, "CAPTURE_HOST": HOST}, capture_output=True, timeout=600,
             )
-            self.assertEqual(out.read_text(encoding="utf-8"), committed.read_text(encoding="utf-8"),
-                             "the saved explorer pages no longer match the chain: run chain/build-chain.sh")
+            for name in ["index.html", "spot-the-fake.html"]:
+                self.assertEqual((Path(tmp) / name).read_text(encoding="utf-8"),
+                                 (STATIC / "fallback" / name).read_text(encoding="utf-8"),
+                                 f"saved page {name} no longer matches the chain: run chain/build-chain.sh")
 
     def test_seat_mints_a_badge_and_reads_it_back(self) -> None:
         Account.enable_unaudited_hdwallet_features()
@@ -342,6 +344,22 @@ class SpotTheFakeLiveTests(unittest.TestCase):
             hit = get(f"/sourcify/contracts/full_match/31337/{GAME[key]}/metadata.json")
             self.assertEqual(hit.status_code, 200, key)
             self.assertIn(name, hit.text, key)
+
+    def test_saved_game_page_shows_the_evidence_and_no_verdict(self) -> None:
+        page = (STATIC / "fallback" / "spot-the-fake.html").read_text(encoding="utf-8")
+        for key in ["POUND", "FAKE_A", "FAKE_B", "TWIST", "POUND_CODE", "FAKE_B_CODE", "TWIST_CODE"]:
+            self.assertIn(f'id="address-{GAME[key].lower()}"', page, key)
+        Account.enable_unaudited_hdwallet_features()
+        for number in [1, 40]:  # seat N is account 9 + N
+            seat = Account.from_mnemonic(PHRASE, account_path=f"m/44'/60'/0'/0/{9 + number}").address
+            self.assertIn(f'<section id="address-{seat.lower()}"><h2>Seat {number}</h2>', page, number)
+        self.assertIn("the call fails: the contract has no owner()", page)
+        self.assertIn("src/PlainToken.sol, contract PlainToken (exact match", page)
+        # Like the explorer, the page names no token real or fake: only the verified source files may
+        # use such words (their comments say they are training code).
+        prose = re.sub(r"<pre>.*?</pre>", "", page, flags=re.S).replace("Spot the fake", "")
+        for word in ["real", "fake", "genuine", "counterfeit", "twist", "impostor", "official"]:
+            self.assertNotRegex(prose.lower(), rf"\b{word}\b", word)
 
     def test_mint_page_asks_any_token(self) -> None:
         sheet = (STATIC / "sign" / "index.html").read_text(encoding="utf-8")
