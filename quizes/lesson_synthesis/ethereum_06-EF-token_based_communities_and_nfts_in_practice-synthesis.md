@@ -2,8 +2,8 @@
 
 ## Source
 
-- `lesson_path`: `/home/ben/Code/courseware-builder-pipeline/blockchain-course/lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`
-- `output_path`: `/home/ben/Code/courseware-builder-pipeline/quizes/lesson_synthesis/ethereum_06-EF-token_based_communities_and_nfts_in_practice-synthesis.md`
+- `lesson_path`: `blockchain-course/lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`
+- `output_path`: `quizes/lesson_synthesis/ethereum_06-EF-token_based_communities_and_nfts_in_practice-synthesis.md`
 - `module`: `ethereum`
 - `lesson_file_stem`: `06-EF-token_based_communities_and_nfts_in_practice`
 
@@ -11,7 +11,7 @@
 
 This lesson argues that tokens are programmable claims on a shared ledger, but their meaning, social value, legal force, and operational reliability depend on surrounding off-chain systems. Ethereum can enforce identifiers, ownership, transfer history, contract execution, and event logs; it does not automatically verify metadata truth, legal rights, identity, community legitimacy, or infrastructure resilience.
 
-The lesson moves from token standards and minting mechanics into token-gated communities, NFTs, soulbound credentials, rug pulls, re-entrancy, and infrastructure chokepoints. Its central analytical habit is to ask what a token system actually enforces, what it only signals, and where trust assumptions re-enter through metadata storage, social layers, governance processes, operators, bridges, RPC providers, or oracles.
+The lesson moves from token standards and minting mechanics into token-gated communities, NFTs, soulbound credentials, rug pulls, and infrastructure chokepoints. Its central analytical habit is to ask what a token system actually enforces, what it only signals, and where trust assumptions re-enter through metadata storage, social layers, governance processes, operators, bridges, RPC providers, or oracles.
 
 ## Core Learning Outcomes
 
@@ -21,7 +21,7 @@ The lesson moves from token standards and minting mechanics into token-gated com
 - Trace token-gating and minting flows, including wallet signatures, contract checks, metadata pointers, and failure points.
 - Reason about the metadata pointer problem by comparing on-chain storage, content-addressed storage, and location-addressed URLs.
 - Diagnose how soulbound tokens alter transfer incentives while failing to bind credentials directly to real people.
-- Explain how rug pulls and the DAO re-entrancy exploit demonstrate different failure modes in technically valid token systems.
+- Explain how a rug pull exploits valid token mechanics and off-chain promises, and how public fund flows and wallet reuse support forensic hypotheses.
 - Assess operational implications of token infrastructure, including public membership enumeration, pseudonymous coordination, forensic records, credentials, and centralized chokepoints.
 
 ## Conceptual Structure
@@ -56,7 +56,7 @@ Soulbound tokens disable transfer to support credentials, attestations, membersh
 
 ### Adversarial And Failure Cases
 
-The Frosties rug pull shows that open minting and public token sales can be used to extract funds from a community and then abandon promised off-chain commitments. On-chain transparency preserved the financial trail, enabling wallet-flow analysis, but it did not prevent the harm. The DAO re-entrancy attack shows a different failure: consensus and cryptography functioned correctly, but contract logic sent ETH before updating balances, allowing recursive withdrawals. The hard fork response demonstrates that immutability is also a social commitment.
+The Frosties rug pull shows that open minting and public token sales can be used to extract funds from a community and then abandon promised off-chain commitments. On-chain transparency preserved the financial trail, enabling wallet-flow analysis, but it did not prevent the harm.
 
 ### Operational Layer And Analyst Implications
 
@@ -75,7 +75,6 @@ The lesson closes by widening the frame from tokens and communities to infrastru
 | Minting policy | Mint logic determines supply, access, fairness, operator power, and attack exposure. | Trace mint flows and diagnose risks in public, allowlist, lazy, or delegated minting. |
 | Soulbound tokens | Demonstrates how non-transferability changes credential systems without solving identity. | Explain the wallet-person gap and evaluate risks such as key sale, key compromise, and recovery. |
 | Rug pulls | Illustrate abuse of valid token mechanics plus off-chain promises and social trust. | Analyze how public fund flows support forensic hypotheses while failing to prevent initial harm. |
-| Re-entrancy | Demonstrates that smart-contract sequencing errors can defeat tokenized treasury systems. | Trace the withdraw loop and explain why checks-effects-interactions prevents the bug. |
 | Centralization chokepoints | Decentralized base layers can still depend on concentrated service layers. | Evaluate how RPC providers, bridges, and oracles affect resilience and leverage. |
 
 ## Supporting Details
@@ -89,7 +88,6 @@ The lesson closes by widening the frame from tokens and communities to infrastru
 - ERC-5192 and ERC-4973 support the soulbound-token discussion; the assessment-worthy point is non-transferability and the wallet-person identity gap.
 - Fabric details such as composite keys, MSP ownership fields, endorsement policies, and private data collections support the contrast between permissionless Ethereum and permissioned consortium issuance.
 - Frosties amounts, dates, names, and project labels support the rug-pull case study; the broader concepts are social trust abuse, public fund flow, obfuscation, and wallet reuse.
-- DAO timeline, amounts, block reference, and Ethereum Classic outcome support the re-entrancy and social-immutability lessons; the mechanism and governance response matter more than exact figures.
 - Market-volume and Fortune 500 figures support the decoupling between speculation and utility infrastructure, not standalone market trivia.
 
 ## Common Misconceptions And Confusions
@@ -102,8 +100,6 @@ The lesson closes by widening the frame from tokens and communities to infrastru
 - Misconception: A DAO is automatically decentralized in every operational layer. Corrected understanding: token voting or treasury execution may be on-chain while discussion, moderation, infrastructure, and participation remain socially or technically concentrated.
 - Misconception: Soulbound tokens solve digital identity because they cannot be transferred. Corrected understanding: they bind a credential to a wallet, and wallet control can be sold, lost, coerced, or compromised.
 - Misconception: Public on-chain transparency prevents scams. Corrected understanding: transparency creates an audit trail and forensic substrate, but it does not necessarily stop operators from extracting value first.
-- Misconception: The DAO attack meant Ethereum cryptography or consensus failed. Corrected understanding: the chain executed flawed contract code faithfully; the failure was contract logic and response governance.
-- Misconception: Immutability is purely technical. Corrected understanding: the DAO fork illustrates that immutability also depends on community norms, governance decisions, and social acceptance.
 - Misconception: Ethereum L1 decentralization means the whole user experience is decentralized. Corrected understanding: RPC providers, bridges, and oracles can reintroduce concentrated dependencies above the base layer.
 - Misconception: Declining NFT speculation means token infrastructure is irrelevant. Corrected understanding: speculative markets and utility-oriented token infrastructure can decouple.
 
@@ -157,10 +153,6 @@ The lesson closes by widening the frame from tokens and communities to infrastru
 - Good question shape: Fund-flow or operator-behavior diagnosis.
 - Avoid: Asking for exact Frosties dates, dollar amounts, or project counts.
 
-- Target: Make learners trace the DAO re-entrancy vulnerability and the checks-effects-interactions fix.
-- Good question shape: Mechanism tracing or ordering bug diagnosis.
-- Avoid: Asking for the exact block number of the hard fork.
-
 - Target: Test recognition of centralized chokepoints above decentralized base layers.
 - Good question shape: Scenario where a dApp, bridge, or oracle fails while L1 consensus remains healthy.
 - Avoid: Asking for a list of provider names without explaining the dependency.
@@ -172,14 +164,14 @@ The lesson closes by widening the frame from tokens and communities to infrastru
 ## High-Value Question Tags
 
 - `core_tags`: `tokens`, `nfts`, `token-standards`, `erc-20`, `erc-721`, `erc-1155`, `token-gating`, `minting`, `metadata`, `daos`, `smart-contract-security`, `on-chain-off-chain`
-- `supporting_tags`: `soulbound-tokens`, `rug-pulls`, `re-entrancy`, `hyperledger-fabric`, `ipfs`, `oracles`, `bridges`, `rpc-providers`, `forensics`, `governance`
+- `supporting_tags`: `soulbound-tokens`, `rug-pulls`, `hyperledger-fabric`, `ipfs`, `oracles`, `bridges`, `rpc-providers`, `forensics`, `governance`
 
 ## Suggested Difficulty Distribution
 
 - Level 1: 1-2 questions for essential vocabulary such as token, fungible, non-fungible, minting, token gate, and off-chain.
 - Level 2: 2-3 questions for recognizing token standards, token-gating flow components, and basic on-chain versus off-chain distinctions.
 - Level 3: 4-6 questions for explanation, comparison, and cause/effect across standards, metadata integrity, community patterns, minting policy, and operational implications.
-- Level 4: 2-4 questions for scenario transfer, misconception diagnosis, rug-pull analysis, re-entrancy mechanism tracing, and centralized chokepoint evaluation.
+- Level 4: 2-4 questions for scenario transfer, misconception diagnosis, rug-pull analysis, and centralized chokepoint evaluation.
 - Level 5: 0-1 questions for synthesis across the full lesson, such as evaluating a hybrid token community that combines metadata dependencies, governance, minting, credentials, and infrastructure concentration.
 
 The lesson supports more middle and upper-middle difficulty questions than pure recall because its main value is reasoning across boundaries: enforced versus signaled, decentralized versus centralized, immutable versus mutable, and legitimate versus adversarial use.
@@ -194,7 +186,15 @@ The lesson supports more middle and upper-middle difficulty questions than pure 
 - `On-Chain vs. Off-Chain`
 - `Token-Based Communities`
 - `Two-Layer Community Architecture`
-- `Three Patterns: DAOs, Membership NFTs, and Social Tokens`
+- `DAOs, Membership NFTs, Social Tokens`
+- `Case Study: Friends With Benefits`
+- `Case Study: Bored Ape Yacht Club`
+- `Case Study: Doodles`
+- `Quadratic Voting: Paying for Intensity`
+- `Case Study: Gitcoin`
+- `Case Study: ENS DAO`
+- `Case Study: Nouns DAO`
+- `Case Study: ConstitutionDAO`
 - `Token Community Examples`
 - `How Token Gating Works`
 - `Token Gating: Access Flow`
@@ -205,11 +205,10 @@ The lesson supports more middle and upper-middle difficulty questions than pure 
 - `Minting on Hyperledger Fabric`
 - `The Frosties Rug Pull`
 - `Rug Pull Operator Wallet Graph`
-- `The DAO Re-Entrancy Attack`
-- `Re-Entrancy Drain Loop`
 - `Centralization Chokepoints`
 - `Hidden Infrastructure Growth`
 - `Analyst Implications`
+- `References`
 
 ## Anti-Trivia Guidance
 
@@ -219,11 +218,14 @@ The lesson supports more middle and upper-middle difficulty questions than pure 
 - Do not ask for specific community token symbols unless the question requires explaining what the token controls.
 - Do not ask for the names of token-gating tools as standalone recall.
 - Do not ask for exact Frosties sale count, ETH price, dollar amount, arrest details, or second-project name unless tied to forensic reasoning.
-- Do not ask for exact DAO dates, raised amounts, ETH price movement, fork block, or participant names unless tied to the re-entrancy mechanism or social response.
 - Do not ask for the exact year or label of an ERC/EIP standard unless the standard's behavioral implication is being assessed.
 - Do not ask whether IPFS is "permanent" without testing pinning, content addressing, and trust assumptions.
 - Do not ask whether infrastructure concentration exists only by naming providers; require reasoning about how the dependency affects resilience or leverage.
 - Do not frame speculative NFT market decline as proof that all token infrastructure is declining.
+
+## Scope Note (14 Nov 2026)
+
+This synthesis was refreshed from the current lesson. Only visible slides are covered: two slides in the lesson source are hidden, so nothing here teaches or tests them. The lesson has no check, worked-example, practice, answers or review slides; it predates `docs/lesson-standard.md` and is listed as pre-standard in `docs/follow-ups.md`.
 
 ## Readiness Check
 

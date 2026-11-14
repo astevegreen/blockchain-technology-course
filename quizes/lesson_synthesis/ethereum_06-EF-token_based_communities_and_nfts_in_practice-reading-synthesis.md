@@ -2,11 +2,11 @@
 
 ## Source
 
-- `lesson_path`: `../blockchain-course/lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`
-- `output_path`: `lesson_synthesis/ethereum_06-EF-token_based_communities_and_nfts_in_practice-reading-synthesis.md`
+- `lesson_path`: `blockchain-course/lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`
+- `output_path`: `quizes/lesson_synthesis/ethereum_06-EF-token_based_communities_and_nfts_in_practice-reading-synthesis.md`
 - `module`: `ethereum`
 - `lesson_file_stem`: `06-EF-token_based_communities_and_nfts_in_practice`
-- `reading_status`: `acquired`
+- `reading_status`: `partial`
 
 ## Assigned Reading
 
@@ -237,14 +237,14 @@ The tension is structural: too much privacy can undermine sybil resistance and c
 
 ## Acquisition And Grounding Notes
 
-The synthesis is grounded in the provided local reading text at `/tmp/blockchain-course-readings/text/desoc.txt`, the provided PDF path `/tmp/blockchain-course-readings/desoc.pdf`, the syllabus excerpt in `/tmp/blockchain-syllabus.txt`, and the existing lesson synthesis for alignment. No browsing was used. The syllabus text lists this topic as `07-EF Communities and NFTs in Practice`, but the assigned lesson file and output path use the actual lesson filename `06-EF-token_based_communities_and_nfts_in_practice.qmd`; this synthesis preserves the actual lesson filename in the output path.
+Update of 14 Nov 2026. The reading was not re-fetched: the earlier synthesis was grounded in a local text extraction and PDF under `/tmp` that no longer exist, so the `reading_status` is `partial` and every statement above about the reading's content is unverified against the source text in this pass. The lesson's visible slides cite the reading (`ohlhaver_weyl_buterin_decentralizedsociety_2022` in `Blockchain.bib`) on two slides only: `Soulbound Tokens` (speaker notes) and `Analyst Implications` (sources). Quiz questions may therefore test only these lesson claims, which the reading supports: a soulbound token binds a credential to a wallet or account, not necessarily a person; SBTs are attestations issued by institutions, DAOs and peers; and the same SBT infrastructure can serve cooperation or exclusion and surveillance. Items on community recovery, souldrops, correlation discounting, plural property and privacy are unverified here and have no visible lesson slide that states them, so they are not tested.
 
-The extracted text has minor OCR artifacts, especially missing ligatures in words such as "financialized" and "affiliations." These artifacts do not materially affect the conceptual synthesis. The reading is long, so the synthesis emphasizes sections most relevant to the lesson: SBTs, NFT provenance, token communities, governance, privacy, implementation risks, and bootstrapping.
+The earlier note that the syllabus lists this topic as `07-EF` while the lesson file is `06-EF` is unverified and not needed for assessment.
 
 ## Readiness Check
 
-- Is the synthesis grounded only in the reading packet and assigned lesson identity? Yes. It uses the provided local reading text, syllabus extraction, assigned lesson identity, and provided lesson synthesis alignment context, with no browsing.
+- Is the synthesis grounded only in the reading packet and assigned lesson identity? Partly. It was grounded in a local reading text that is no longer available; the reading was not re-fetched on 14 Nov 2026, so reading content is unverified.
 - Are the assessment targets comprehension-focused rather than trivia-focused? Yes. Targets emphasize mechanism tracing, tradeoff analysis, misconception diagnosis, scenario application, and argument evaluation.
 - Does the synthesis distinguish reading contribution from lesson content? Yes. It identifies the reading's distinctive contribution as the DeSoc/SBT argument that extends and complicates the lesson's token-community framework.
 - Are tags normalized and useful for future quiz pooling? Yes. Tags are lowercase slugs grouped into core and supporting categories.
-- Are acquisition limitations or ambiguities documented? Yes. The 07-EF syllabus numbering versus 06-EF lesson filename ambiguity and OCR limitations are documented.
+- Are acquisition limitations or ambiguities documented? Yes. The partial status and which lesson slides cite the reading are documented above.
