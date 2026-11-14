@@ -31,10 +31,6 @@ slide index), which is never listed here.
   or the review. [13 Nov 2026, 04-EF rebuild]
 - `quizes/quiz_json/forensics_12-FO-aml_typologies_frameworks-quiz-bank.json` has no questions on the rebuilt 12-FO's
   new slides (the part 1 and part 2 checks, the drainer answers with their confidence words, the review). [13 Nov 2026, 12-FO rebuild]
-- `quizes/quiz_json/forensics_05-FO-vasps_and_the_rules-quiz-bank.json` has no questions on the rebuilt 05-FO's
-  three checks (which of the two is a VASP; a 2023 sanctions line today; is a 311 action an OFAC listing), the
-  Travel Rule slide's check, the worked cluster reading, the practice and answers, or the review.
-  [13 Nov 2026, 05-FO rebuild]
 - **Closes with the 04-BF rebuild.** `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);

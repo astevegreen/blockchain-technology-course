@@ -132,11 +132,11 @@ Between two VASPs, sender and recipient data travel off-chain, by any system bot
 
 - Level 1: 0 questions.
 - Level 2: 0 questions; the lesson's ideas are comparisons, not recognition.
-- Level 3: 8 questions for explanation, comparison and cause and effect.
-- Level 4: 7 questions for scenarios and misconception diagnosis.
+- Level 3: 12 questions for explanation, comparison and cause and effect.
+- Level 4: 10 questions for scenarios and misconception diagnosis.
 - Level 5: 1 question for the vendor write-up triage.
 
-This matches the mix of the existing 16-question forensics bank.
+This is the mix of the 23 lesson-grounded questions; the 4 reading questions sit at levels 3 and 4.
 
 ## Source Anchors
 
@@ -146,6 +146,8 @@ This matches the mix of the existing 16-question forensics bank.
 - The OFAC slides: who is bound, strict liability, listed versus clustered, Tornado Cash.
 - The Travel Rule slides, including the self-custody case.
 - The summary table and the vendor write-up exercise.
+- The three checks (which of the two is a VASP; can a 2023 sanctions line stand today; is a 311 action an OFAC listing).
+- The worked cluster reading, the practice, its answers and the review.
 
 ## Anti-Trivia Guidance
 
