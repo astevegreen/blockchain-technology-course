@@ -66,10 +66,6 @@ slide index), which is never listed here.
 - The 04-CP rebuild moved the slide "A Tron address is an Ethereum address plus 41" (Tron's own worked example,
   `tron_accounts_2026`) out of 04-CP, which now has it hidden. `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd:91`
   has one derivation bullet; take the slide or its example there at 01-PC's rework. [13 Nov 2026, 04-CP rebuild]
-- The 04-CP rebuild moved Bitcoin's address-type table (prefixes 1, 3, bc1q, bc1p) and the Taproot/Schnorr point out
-  of 04-CP (hidden there as "Bitcoin address types by prefix"); `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`
-  should teach both. Its line 94 says "as 04-CP showed": use the lesson's name; its line 123 (notes) says the slide
-  "extends day 1's address-prefix table", which day 1 no longer shows. [13 Nov 2026, 04-CP rebuild]
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:1016`
   lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
   identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
@@ -77,9 +73,23 @@ slide index), which is never listed here.
   a Tron address) was pulled on the owner's word because it read a hidden slide; restore it when 01-PC carries the
   Tron slide. The 04-CP questions have none on the rebuild's four checks, the two worked slides, the signed fields
   (nonce, chain ID), the practice or the review. [13 Nov 2026, 04-CP rebuild]
-- The 01-CM rebuild teaches proof of work in "Proof of work is guessing until a hash is low" (outline move A1, from
-  `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd:369` "Mining a Candidate Block"); 02-BF's
-  rebuild should hide that slide and recall 01-CM, keeping the Merkle root and the coinbase there. [13 Nov 2026, 01-CM rebuild]
+- The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
+  (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
+  Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
+  "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
+- How a key becomes an address (hash160, Base58Check), hidden in 04-CP as "Bitcoin address types by prefix", moves
+  to `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd` at its rebuild; 02-BF's notes point there. [13 Nov 2026, 02-BF rebuild]
+- The 02-BF rebuild renamed slides that other files name: `dynamic-labs/wallet/gateway/static/lab/index.html:48` and
+  `quizes/quiz_json/weekone_check-quiz-bank.json:252` ("Coinbase pays the miner: subsidy plus fees", now "A trace
+  ending at a coinbase reached new coins"); `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:135,140`,
+  `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:40` and
+  `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:218,250` ("Co-spending and change: two clues to
+  carry", now "Co-spent inputs point to one owner" and "Change is the output back to the payer");
+  `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json:98,179` ("Script type says what kind of wallet paid",
+  "A Merkle proof shows a tx is in a block"). Old anchors still land; update the strings. [13 Nov 2026, 02-BF rebuild]
+- `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` predates the rebuild: q9 (proof of work)
+  names the now-hidden "Mining a Candidate Block", other items name slides hidden since 24 Oct, and the bank has no
+  questions on the rebuild's two checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
 - Outline move A4 puts Raft and PBFT, by name, in `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`,
   which does not teach them yet; 01-CM's "Open chains buy openness with slower finality" keeps the known-members
   fact without the names (`castro_practicalbyzantinefault_1999`, `ongaro_searchunderstandableconsensus_2014`).

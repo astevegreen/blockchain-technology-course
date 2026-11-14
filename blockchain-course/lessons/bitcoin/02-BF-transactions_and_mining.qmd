@@ -15,35 +15,69 @@ format:
 
 ## A trace is read one transaction at a time {.smaller}
 
-**Bottom line:** a trace follows money hop by hop, and every hop is one transaction. This lesson reads one transaction completely, so that today's wallet lab and every later trace (day 6 follows a ransom) record the same things.
+:::: {.columns}
+::: {.column width="52%"}
+::: {style="font-size: .76em;"}
 
-| For every hop, record | Why it matters | Slide |
-| --- | --- | --- |
-| Inputs and their script types | Who could spend; what kind of wallet | Scripts |
-| Outputs: amounts, types, which is change | Where the money went next | Clues |
-| Fee rate and replace-by-fee signal | How the wallet behaves | Fees |
-| Block height and block time | When it happened, and how sure | Time |
-| A coinbase at the start of the chain | Newly mined coins, not someone's payment | Mining |
+**Day 1 left off** with Alice's 0.015 BTC coffee payment in block 277,316. You read its inputs, outputs, change and fee [@antonopoulos_masteringbitcoinprogramming_2017]. A trace follows money hop by hop, and every hop is one transaction like it.
 
-The heuristics that turn these clues into a trace are day 6's [@meiklejohn_fistfulbitcoinscharacterizing_2013; @antonopoulos_masteringbitcoinprogramming_2017].
+**This lesson reads one transaction completely**, in four parts:
+
+1. **Scripts and types:** who could spend, and what wallet made it.
+2. **Time, fee, replace:** when it happened, and what it cost.
+3. **Blocks and proofs:** where coins start, and how a block holds a payment.
+4. **Read it whole:** every field, and two clues about owners.
+
+**By the end:** given any Bitcoin transaction, record the six fields and say how sure you are which output is change.
+
+**The point to earn:** the explorer shows the fields; when it was sent and which output is change are your reading, with a confidence [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+:::
+:::
+::: {.column width="48%"}
+::: {style="font-size: .8em;"}
+
+| For every hop, record | Part |
+| --- | --- |
+| 1. Inputs: script types, and which are spent together | Scripts; Read it whole |
+| 2. Outputs: amounts and script types | Scripts |
+| 3. Change: which output, and how sure | Read it whole |
+| 4. Fee rate and replace-by-fee signal | Time, fee, replace |
+| 5. Block height and block time | Time, fee, replace |
+| 6. Origin: an earlier payment, or a coinbase | Blocks and proofs |
+
+: {tbl-colwidths="[64,36]"}
+
+Today's wallet lab, and day 6's ransom trace, record the same six at every hop.
+
+:::
+:::
+::::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 2 by naming what every transaction read records. It matters here because today's lab reads the wallet's own transactions in the explorer, and day 6's trace records the same fields at every hop. Emphasize that this lesson reads; day 6 applies the heuristics.
+This slide opens day 2 by linking back to Alice's payment from day 1 and naming the six fields every transaction read records. It matters here because today's wallet lab reads the wallet's own transactions in the explorer, and day 6's ransom trace records the same six fields at every hop; an analyst who skips one misses where the money went or when. Emphasize the point to earn: the explorer prints the fields, but the time a payment was sent and which output is change are the analyst's reading, each with a confidence.
 
 **Key Points**
-- A trace is a chain of transactions; each hop is read the same way.
-- The fields to record: input script types, outputs and change, fee rate and the replace-by-fee signal, block height and time, and whether the chain starts at a coinbase.
-- Day 1 taught inputs, outputs, fees and confirmations; today adds scripts, fee rate, time, how a block is mined (proof of work) and the coinbase.
+- Start from the case students know. Alice paid Bob's Cafe 0.015 BTC for a coffee; on day 1 the first lesson read its inputs, outputs, change and fee, the keys lesson its signature, and the consensus lesson its confirmations.
+- So students already know what a transaction is. This lesson reads one completely, because a trace is a chain of transactions and each hop is read the same way.
+- Read the four parts as the route. Part 1 says what locks each output and what the lock's type says about the wallet; part 2 says when a transaction happened and what it paid; part 3 says where new coins start and how a block commits to its transactions; part 4 reads Alice's payment whole and adds the two clues about owners that day 6 builds on.
+- The six fields, in the table, are what students record for every hop. Each part fills one or more rows.
+- The objective is a skill used this afternoon: record the six fields for any transaction, and say how sure you are of the change.
+- The point to earn: an explorer shows the inputs, outputs and fee, but it does not say when a payment was sent or which output is change. Those are the analyst's reading, and each carries a confidence word.
+- Day 6 turns the clues into tracing method; today only reads.
 
 **Walkthrough**
-1. Read the bottom line: one transaction per hop.
-2. Walk the table row by row and point to the slide that teaches each row.
+1. Read the link back: Alice's payment, and what day 1 read from it.
+2. Read the four parts.
+3. Walk the six fields in the table, and point to the part that teaches each.
+4. Read the objective and the point to earn.
+5. Time plan, 50 minutes: opening 2; part 1 (scripts and types) with its check 10; part 2 (time, fee, replace) with its worked fee rate and check 12; part 3 (blocks and proofs) 7; part 4 (Alice's payment and the two clues) 11; practice, answers, review and next 8.
 
 **Sources**
-- @meiklejohn_fistfulbitcoinscharacterizing_2013
 - @antonopoulos_masteringbitcoinprogramming_2017
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
 
 :::
 
@@ -51,13 +85,16 @@ This slide opens day 2 by naming what every transaction read records. It matters
 
 :::: {.columns}
 ::: {.column width="55%"}
+::: {style="font-size: .9em;"}
 **Bottom line:** an output holds an amount and a locking script. Whoever spends it must supply data that makes the script succeed, and every node checks [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
 
 - **Locking script** (`scriptPubKey`): sits on the output and states the condition.
-- **Unlocking data** (`scriptSig`, or the witness in SegWit): supplied by the input that spends it [@lombrozo_bip141segregatedwitness_2015].
-- Nodes run the two together; if the result is true, the spend is valid [@bitcoin.orgdevelopers_contractsbitcoindeveloper_2024].
+- **Unlocking data** (`scriptSig`): supplied by the input that spends it.
+- **SegWit** (segregated witness): newer types move the signature and key out of the input into a separate part of the transaction, the **witness** [@lombrozo_bip141segregatedwitness_2015].
+- Nodes run lock and unlock together; if the result is true, the spend is valid [@bitcoin.orgdevelopers_contractsbitcoindeveloper_2024].
 - Script has no loops, so every script finishes [@antonopoulos_masteringbitcoin3e_2023, ch. 7].
 - You never run a script. You read its **type**, because the type shows what kind of wallet made it.
+:::
 :::
 ::: {.column width="45%"}
 Pay-to-public-key-hash (P2PKH), the type in Alice's payment [@antonopoulos_masteringbitcoin3e_2023, ch. 7; @antonopoulos_masteringbitcoinprogramming_2017]:
@@ -79,19 +116,20 @@ Unlock (in the input):
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide teaches the two halves of every Bitcoin spend: the locking script on the output and the unlocking data in the input. It matters here because script type is one of the fields an analyst records for each hop, and it is only meaningful once students know what a script does. Emphasize reading, not programming: students identify the type, they never write or run a script.
+This slide teaches the two halves of every Bitcoin spend: the locking script on the output and the unlocking data in the input, and where SegWit moves that data. It matters here because script type is one of the six fields an analyst records for each hop, and it means something only once students know what a script does. Emphasize reading, not programming: students identify the type; they never write or run a script.
 
 **Key Points**
-- The scriptPubKey on an output states the spending condition.
-- The scriptSig, or for SegWit the witness, supplies the signature and key that satisfy it.
-- Nodes evaluate both; a true result makes the spend valid.
-- Script is deliberately not Turing complete: it has no loops.
-- P2PKH: the spender reveals a public key that hashes to the locked hash, and a signature valid for that key.
+- Every output carries a locking script, the scriptPubKey, which states the condition for spending it.
+- The input that spends it supplies the unlocking data: in older types the scriptSig, and in SegWit types the witness. SegWit, short for segregated witness, moves the signature and key out of the input into that separate witness section; the fee slides later in this part show why that matters to the analyst.
+- Every node runs the two together, and only a true result makes the spend valid. So no one can spend an output without the data its lock asks for.
+- Script is deliberately simple: it has no loops, so every script finishes.
+- In P2PKH, the type in Alice's payment, the spender reveals a public key that hashes to the locked hash, and a signature valid for that key.
+- Students read the type, which an explorer prints, because it tells them what kind of wallet made the output; the next slide is that table.
 
 **Walkthrough**
 1. Point to the lock: duplicate the key, hash it, compare with the stored hash, check the signature.
 2. Point to the unlock: the signature and the public key.
-3. Ask: what does the spender reveal that the output did not? (The public key, as 04-CP showed.)
+3. Ask: what does the spender reveal that the output did not? (The public key, as the keys lesson on day 1 showed: the address holds only its hash.)
 
 **Sources**
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
@@ -102,46 +140,54 @@ This slide teaches the two halves of every Bitcoin spend: the locking script on 
 
 :::
 
-## Script type says what kind of wallet paid {.smaller}
+## Script type and prefix say what wallet paid {.smaller}
 
-**Bottom line:** the wallet that makes an address picks its script type. The inputs and the change show the payer's wallet; the payment shows the payee's. When outputs differ in type, the one matching the inputs is a change clue for day 6 [@frowis_safeguardingevidentialvalue_2020].
+[]{#script-type-says-what-kind-of-wallet-paid}**Bottom line:** read an address's first characters and you know its script type, which the wallet picked. The inputs and the change show the payer's wallet; the payment shows the payee's [@frowis_safeguardingevidentialvalue_2020].
 
-| Type | Address | Locks to | What it tells you |
+::: {style="font-size: .85em;"}
+
+| Starts with | Type | Locks to | What it tells you |
 | --- | --- | --- | --- |
-| P2PKH | `1...` | A key hash | Older single-key wallet [@antonopoulos_masteringbitcoin3e_2023, ch. 4] |
-| P2SH | `3...` | A script hash; script shown on spend | Often multisig; can wrap SegWit [@andresen_bip16paytoscript_2012; @lombrozo_bip141segregatedwitness_2015] |
-| P2WPKH | `bc1q`, 42 chars | A 20-byte key hash | Modern single-key wallet [@lombrozo_bip141segregatedwitness_2015; @wuille_bip173base32address_2017] |
-| P2WSH | `bc1q`, 62 chars | A 32-byte script hash | Modern multisig or contract [@lombrozo_bip141segregatedwitness_2015; @wuille_bip173base32address_2017] |
-| P2TR | `bc1p...` | A key; scripts hidden unless used | Taproot wallet [@wuille_bip341taprootsegwit_2020] |
-| `OP_RETURN` | None | Data; never spendable | A marker, not a payment [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024] |
+| `1` | P2PKH | A key hash | Older single-key wallet [@antonopoulos_masteringbitcoin3e_2023, ch. 4] |
+| `3` | P2SH | A script hash; script shown on spend | Often multisig (several keys must sign); can wrap SegWit [@andresen_bip16paytoscript_2012; @lombrozo_bip141segregatedwitness_2015] |
+| `bc1q`, 42 chars | P2WPKH | A 20-byte key hash | Modern single-key wallet [@lombrozo_bip141segregatedwitness_2015; @wuille_bip173base32address_2017] |
+| `bc1q`, 62 chars | P2WSH | A 32-byte script hash | Modern multisig or contract [@lombrozo_bip141segregatedwitness_2015; @wuille_bip173base32address_2017] |
+| `bc1p` | P2TR | The public key itself, shown before any spend | **Taproot** wallet; signs with Schnorr signatures, a newer scheme than the others' ECDSA; a key-path spend shows one key [@wuille_bip341taprootsegwit_2020; @antonopoulos_masteringbitcoin3e_2023, ch. 8] |
+| None | `OP_RETURN` | Data; never spendable | A marker, not a payment [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024] |
 
-: {tbl-colwidths="[14,20,32,34]"}
+: {tbl-colwidths="[15,12,30,43]"}
+
+`1` and `3` addresses are Base58Check; `bc1q` is Bech32 and `bc1p` Bech32m, each with a checksum that catches typing errors [@antonopoulos_masteringbitcoin3e_2023, ch. 4; @wuille_bip173base32address_2017; @wuille_bip350bech32mformat_2020].
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide extends day 1's address-prefix table into what each script type tells an analyst. It matters here because script type is recorded at every hop, and a mismatch between input and output types is one of the change clues day 6 uses. Emphasize that P2SH (`3...`) is not SegWit by itself: it is a script hash, often multisig, and can carry wrapped SegWit; native SegWit is `bc1q` and Taproot is `bc1p`.
+This slide teaches how to read an address's prefix, and what each script type tells an analyst about the wallet behind it. It matters here because script type is recorded at every hop, and a payment whose outputs differ in type gives day 6 one of its change clues. Emphasize that P2SH (`3...`) is not SegWit by itself: it is a script hash, often multisig, and can carry wrapped SegWit; native SegWit is `bc1q` and Taproot is `bc1p`.
 
 **Key Points**
-- Payer versus payee: the payee's wallet made the payment address, so its type describes the payee; the inputs and the change describe the payer.
-- P2PKH (`1...`) locks to a public-key hash.
-- P2SH (`3...`) locks to the hash of a redeem script revealed at spend time; multisig is its most common use, and BIP 141 defines SegWit nested inside it.
-- P2WPKH and P2WSH are native SegWit version 0, told apart by program length: 20 bytes (42-character address) versus 32 bytes (62-character address).
-- P2TR (`bc1p...`) is SegWit version 1, Taproot.
-- OP_RETURN outputs carry data and are provably unspendable.
-- Their size is node policy, not a consensus rule. Bitcoin Core relayed and mined at most 83 bytes by default from 0.12.0 (Feb 2016); 30.0 (Oct 2025) raised the default to 100,000 bytes, "which effectively uncaps the limit", and allows several OP_RETURN outputs in one transaction [24 Oct 2026]{.asof}.
+- The wallet that makes an address picks its type, so the type describes the wallet. The payee's wallet made the payment address, so the payment's type describes the payee; the inputs and the change describe the payer.
+- Read the prefix first. A `1` address is P2PKH and locks to a public-key hash.
+- A `3` address is P2SH. It locks to the hash of a script that appears only when the output is spent. Its most common use is multisig, where several keys must sign (the next slide), and BIP 141 defines SegWit nested inside it.
+- A `bc1q` address is native SegWit version 0. P2WPKH and P2WSH are told apart by length: a 20-byte program makes a 42-character address, a 32-byte one a 62-character address.
+- A `bc1p` address is Taproot, SegWit version 1. Unlike the hashed types, it carries the public key itself, so the key is on chain before any spend; Taproot spends sign with Schnorr signatures (BIP 340), a different signature scheme from the older types' ECDSA.
+- `OP_RETURN` outputs carry data and can never be spent. Their size is node policy, not a consensus rule: Bitcoin Core relayed and mined at most 83 bytes by default from 0.12.0 (Feb 2016), and 30.0 (Oct 2025) raised the default to 100,000 bytes, "which effectively uncaps the limit", and allows several `OP_RETURN` outputs in one transaction [24 Oct 2026]{.asof}.
+- The encoding follows the prefix: Base58Check for `1` and `3`, Bech32 for `bc1q`, Bech32m for `bc1p`. Each carries a checksum, so a mistyped address is rejected rather than paid. How a key becomes an address is the wallet types lesson's subject.
 
 **Walkthrough**
-1. Read the first column: the type an explorer or bitcoin-cli shows.
-2. Read the second: how to recognize it from the address alone.
+1. Read the first column: the characters an address starts with.
+2. Read the second: the type an explorer or bitcoin-cli prints.
 3. Read the last: what to write in the trace for each.
+4. Ask: Alice's payment pays two `1...` addresses. What kind of wallet? (An older single-key wallet, P2PKH, on both sides.)
 
 **Sources**
-- @antonopoulos_masteringbitcoin3e_2023 [chs. 4, 7]
+- @antonopoulos_masteringbitcoin3e_2023 [chs. 4, 7, 8]
 - @andresen_bip16paytoscript_2012
 - @lombrozo_bip141segregatedwitness_2015
 - @wuille_bip173base32address_2017
 - @wuille_bip341taprootsegwit_2020
+- @wuille_bip350bech32mformat_2020
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
 - @bitcoincore_bitcoincore0120_2016
 - @bitcoincore_bitcoincore30_2025
@@ -155,15 +201,16 @@ This slide extends day 1's address-prefix table into what each script type tells
 ::: {.column width="58%"}
 **Bottom line:** a `3...` output shows its spending rule only when spent; a `bc1p...` output often not even then. Report what the chain shows.
 
-- P2SH stores only a script hash. The spender reveals the redeem script, such as a 2-of-3 multisig [@andresen_bip16paytoscript_2012].
-- Multisig needs several signatures to spend [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
-- A Taproot key-path spend "prevents observers from learning the spending conditions of a coin"; multi-party keys look like single keys [@wuille_bip341taprootsegwit_2020].
+- **Multisig** (multi-signature): an output that needs m of n keys to sign, such as 2 of 3 [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024]. The multisig lesson later today reads one.
+- P2SH stores only a script hash. The spender reveals the script, such as a 2-of-3 multisig [@andresen_bip16paytoscript_2012].
+- Taproot can spend by its one key alone, a **key-path spend**, which "prevents observers from learning the spending conditions of a coin"; keys held by several people look like a single key [@wuille_bip341taprootsegwit_2020].
 - Write "a 2-of-3 multisig", not "the company's cold wallet", unless other evidence names it.
 :::
 ::: {.column width="42%"}
 ```{dot}
 //| fig-width: 4.5
 //| fig-height: 4.5
+//| fig-alt: "Two paths: an unspent 3... output's rule is unknown until it is spent, when the script shows 2 of 3 keys signed; an unspent bc1p... output's rule is unknown, and a key-path spend still looks like one key."
 digraph Reveal {
   rankdir=TB;
   bgcolor="transparent";
@@ -185,17 +232,17 @@ digraph Reveal {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows that some script types hide their spending rule until the output is spent. It matters here because analysts are tempted to describe unspent `3...` outputs as multisig or to guess how many people control a Taproot output. Emphasize describing only what the chain shows.
+This slide shows that some script types hide their spending rule until the output is spent, and Taproot often hides it even then. It matters here because analysts are tempted to describe an unspent `3...` output as multisig, or to guess how many people control a Taproot output, and an agent will repeat what the assessment says. Emphasize describing only what the chain shows.
 
 **Key Points**
-- P2SH commits to a script hash; the redeem script appears in the spending input.
-- Multisig requires m of n signatures; it is the most common P2SH use.
-- Taproot key-path spends do not reveal any alternative script, and multi-party keys look like single keys.
-- Attribution ("cold wallet", "exchange") needs separate evidence.
+- First the word: multisig, short for multi-signature, is an output that needs m of n keys to sign, such as any 2 of 3. The multisig lesson later today reads a real one; here students need only the idea.
+- A P2SH output stores only the hash of its script. So until the output is spent, no one outside the wallet knows the rule; when it is spent, the input reveals the script, for example 2 of 3 keys.
+- Taproot goes further. A key-path spend signs with the one key and shows no script at all, and several people's keys can be combined to look like one key. So even a spent Taproot output may say nothing about how many people control it.
+- That is why the trace records what the chain shows: "a 2-of-3 multisig", once revealed. Attribution, such as "cold wallet" or "exchange", needs separate evidence.
 
 **Walkthrough**
 1. An unspent `3...` output: the rule is unknown.
-2. Once spent, the input reveals the redeem script, for example 2 of 3 keys.
+2. Once spent, the input reveals the script, for example 2 of 3 keys.
 3. A Taproot key-path spend looks like a single key, whatever stands behind it.
 
 **Sources**
@@ -205,18 +252,62 @@ This slide shows that some script types hide their spending rule until the outpu
 
 :::
 
+## Check: an unspent 3… address. Is it multisig? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+A case note reads: "The suspect's funds sit in `3J98t1Wp…`, a multisig wallet." The output has never been spent.
+
+**Write one line:** what can you say about that output's spending rule?
+
+::: {.fragment}
+**Answer:** not that it is multisig. A `3...` address is P2SH: it locks to a script's hash, and the script appears only when the output is spent [@andresen_bip16paytoscript_2012]. Write "a P2SH output; its spending rule is not yet revealed". Once spent, read the script; for a `bc1p...` output, even a spend may show only one key [@wuille_bip341taprootsegwit_2020].
+
+**Part 1 in one line:** the prefix gives the script type, and the type describes the wallet, but only what the chain has revealed goes in the assessment.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 1 with a check on the most common overstatement about script types: calling an unspent `3...` address multisig. It matters here because case notes arrive with that word already in them, and the analyst's line is what an agent repeats. Emphasize that the answer is what the chain shows, not what is common.
+
+**Key Points**
+- Expected answer: you cannot say it is multisig. A `3...` address is P2SH, which stores only the hash of its script; the script, and so the rule, appears only when the output is spent.
+- Multisig is the most common use of P2SH, which is why the guess is tempting, but P2SH can also wrap a single-key SegWit wallet.
+- The line to write: "a P2SH output; its spending rule is not yet revealed". Once it is spent, the input shows the script.
+- For a Taproot output, even a spend may show only one key.
+- The part's synthesis, on the slide: prefix gives type, type describes the wallet, and only what is revealed is reported.
+
+**Walkthrough**
+1. Read the case note.
+2. Give every student thirty seconds to write one line.
+3. Take two or three answers, then reveal.
+4. Read the part 1 synthesis.
+
+**Sources**
+- @andresen_bip16paytoscript_2012
+- @wuille_bip341taprootsegwit_2020
+
+:::
+
 ## A transaction has no timestamp of its own {.smaller}
 
 :::: {.columns}
 ::: {.column width="55%"}
-**Bottom line:** the time an explorer prints beside a transaction is its block's time, which the miner wrote. Say which time you mean.
+::: {style="font-size: .92em;"}
+**The wrong idea:** the time an explorer prints beside a transaction is when it was sent.
 
-- The block header carries a time. The consensus rules "do not mandate strict ordering of block timestamps", so a block can show an earlier time than the block before it [@kerin_bip113mediantimepast_2015].
+**The case that breaks it:** in the five-minute lab's made-up chain, block 800,002 is stamped 10:03 and block 800,001 is stamped 10:05, yet 800,002 names 800,001 as the block before it. The rules "do not mandate strict ordering of block timestamps" [@kerin_bip113mediantimepast_2015].
+
+**The right model:** the printed time is the block's, which its miner wrote. Order comes from block height, not block time.
+
 - A transaction's **locktime** sets the earliest point it may be mined: below 500 million it is a block height, otherwise a Unix time [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
-- Alice's payment has locktime 0, and its block, 277,316, gives the time 1388185914: 27 Dec 2013, 23:11:54 UTC [@antonopoulos_masteringbitcoinprogramming_2017].
-- Order of events is set by block height, not by block time.
+- Alice's payment: locktime 0; block 277,316's time is 27 Dec 2013, 23:11:54 UTC [@antonopoulos_masteringbitcoinprogramming_2017].
 
 [Try it: What time was it sent? (five-minute lab)](/assets/labs/what-time-was-it-sent/index.html)
+:::
 :::
 ::: {.column width="45%"}
 | Don't write | Write |
@@ -230,20 +321,22 @@ This slide shows that some script types hide their spending rule until the outpu
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide corrects a common error in reports: treating the explorer's time as the moment a transaction was sent. It matters here because a trace and an assessment state times, and agents and prosecutors read them as exact. Emphasize that the transaction carries no time; the block's time is the miner's claim, and height gives the order.
+This slide corrects a common error in reports: treating the explorer's time as the moment a transaction was sent. It matters here because an assessment states times, and agents and prosecutors read them as exact. Emphasize the order of the slide: the wrong idea, the case that breaks it, then the right model, that the transaction carries no time and the block's time is its miner's claim.
 
 **Key Points**
-- Bitcoin transactions carry no timestamp field; the time shown is the block's.
-- Block timestamps are set by miners and need not increase from block to block.
-- Locktime is a lower bound on when a transaction may be mined: a height if below 500 million, a Unix time otherwise.
-- "Anti-fee-sniping": since 0.11.0 (2015) Bitcoin Core's wallet sets locktime near the current height, and one time in ten a further 0 to 99 blocks back; today it uses the current height, or 0 when the wallet's copy of the chain lags [24 Oct 2026]{.asof}. A wallet stuck at one height once gave all its transactions the same locktime, which "makes it easier for passive observers to cluster transactions by wallet".
-- The clue points to wallet software, not to a person: Low on its own.
-- Alice's payment: locktime 0; block 277,316's time is 1388185914, 27 Dec 2013 23:11:54 UTC.
-- Optional, five minutes: the What time was it sent? lab (link on the slide). Students predict what the explorer's 09:09 means for a payment sent at 09:02, watch a low-fee payment wait while a slow-clocked miner stamps it, meet the word block time, and see that block 800,002 can show an earlier time than block 800,001 yet be recorded after it.
+- Start with the belief most students hold: the time beside a transaction is when someone sent it.
+- Then the case that breaks it. In the lab's made-up chain, block 800,002 says 10:03 and block 800,001 says 10:05, yet 800,002 names 800,001 as the block before it, so it was recorded later. That is allowed, because miners set block timestamps and the rules do not require each to be later than the last.
+- So the right model: a Bitcoin transaction has no timestamp field. The time an explorer shows is the block's, which the miner wrote, and the order of events comes from block height.
+- Locktime is the only time-related field in a transaction, and it is a lower bound on when the transaction may be mined: a height if below 500 million, a Unix time otherwise.
+- Wallets use locktime as a fingerprint too. Since 0.11.0 (2015) Bitcoin Core's wallet sets locktime near the current height ("anti-fee-sniping"), and one time in ten a further 0 to 99 blocks back; today it uses the current height, or 0 when the wallet's copy of the chain lags [24 Oct 2026]{.asof}. A wallet stuck at one height once gave all its transactions the same locktime, which "makes it easier for passive observers to cluster transactions by wallet". That clue points to wallet software, not a person: Low on its own.
+- Alice's payment: locktime 0; block 277,316's time is 1388185914, which is 27 Dec 2013 23:11:54 UTC.
+- Optional, five minutes: the What time was it sent? lab (link on the slide). Students predict what the explorer's 09:09 means for a payment sent at 09:02, watch a low-fee payment wait while a slow-clocked miner stamps it, meet the word block time, and see the 800,001 and 800,002 case for themselves. The lab's heights and payments are made up.
 
 **Walkthrough**
-1. Read the bottom line.
-2. Walk the table: each wrong phrase and its fix.
+1. Ask the room: what does the time beside a transaction mean? Take one or two answers.
+2. Read the case that breaks it, and ask which block came first. (800,001: 800,002 names it as the block before.)
+3. Read the right model.
+4. Walk the table: each wrong phrase and its fix.
 
 **Sources**
 - @kerin_bip113mediantimepast_2015
@@ -258,12 +351,16 @@ This slide corrects a common error in reports: treating the explorer's time as t
 
 :::: {.columns}
 ::: {.column width="55%"}
-**Bottom line:** miners rank waiting transactions by fee rate, in satoshis per virtual byte (sat/vB). A fee shows how much block space was bought and how urgently, not how much was sent.
+<div style="font-size: .9em;">
+
+**The wrong idea:** a big fee means a big payment. **It breaks on** Alice's 50,000-sat fee for 0.015 BTC: 1 BTC in the same 258 bytes would pay the same. **The right model:** miners rank waiting transactions by fee rate, in satoshis per virtual byte (sat/vB).
 
 - Miners prioritize transactions "based on their fee per byte" [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
-- Weight = base size (no witness) × 3 + total size; vsize = weight ÷ 4; a block holds 4,000,000 weight at most [@lombrozo_bip141segregatedwitness_2015].
-- So witness bytes are discounted: a SegWit vsize is below its byte size, and a payment costs less from `bc1` than `1`.
+- Weight = base size (no witness) × 3 + total size; virtual size = weight ÷ 4; a block holds 4,000,000 weight at most [@lombrozo_bip141segregatedwitness_2015].
+- So witness bytes count a quarter as much as the rest. The next slide shows it on a SegWit payment.
 - The wallet chooses the fee rate. A repeated, unusual fee rate is behavior: on its own, **Low** confidence.
+
+</div>
 :::
 ::: {.column width="45%"}
 Alice's payment [@antonopoulos_masteringbitcoinprogramming_2017]:
@@ -284,15 +381,14 @@ Alice's payment [@antonopoulos_masteringbitcoinprogramming_2017]:
 This slide moves from day 1's fee (inputs minus outputs) to the fee rate that miners and wallets actually use. It matters here because the trace records fee rate as wallet behavior, and students must not read a large fee as a large payment. Emphasize the formula once with Alice's legacy payment, where virtual size equals size because there is no witness.
 
 **Key Points**
-- Fee rate is fee divided by virtual size, in sat/vB.
-- BIP 141 weight counts non-witness bytes four times and witness bytes once; virtual size is weight divided by four.
-- Base size is the transaction without its witness; total size includes it. With a witness, vsize is smaller than the byte size; Alice's legacy payment has none, so the two are equal.
-- Alice's 258-byte payment paid 50,000 sat, about 194 sat/vB.
-- One satoshi is 0.00000001 BTC.
-- A fee-rate pattern alone is behavior, Low on the course scale.
+- Day 1 worked the fee as inputs minus outputs. Miners, though, have limited block space, so they compare transactions by fee rate: the fee divided by the transaction's virtual size, in satoshis per virtual byte. One satoshi is 0.00000001 BTC.
+- Virtual size comes from weight. BIP 141 counts each byte outside the witness four times and each witness byte once; virtual size is weight divided by four.
+- Base size is the transaction without its witness; total size includes it. Alice's legacy payment has no witness, so its weight is 258 × 4 and its virtual size equals its 258 bytes.
+- So Alice's 50,000 sat fee is about 194 sat/vB. The fee says nothing about the 0.015 BTC she sent: a 1 BTC payment of the same size would cost the same.
+- The wallet picks the fee rate, so a repeated, unusual rate is wallet behavior: Low on the course scale on its own.
 
 **Walkthrough**
-1. Size: 258 bytes, all non-witness.
+1. Size: 258 bytes, all outside a witness.
 2. Weight: 258 × 3 + 258 = 1,032; virtual size 258 vB.
 3. Fee rate: 50,000 sat ÷ 258 vB ≈ 194 sat/vB.
 
@@ -303,21 +399,78 @@ This slide moves from day 1's fee (inputs minus outputs) to the fee rate that mi
 
 :::
 
+## Worked: a SegWit fee rate, discount included {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**The SegWit payment:** transaction `ac4e20f7…c262`, block 887,986, with two P2WPKH (`bc1q`) inputs [@mempoolspace_transactionac4e20f7_2025].
+
+| Step | Working |
+| --- | --- |
+| Total size | 382 bytes |
+| Weight | 880 |
+| Base size | (880 − 382) ÷ 3 = 166 bytes |
+| Witness | 382 − 166 = 216 bytes |
+| Virtual size | 880 ÷ 4 = 220 vB |
+| Fee | 15,112,262 in − 15,111,822 out = 440 sat |
+| Fee rate | 440 ÷ 220 = **2 sat/vB** |
+
+: {tbl-colwidths="[30,70]"}
+:::
+::: {.column width="50%"}
+- **The discount:** the 216 witness bytes count as 54 vB. Counted in full, the same fee would be 440 ÷ 382 ≈ 1.15 sat per byte [@lombrozo_bip141segregatedwitness_2015].
+- **The signal:** both inputs carry sequence `0xfffffffd`, below `0xfffffffe`: the wallet signaled replace-by-fee (next slide) [@harding_bip125optinfull_2015].
+- **Read it as:** a cheap, unhurried payment from a modern wallet. That describes the wallet, not the sender [@frowis_safeguardingevidentialvalue_2020].
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works the fee rate on a second, real transaction, a SegWit payment, so students see the witness discount on real numbers rather than only in the formula. It matters here because most payments analysts read today spend from `bc1` addresses, and their fee rate cannot be worked from the byte size alone. Emphasize that weight, not size, sets the fee rate, and that explorers print both.
+
+**Key Points**
+- The case: transaction ac4e20f7c78ba7317d313a034dfd9927c06f090050449bb51eef23f784eac262, mined in block 887,986 on 16 Mar 2025. It spends two P2WPKH inputs, so its signatures and keys sit in the witness. Call it "the SegWit payment"; the practice at the end reads it whole.
+- An explorer gives total size and weight. Base size follows from the formula: weight is base × 3 plus total, so base is (880 − 382) ÷ 3, which is 166 bytes; the other 216 bytes are witness.
+- Virtual size is 880 ÷ 4, which is 220 vB: the 166 base bytes plus a quarter of the 216 witness bytes, which is 54.
+- The fee is inputs minus outputs: 75,000 plus 15,037,262 in, 14,112,262 plus 999,560 out, so 440 sat. 440 ÷ 220 is 2 sat/vB, a low rate.
+- Without the discount, 440 ÷ 382 is about 1.15 per byte; that is the number a student gets by dividing by size, and it is wrong for SegWit.
+- Both inputs carry sequence 0xfffffffd, which is below 0xfffffffe, so the wallet signaled replace-by-fee; the next slide explains the signal. The transaction's locktime, 887,985, is one block below the block it was mined in: the anti-fee-sniping habit from the time slide.
+- What to write: a low fee rate and an RBF signal from a modern single-key wallet. Both describe the wallet software, not who sent the money.
+
+**Walkthrough**
+1. Read the size and weight the explorer gives.
+2. Work the base size, then the witness bytes.
+3. Work the virtual size, then the fee from inputs minus outputs.
+4. Divide: 2 sat/vB.
+5. Ask: what rate would a student get dividing by size? (About 1.15; wrong, because the witness counts at a quarter.)
+
+**Sources**
+- @mempoolspace_transactionac4e20f7_2025
+- @lombrozo_bip141segregatedwitness_2015
+- @harding_bip125optinfull_2015
+- @frowis_safeguardingevidentialvalue_2020
+
+:::
+
 ## Replace-by-fee: unconfirmed can still change {.smaller}
 
 :::: {.columns}
 ::: {.column width="60%"}
+::: {style="font-size: .94em;"}
 **Bottom line:** until it is mined, a transaction can be replaced by one paying a higher fee, which can pay someone else. Trace the version that was mined.
 
-- BIP 125's signal is an input sequence below `0xfffffffe`. The replacement pays at least the original's fee, with no rule on outputs [@harding_bip125optinfull_2015].
+- Each input carries a **sequence** number. Below `0xfffffffe` on any input, it signals that the transaction may be replaced (BIP 125); the replacement pays at least the original's fee, with no rule on outputs [@harding_bip125optinfull_2015].
 - Bitcoin Core now replaces whether or not the original signaled: "full replace-by-fee" [@bitcoincore_bitcoincore29_2025] [24 Oct 2026]{.asof}. The signal is a wallet trait, not a protection.
 - Both spend the same inputs, so at most one is mined [@nakamoto_bitcoinpeertopeerelectronic_2008].
-- Alice's input has sequence `0xffffffff`: no signal [@antonopoulos_masteringbitcoinprogramming_2017].
+- Alice's input has sequence `0xffffffff`: no signal. The SegWit payment's inputs have `0xfffffffd`: signaled [@antonopoulos_masteringbitcoinprogramming_2017; @mempoolspace_transactionac4e20f7_2025].
+:::
 :::
 ::: {.column width="40%"}
 ```{dot}
 //| fig-width: 4.5
 //| fig-height: 4.5
+//| fig-alt: "One unspent output is spent by version 1, paying Bob a low fee, and by version 2, paying Carol a higher fee; only version 2 is mined."
 digraph RBF {
   rankdir=TB;
   bgcolor="transparent";
@@ -343,12 +496,12 @@ digraph RBF {
 This slide teaches replace-by-fee as the reason an unconfirmed transaction is not evidence of payment. It matters here because a victim or an exchange may show an analyst a txid that never confirmed, and the money may have gone elsewhere. Emphasize that the trace follows the version that was mined; the diagram is illustrative, not a real case.
 
 **Key Points**
-- BIP 125 opt-in signal: an input sequence number below 0xfffffffe.
-- The replacement pays at least the original's absolute fee; BIP 125 does not constrain its outputs.
+- First the field: every input carries a sequence number, `nSequence` in explorers. Wallets use it for signals; its maximum, 0xffffffff, signals nothing.
+- BIP 125's opt-in signal is a sequence number below 0xfffffffe on any input. A replacement must pay at least the original's absolute fee, and BIP 125 places no rule on where it sends the money.
 - Before full replace-by-fee, nodes kept the first version they saw unless it signaled, a policy "sometimes called first-seen"; Bitcoin Core 24.0.1 (Dec 2022) added an option to drop it, off by default.
-- Bitcoin Core 28.0 (Oct 2024) turned full replace-by-fee on by default and 29.0 (Apr 2025) removed the option, so nodes accept replacements whether or not the original signaled [24 Oct 2026]{.asof}.
-- Two transactions spending the same output cannot both be mined.
-- Alice's input uses sequence 0xffffffff, so it did not signal; record the signal as wallet behavior.
+- Bitcoin Core 28.0 (Oct 2024) turned full replace-by-fee on by default and 29.0 (Apr 2025) removed the option, so nodes accept replacements whether or not the original signaled [24 Oct 2026]{.asof}. So the signal no longer protects anyone; it is a wallet trait to record.
+- Two transactions that spend the same output cannot both be mined, so only one version ever appears in a block.
+- Alice's input uses 0xffffffff: no signal. The SegWit payment's inputs use 0xfffffffd: signaled. Record either as wallet behavior.
 - Treat every unconfirmed transaction as able to change, as day 1 taught: unconfirmed is not paid.
 
 **Walkthrough**
@@ -363,8 +516,624 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 - @bitcoincore_bitcoincore29_2025
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 - @antonopoulos_masteringbitcoinprogramming_2017
+- @mempoolspace_transactionac4e20f7_2025
 
 :::
+
+## Check: "sent 14:02". What do you record? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+**1.** A case note says a payment was "sent 14:02", the time the explorer prints beside it. **Write the line you would record.**
+
+**2.** One payment paid 5,000 sat and is 250 vB; another paid 50,000 sat and is 2,500 vB. **Which bid more for block space?**
+
+::: {.fragment}
+**Answers:** 1. The block height and the block's time, as its miner's claim: "Mined in block N; block time 14:02 UTC". The transaction carries no time of its own [@kerin_bip113mediantimepast_2015]. 2. Neither: both are 20 sat/vB. The bigger fee bought more bytes, not a faster place [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+
+**Part 2 in one line:** record the height, the block time, the fee rate and the RBF signal; none of them is the moment of sending or the size of the payment.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with two short checks, one on time and one on fee rate. It matters here because both errors reach reports: a time read as the moment of sending, and a big fee read as urgency or a big payment. Emphasize that the record is height, block time and rate.
+
+**Key Points**
+- Question 1, expected answer: record the block height and the block's time, and say it is the miner's stated time. The explorer's 14:02 is the block's time; the transaction has none of its own, and the payment may have waited in the mempool well before that.
+- Question 2: 5,000 ÷ 250 and 50,000 ÷ 2,500 are both 20 sat/vB. The second paid ten times the fee for ten times the space, so neither bid more for its place in a block.
+- The part's synthesis, on the slide: height, block time, fee rate and RBF signal are what part 2 adds to the record.
+
+**Walkthrough**
+1. Read question 1 and give thirty seconds to write the line.
+2. Read question 2 and give thirty seconds to work both rates.
+3. Take answers, then reveal.
+4. Read the part 2 synthesis.
+
+**Sources**
+- @kerin_bip113mediantimepast_2015
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## A trace ending at a coinbase reached new coins {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+[]{#coinbase-pays-the-miner-subsidy-plus-fees}[]{#mining-a-candidate-block}**Bottom line:** new bitcoin enters only through each block's first transaction, the **coinbase**. A trace that ends at a coinbase has reached newly mined coins, not someone's earlier payment.
+
+- The consensus lesson on day 1 showed how a miner wins a block by proof of work. The coinbase is how the winner is paid [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- It spends no earlier output; it collects the block **subsidy** (newly created bitcoin) plus every fee in the block [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- The subsidy halves every 210,000 blocks; it is 3.125 BTC a block [@antonopoulos_masteringbitcoin3e_2023, ch. 12] [24 Oct 2026]{.asof}.
+- Coinbase outputs cannot be spent for 100 blocks [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.4
+//| fig-height: 4.4
+//| fig-alt: "A block: its first transaction, the coinbase, has no earlier input and pays the miner the subsidy plus the fees collected from every other transaction in the block."
+digraph Coinbase {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  S [label="Subsidy:\nnew bitcoin", fillcolor="#fef3c7", color="#f59e0b"];
+  F [label="Fees from every\nother transaction", fillcolor="#e0f2fe", color="#38bdf8"];
+  C [label="Coinbase:\nthe block's first transaction\n(no earlier input)", fillcolor="#f8fafc"];
+  M [label="Miner's address", fillcolor="#dcfce7", color="#22c55e"];
+
+  S -> C; F -> C;
+  C -> M [label=" spendable after\n 100 blocks"];
+  {rank=same; S; F;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the coinbase as an analyst meets it: the place a trace backwards can end, because coins there were newly created rather than paid by anyone. It matters here because an analyst who reaches a coinbase must not report it as a payment from a person, and the sixth field of every hop asks whether the money came from an earlier payment or a coinbase. Emphasize that the consensus lesson on day 1 taught how a block is won; this slide reads only what the winner is paid.
+
+**Key Points**
+- Day 1's consensus lesson showed a miner guessing until its block's hash is low enough: proof of work. This slide picks up at the reward.
+- Every block's first transaction is the coinbase. Unlike every other transaction, it spends no earlier output, so a trace backwards stops there.
+- The coinbase pays the miner two things: the subsidy, bitcoin created in that block, and the fees from every other transaction in the block.
+- The subsidy began at 50 BTC and halves every 210,000 blocks: 50, 25, 12.5, 6.25 and, from block 840,000, 3.125 BTC; the next halving is at block 1,050,000 [24 Oct 2026]{.asof}. Alice's block, 277,316, was in the 25 BTC era. Students need the current figure and the idea of halving, not the table.
+- Coinbase outputs mature after 100 blocks: the miner cannot spend them sooner.
+- Background, if asked: most miners join pools, so a coinbase usually pays a pool, which pays its members' addresses once their share reaches a threshold. A pool payout looks like one transaction paying many addresses.
+
+**Walkthrough**
+1. Point to the coinbase: the first transaction, with no earlier input.
+2. Point to what flows in: the subsidy and the fees.
+3. Point to what flows out: the miner's address, spendable after 100 blocks.
+4. Ask: a trace backwards ends at a transaction with no earlier input. What have you reached? (A coinbase: newly mined coins, not someone's payment.)
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @antonopoulos_masteringbitcoin3e_2023 [ch. 12]
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## The Merkle root commits to every transaction {.smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+**Bottom line:** one hash in the block header covers every transaction in the block. Change any transaction and that hash changes, so the block no longer matches its header.
+
+- The consensus lesson called it the header's "summary of the block's transactions". This is how it is built.
+- The txids are hashed in pairs, then the results are paired and hashed again, until a single hash remains: the **Merkle root** [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- With an odd number, "the txid without a partner is hashed with a copy of itself" [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- The root sits in the header, which the next block's header hashes in turn (day 1) [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+//| fig-alt: "A Merkle tree: four txids A to D at the bottom; A and B hash to AB, C and D hash to CD; AB and CD hash to the Merkle root in the header."
+digraph Merkle {
+  rankdir=BT;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  A [label="txid A"]; B [label="txid B"]; C [label="txid C"]; D [label="txid D", fillcolor="#fef3c7", color="#f59e0b"];
+  AB [label="hash AB", fillcolor="#e0f2fe", color="#38bdf8"];
+  CD [label="hash CD", fillcolor="#e0f2fe", color="#38bdf8"];
+  R [label="Merkle root\nin the header", fillcolor="#dcfce7", color="#22c55e"];
+
+  A -> AB; B -> AB; C -> CD; D -> CD;
+  AB -> R; CD -> R;
+  {rank=same; A; B; C; D;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the Merkle tree, built from the hashes students met in the keys lesson on day 1. It matters here because the Merkle root is why one header commits to all of a block's transactions, and it is the basis of the inclusion proof on the next slide. Emphasize the tamper evidence: altering any transaction changes the root, then the header, then every later block's link.
+
+**Key Points**
+- The consensus lesson on day 1 said a block's header holds a summary of its transactions and promised day 2 would name it. Its name is the Merkle root.
+- It is built from the bottom. Each transaction's txid is a leaf; pairs of leaves are hashed together, then pairs of those results, until one hash is left, the root.
+- When a level has an odd number of hashes, the last one is paired with a copy of itself.
+- The root sits in the header, and the next block's header hashes this header. So changing any transaction changes the root, the header, and every later block's link to it.
+
+**Walkthrough**
+1. Start at the four txids at the bottom.
+2. Hash A with B and C with D.
+3. Hash the two results into the root in the header.
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+## A Merkle proof shows inclusion, not the sender {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+[]{#a-merkle-proof-shows-a-tx-is-in-a-block}**Bottom line:** a short list of hashes proves that a transaction is in a block, without the rest of the block. It proves inclusion; it says nothing about who sent the money.
+
+- To check D in a block of four (A to D), a client needs only C's hash, the hash AB and the root [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- **SPV** (simplified payment verification): a lightweight wallet keeps only block headers and checks its own payments with such proofs [@nakamoto_bitcoinpeertopeerelectronic_2008; @bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- A proof grows by one hash each time a block doubles [@narayanan_bitcoincryptocurrencytechnologies_2016]. Block 277,316 holds 419 transactions, so a proof needs 9 hashes (2⁹ = 512).
+
+[Try it: Prove it is in the block (five-minute lab)](/assets/labs/merkle-trees/index.html)
+
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4
+//| fig-height: 3.2
+//| fig-alt: "A Merkle proof: given C and AB, the checker hashes C with D to get CD, then AB with CD, and compares the result with the root in the header."
+digraph Proof {
+  rankdir=BT;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  C [label="C (given)", fillcolor="#e0f2fe", color="#38bdf8"];
+  D [label="D (checked)", fillcolor="#fef3c7", color="#f59e0b"];
+  AB [label="AB (given)", fillcolor="#e0f2fe", color="#38bdf8"];
+  CD [label="CD (worked out)"];
+  R [label="Root: matches\nthe header?", fillcolor="#dcfce7", color="#22c55e"];
+
+  C -> CD; D -> CD;
+  AB -> R; CD -> R;
+  {rank=same; C; D;}
+}
+```
+
+::: {.fragment style="font-size: .85em;"}
+**Check:** a defense expert shows a valid Merkle proof for a payment. What does it prove? **Answer:** that the payment is in that block; not who sent it or who controls its outputs.
+:::
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the Merkle proof, the payoff of the tree for anyone who must show a transaction is in a block, and closes part 3 with a one-question check. It matters here because analysts meet lightweight wallets and inclusion proofs, and must be clear what such a proof does and does not establish. Emphasize that inclusion is not attribution.
+
+**Key Points**
+- A Merkle proof is the transaction plus the sibling hashes on its path up to the root. To check D in a block of four, the checker needs C's hash and the hash AB; it works out CD, then the root, and compares it with the header.
+- So a wallet need not download whole blocks. SPV, simplified payment verification, is the name the Bitcoin paper gives this: a lightweight wallet keeps only the block headers and checks its own payments with proofs. Many phone wallets work this way.
+- A proof stays short: it grows by one hash each time the block doubles. Block 277,316's 419 transactions need 9 hashes, because 2⁹ is 512. The developer guide's own example has five transactions, so its proof adds one more hash than this slide's four.
+- A proof shows that a transaction is in a block. It does not show who sent it or who controls its outputs.
+- The check, on the slide as a fragment: a valid proof proves inclusion only. Part 3 in one line: a trace backwards can end at a coinbase, and the Merkle root ties every transaction to its block.
+
+**Walkthrough**
+1. Given C, hash C with D to get CD.
+2. Given AB, hash AB with CD to get the root.
+3. If it matches the header's root, D is in the block.
+4. Read the check, take an answer, then reveal.
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## Reading Alice's payment, field by field {.smaller}
+
+:::: {.columns}
+::: {.column width="57%"}
+Bitcoin Core's decode, trimmed [@antonopoulos_masteringbitcoinprogramming_2017]:
+
+```json
+{ "version": 1, "locktime": 0,
+  "vin": [{ "txid": "7957a35f...6f18", "vout": 0,
+            "sequence": 4294967295 }],
+  "vout": [
+  { "value": 0.01500000, "n": 0, "scriptPubKey": {
+   "type": "pubkeyhash", "addresses": ["1GdK9Uzp..."]}},
+  { "value": 0.08450000, "n": 1, "scriptPubKey": {
+   "type": "pubkeyhash", "addresses": ["1Cdid9KF..."]}}
+  ] }
+```
+
+<div style="font-size: 0.75em;">
+
+| Field | What you record |
+| --- | --- |
+| 1. Inputs | One, P2PKH, from `1Cdid9KF...`; nothing co-spent |
+| 2. Outputs | 0.015 and 0.0845 BTC, both P2PKH |
+| 3. Change | 0.0845 back to `1Cdid9KF...`: High (next slides) |
+| 4. Fee rate, RBF | ≈ 194 sat/vB; `0xffffffff`: no signal |
+| 5. Height, time | Block 277,316; block time 23:11:54 UTC |
+| 6. Origin | An earlier payment, `7957a35f...:0`: not a coinbase |
+
+</div>
+:::
+::: {.column width="43%"}
+In mempool, an open-source explorer [@mempool_mempool_2026; @mempoolspace_transaction0627052b_2013] [31 Oct 2026]{.asof}:
+
+![](../images/mempool-alice-payment.png){fig-alt="mempool's transaction page for Alice's payment: 696,684 confirmations, 194 sat/vB, one P2PKH input from 1Cdid9KF... with nSequence 0xffffffff, two P2PKH outputs" width="78%"}
+
+<div style="font-size: 0.75em;">
+Click **Details** to show nSequence and the script types. mempool prints times in your own time zone: convert to UTC.
+</div>
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads day 1's payment again, this time for the six fields a trace records, first in Bitcoin Core's decode and then in mempool, the explorer the course labs run. It matters here because it is the worked example for annotating a hop, in today's lab and in day 6's trace: every row comes from the decode, the explorer or an earlier slide. Emphasize that the change here is easy, because Alice's change went back to the very address her input came from.
+
+**Key Points**
+- In full: txid 0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2; input 7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18 output 0; output hashes ab68025513c3dbd2f7b92a94e0581f5d50f654e7 and 7f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8.
+- Field 1: the input's address and type are not in `vin`. They are on the output it spends, output 0 of transaction 7957a35f…6f18, which paid 0.1 BTC to 1Cdid9KF…. So students look them up there, or let mempool show them beside the input. There is one input, so nothing is co-spent.
+- Field 2: both outputs are P2PKH, an older single-key wallet on both sides.
+- Field 3: the second output pays 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK, the address Joe paid and Alice's input spent from. Only the holder of that key could spend from it, so an output back to it returns to the payer: the change. The next two slides give the clues for harder cases.
+- Field 4: about 194 sat/vB, and sequence 0xffffffff, so no replace-by-fee signal. Locktime 0: no restriction.
+- Field 5: block 277,316, block time 1388185914, which is 27 Dec 2013 23:11:54 UTC.
+- Field 6: the input is an earlier payment's output, so the money did not start at a coinbase here.
+- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. The screenshot is mempool, open source under AGPL-3.0 [31 Oct 2026]{.asof}, on the public site mempool.space; the course lab runs the same software on the course chain.
+- mempool does the lookup the decode leaves to you: it shows the input's address (1Cdid9KF…), amount (0.1 BTC) and previous output type (P2PKH) beside the input, and works out the fee rate (194 sat/vB) and confirmations: 696,684 [31 Oct 2026]{.asof}, a count that grows with every block.
+- The "Details" button opens the nSequence and type rows; the screenshot hides the script rows, the miner row and the size, virtual size and weight rows lower down. The page gives confirmations, not a block-height row: the height is on the block's own page. Confirmed transactions get no RBF badge: read nSequence.
+- mempool shows times in the viewer's own time zone: the screenshot's 18:11:54 is 23:11:54 UTC, when block 277,316 was mined. Record times in UTC.
+- Ignore the dollar figure and the red "Overpaid" badge: they are mempool's own estimates, not fields of the transaction. The lab instance runs offline, so its dollar figures mean nothing at all.
+- mempool shows no owner names and does not mark change: field 3 is the analyst's call.
+
+**Walkthrough**
+1. Find version, locktime and the input's sequence in the decode.
+2. Find each output's type and address.
+3. Fill the six fields, row by row.
+4. Point to the same values in mempool: click Details, then find the input address and type, nSequence, fee rate and confirmations; convert the time to UTC.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @harding_bip125optinfull_2015
+- @mempool_mempool_2026
+- @mempoolspace_transaction0627052b_2013
+
+:::
+
+## Co-spent inputs point to one owner {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+[]{#co-spending-and-change-two-clues-to-carry}**Bottom line:** inputs signed together in one transaction most often belong to one wallet. It is a clue, rated **Moderate** on its own, because it has a known failure.
+
+- **Co-spending:** A1 and A2 sign one transaction, so one wallet most often holds both keys. The Bitcoin paper itself warns that such inputs "were owned by the same owner" [@nakamoto_bitcoinpeertopeerelectronic_2008; @meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Where it fails:** a **CoinJoin** is one transaction that several people build together, each signing their own inputs, so co-spent inputs there have different owners [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- So write "co-spent with A2 (Moderate)", not "Alice's wallet holds A2".
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+//| fig-alt: "Illustration: addresses A1 (0.60 BTC) and A2 (0.70 BTC) are spent together in one transaction with a 0.01 BTC fee, paying Bob 1.00 BTC and a new address A3 0.29 BTC."
+digraph Clues {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  A1 [label="A1: 0.60 BTC", fillcolor="#fef3c7", color="#f59e0b"];
+  A2 [label="A2: 0.70 BTC", fillcolor="#fef3c7", color="#f59e0b"];
+  T [label="One transaction\nfee 0.01 BTC", fillcolor="#e0f2fe", color="#38bdf8"];
+  B [label="Bob: 1.00 BTC"];
+  C [label="A3 (new): 0.29 BTC"];
+
+  A1 -> T; A2 -> T;
+  T -> B; T -> C;
+  {rank=same; A1; A2;}
+  {rank=same; B; C;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the first of the two Bitcoin clues day 6 turns into method: co-spending, also called common-input ownership. It matters here because day 6's trace names a clue for every hop that groups addresses, and students should arrive there already seeing co-spending in a transaction and knowing where it fails. Emphasize that it is a clue with a known failure, rated on the course scale, not proof.
+
+**Key Points**
+- The diagram is an illustration, not a real case: Alice spends A1, 0.60 BTC, and A2, 0.70 BTC, in one transaction.
+- To spend an output, the spender must sign for it, as the script slide showed. So a transaction that spends A1 and A2 needed both keys at once, and most often one wallet holds both. Nakamoto's paper names this itself: multi-input transactions reveal that their inputs were owned by the same owner.
+- It fails in a CoinJoin. Several people build one transaction together and each signs only their own inputs, so co-spent inputs there belong to different people. CoinJoin is a privacy technique; day 6 and the mixers lesson show how to recognize one.
+- Because of that known failure, co-spending alone is Moderate on the course scale. The line to write names the clue and its rating, not an owner.
+- The diagram's outputs carry the second clue, change, on the next slide.
+
+**Walkthrough**
+1. Alice spends A1 (0.60) and A2 (0.70) together: co-spending.
+2. Ask: what would make A1 and A2 belong to different people? (A CoinJoin: several people signing one transaction.)
+3. Read the line to write.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+
+:::
+
+## Change is the output back to the payer {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** an input is spent whole, so the payer's wallet usually sends the leftover back to itself as **change**. Which output is change is your call, with a confidence.
+
+- **Clues that point at A3:** a new address, the same script type as the inputs, and an un-round amount (0.29, where Bob's 1.00 is round) [@meiklejohn_fistfulbitcoinscharacterizing_2013; @frowis_safeguardingevidentialvalue_2020].
+- **How sure:** one clue alone is **Low**. Agreeing clues, as for A3, are **Moderate**: a CoinJoin could still break them. Alice's change returns to her one input's own address, with the un-round amount: two lines agree and one input rules out CoinJoin, so **High**.
+- **Warning:** the clues assume one payer. In a CoinJoin, several payers share one transaction, so do not name "the" change [@gmaxwell_coinjoinbitcoinprivacy_2013].
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.2
+//| fig-height: 3.8
+//| fig-alt: "The same illustration: A1 and A2 spent together, 1.30 BTC in; Bob receives a round 1.00 BTC and the new address A3 receives 0.29 BTC, marked as the likely change."
+digraph Change {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  A1 [label="A1: 0.60 BTC"];
+  A2 [label="A2: 0.70 BTC"];
+  T [label="One transaction\n1.30 in, fee 0.01", fillcolor="#e0f2fe", color="#38bdf8"];
+  B [label="Bob: 1.00 BTC\nround: the payment"];
+  C [label="A3 (new): 0.29 BTC\nun-round: change?", fillcolor="#dcfce7", color="#22c55e"];
+
+  A1 -> T; A2 -> T;
+  T -> B; T -> C;
+  {rank=same; A1; A2;}
+  {rank=same; B; C;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the second clue: which output is change, the money the payer's wallet sends back to itself. It matters here because the third field of every hop is the change call, and a trace follows the payment, not the change, or the reverse, depending on that call. Emphasize that change is the analyst's call with a confidence, and that the clues assume a single payer.
+
+**Key Points**
+- Day 1 taught that an input is spent whole. So when Alice owes Bob 1.00 BTC and her inputs hold 1.30, her wallet pays Bob 1.00, the miner 0.01, and itself the remaining 0.29: the change.
+- An explorer does not mark change. The analyst names it from clues: the output goes to a new address; its script type matches the inputs'; and its amount is un-round, where the payment is a round figure a person would choose.
+- Then the confidence words, from the course scale. One clue alone is weak: a change call on the round amount alone is Low. Clues that agree raise it to Moderate, as A3's three do, but not to High while a known failure such as a CoinJoin could apply. Day 6 shows more clues, and when they mislead.
+- One case is strong: an output back to an address the transaction spends from, as in Alice's payment. Only the holder of that key could spend from it, so the output returns to the payer. Add the un-round amount, 0.0845 against the round 0.015, and two lines agree; with one input there can be no CoinJoin, so the scale gives High.
+- Warning: every clue assumes one payer. In a CoinJoin, the transaction from the last slide that several people build together, there are several payers and several change outputs, so do not name "the" change.
+
+**Walkthrough**
+1. 1.30 in, 1.29 out: fee 0.01.
+2. Bob gets the round 1.00; A3, new, gets 0.29: the change clues point at A3.
+3. Ask: how sure on the round amount alone? (Low.) And Alice's payment? (Back to her input's own address: the payer.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @frowis_safeguardingevidentialvalue_2020
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+
+:::
+
+## Practice: six fields for the SegWit payment {.smaller}
+
+::: {style="font-size: .8em;"}
+
+Transaction `ac4e20f7…c262`, from mempool [@mempoolspace_transactionac4e20f7_2025]. Record the six fields, and say how sure you are of the change.
+
+| Item | Value |
+| --- | --- |
+| Input 1 | 75,000 sat from `bc1qwafv…`, P2WPKH, from output 1 of `466200…6177`; sequence `0xfffffffd` |
+| Input 2 | 15,037,262 sat from `bc1qvyqn…`, P2WPKH, from output 1 of `fa588c…b373`; sequence `0xfffffffd` |
+| Output 0 | 14,112,262 sat to `bc1quh0z…`, P2WPKH; the address's first appearance |
+| Output 1 | 999,560 sat to `bc1pzvqc…`, P2TR |
+| Size, fee | 382 bytes, weight 880; fee 440 sat |
+| Block | 887,986; block time 1742094256 (16 Mar 2025, 03:04:16 UTC) |
+
+: {tbl-colwidths="[16,84]"}
+
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+The four parts are done; this slide has students record all six fields for the SegWit payment, the real transaction whose fee rate they worked in part 2. It matters here because this is the skill the opening promised and the afternoon's wallet lab uses: read a transaction whole, and say how sure you are of the change. Emphasize that the change call needs reasons and a confidence word.
+
+**Key Points**
+- Each field is a second case of a reading taught on a slide: input types from the prefix table, the fee rate from the worked slide, the RBF signal from the replace-by-fee slide, the time from the timestamp slide, the origin from the coinbase slide, and co-spending and change from part 4.
+- The data on the slide comes from mempool's page for the transaction; trimmed addresses are in full in the bibliography entry.
+- The answers are on the next slide; keep it hidden until students have written theirs.
+
+**Walkthrough**
+1. Give students five minutes in pairs to write the six fields.
+2. Ask one pair for fields 1 and 2, another for 4 and 5.
+3. Ask a third pair which output is change, why, and how sure.
+
+**Sources**
+- @mempoolspace_transactionac4e20f7_2025
+
+:::
+
+## Answers: six fields, and how sure of change {.smaller}
+
+::: {style="font-size: .78em;"}
+
+| Field | The SegWit payment | Why |
+| --- | --- | --- |
+| 1. Inputs | Two, both P2WPKH; co-spent, so one wallet (Moderate) | Both signed one transaction [@meiklejohn_fistfulbitcoinscharacterizing_2013] |
+| 2. Outputs | 14,112,262 sat P2WPKH; 999,560 sat P2TR | The prefixes `bc1q` and `bc1p` [@wuille_bip173base32address_2017; @wuille_bip350bech32mformat_2020] |
+| 3. Change | Output 0, 14,112,262 sat: **Moderate** | A new address, and the inputs' type where the other output's differs [@meiklejohn_fistfulbitcoinscharacterizing_2013] |
+| 4. Fee rate, RBF | 2 sat/vB (440 ÷ 220); signaled | Weight ÷ 4; sequence below `0xfffffffe` [@harding_bip125optinfull_2015] |
+| 5. Height, time | Block 887,986; block time 03:04:16 UTC, 16 Mar 2025 | The miner's stated time, not when it was sent [@kerin_bip113mediantimepast_2015] |
+| 6. Origin | Two earlier payments' outputs: not a coinbase | Each input spends an earlier output |
+
+: {tbl-colwidths="[15,42,43]"}
+
+Two clues agree on output 0, so Moderate, not Low; not High, because a CoinJoin would void both [@gmaxwell_coinjoinbitcoinprivacy_2013]. Output 0 is still unspent [@mempoolspace_transactionac4e20f7_2025] [13 Nov 2026]{.asof}.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the answers to the practice, each with the reason it rests on, and the change call with its confidence. It matters here because the feedback is where students check their own reading, and answering first and then hearing the reasons teaches more than reading a summary. Emphasize row 3: three agreeing clues give Moderate, and the reasons go in the record.
+
+**Key Points**
+- Field 1: two P2WPKH inputs signed together. Co-spending alone is Moderate that one wallet holds both.
+- Field 2: one P2WPKH output and one Taproot output.
+- Field 3: output 0 is the change, Moderate. Two clues agree: it goes to an address seen for the first time, and its type, P2WPKH, matches the inputs', where the other output is Taproot. Agreeing clues raise the call above a single clue's Low, but not to High, because a CoinJoin would void them. Neither output is a round amount, so the round-amount clue gives nothing here. A sharp student may notice that 999,560 plus the 440 fee is exactly 1,000,000 sat; it fits output 1 being the payment, but this lesson does not rate that pattern.
+- Field 4: 2 sat/vB, worked in part 2, and both inputs signal replace-by-fee.
+- Field 5: block 887,986; the block time 1742094256 is 16 Mar 2025, 03:04:16 UTC, and it is the miner's stated time.
+- Field 6: both inputs spend earlier outputs, so this hop did not start at a coinbase.
+- The last line is dated because "unspent" can change: when the change moves, a trace follows it to the payer's next transaction.
+
+**Walkthrough**
+1. Reveal the slide after students have written their six fields.
+2. Read each row, and ask a pair who wrote something different to read theirs.
+3. Stress row 3: the two clues and the confidence word.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @wuille_bip173base32address_2017
+- @wuille_bip350bech32mformat_2020
+- @harding_bip125optinfull_2015
+- @kerin_bip113mediantimepast_2015
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @mempoolspace_transactionac4e20f7_2025
+
+:::
+
+## Review: every hop records the same six fields {.smaller}
+
+::: {style="font-size: .8em;"}
+
+[]{#recap-what-to-record-for-every-hop}**The objective:** given any Bitcoin transaction, record the six fields and say how sure you are of the change. Answer each question from memory before the answer appears.
+
+**1. Name the six fields.**
+
+::: {.fragment}
+Inputs and co-spending; outputs; change and how sure; fee rate and RBF; block height and block time; origin.
+:::
+
+**2. The explorer prints a time beside a transaction. Is that when it was sent?**
+
+::: {.fragment}
+No: it is the block's time, its miner's claim. Record height and block time [@kerin_bip113mediantimepast_2015].
+:::
+
+**3. A payment paid a large fee. Was it a large payment?**
+
+::: {.fragment}
+Not from the fee: the fee rate, in sat/vB, prices block space, not the amount sent [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+:::
+
+**4. An unspent `3...` output: multisig?**
+
+::: {.fragment}
+Not yet known: P2SH shows its rule only when spent [@andresen_bip16paytoscript_2012].
+:::
+
+**5. Co-spending alone, and a round-amount change call alone: how sure?**
+
+::: {.fragment}
+Moderate, and Low; a CoinJoin breaks both [@gmaxwell_coinjoinbitcoinprivacy_2013].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reviews the lesson against its objective: five questions, answered from memory before each answer appears, including the two wrong beliefs this lesson corrected, about time and about fees. It matters here because recalling an answer fixes it better than hearing a summary, and the questions show whether students can now do what the opening promised. Emphasize questions 2 and 3: the time and fee beliefs, asked a second time.
+
+**Key Points**
+- Question 1 is the opening's table, recalled.
+- Question 2 re-asks the timestamp slide's wrong idea: the explorer's time is the block's, and the transaction has none.
+- Question 3 re-asks the fee belief: a fee shows block space bought, not the payment's size.
+- Question 4 is part 1's check.
+- Question 5 is part 4's two clues and their ratings, with the failure they share.
+- No new facts appear here; every answer was taught on an earlier slide.
+
+**Walkthrough**
+1. Read the objective.
+2. For each question, give students a few seconds to answer aloud or on paper, then reveal the answer.
+3. A class that misses question 2 or 3 needs that slide once more.
+
+**Sources**
+- @kerin_bip113mediantimepast_2015
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @andresen_bip16paytoscript_2012
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+
+:::
+
+## Next: who holds the keys {.smaller}
+
+::: {style="font-size: .88em;"}
+
+You can now read a transaction. The next question is who could have signed it, and that depends on the wallet.
+
+| Where | What you do with today's reading |
+| --- | --- |
+| **Next lesson:** Bitcoin wallet types | Who holds the keys: custodial or self-held, hot or cold, and how one seed makes many addresses |
+| Later today: Multi-sig and wallet software | Reading a real multisig spend, the rule this lesson's P2SH outputs hide |
+| This afternoon: the wallet lab | Record the six fields for the wallet's own transactions in mempool |
+| Day 6: tracing | Co-spending and change become method, with their failures, along a ransom's path |
+
+: {tbl-colwidths="[36,64]"}
+
+**Bottom line:** every hop, the same six fields; the change call always with its reasons and a confidence word.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+The review checked the objective; this slide gives the lesson's bottom line and names where it is used next without teaching it. It matters here because the next lesson asks who controls the keys behind the addresses students can now read, and the afternoon's lab asks them to record the six fields themselves. Emphasize the bottom line.
+
+**Key Points**
+- The next lesson, Bitcoin wallet types, asks who holds the keys: an exchange or the user, a phone or a hardware device, and how one seed makes the many addresses a wallet uses.
+- Later today the multisig lesson reads a real multisig spend, the rule that P2SH and P2WSH outputs hide until they are spent.
+- This afternoon's wallet lab has students record the six fields for the wallet's own transactions in mempool.
+- Day 6 turns co-spending and change into tracing method, and shows when they fail, along a ransom's path.
+
+**Walkthrough**
+1. Read the bridge to the next lesson.
+2. Walk the table.
+3. Close on the bottom line.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+<!-- Hidden 24 Oct 2026 when this lesson was rebuilt to read a transaction for the day 2 trace (Build Tracker D2 ①): kept for reuse, not shown. "Mining a Candidate Block" hidden 13 Nov 2026: the consensus lesson on day 1 teaches proof of work. -->
+
+:::: {.content-hidden}
 
 ## Mining a Candidate Block {.smaller}
 
@@ -427,335 +1196,6 @@ This slide teaches proof of work at the level an analyst needs: what the miner h
 
 :::
 
-## Coinbase pays the miner: subsidy plus fees {.smaller}
-
-:::: {.columns}
-::: {.column width="55%"}
-**Bottom line:** new bitcoin enters only through each block's first transaction, the coinbase. A trace that ends at a coinbase has reached newly mined coins, not someone's payment.
-
-- The coinbase collects the block subsidy and the block's fees [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- The subsidy began at 50 BTC and halves every 210,000 blocks [@antonopoulos_masteringbitcoin3e_2023, ch. 12; @narayanan_bitcoincryptocurrencytechnologies_2016]. After four halvings it is 3.125 BTC; the next halving is at block 1,050,000 [24 Oct 2026]{.asof}.
-- Coinbase outputs cannot be spent for 100 blocks [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- Most miners join pools: the coinbase pays the pool, which pays its members' addresses once their share of the rewards reaches a threshold [@antonopoulos_masteringbitcoin3e_2023, ch. 12].
-:::
-::: {.column width="45%"}
-| From block | Subsidy |
-| --- | --- |
-| 0 | 50 BTC |
-| 210,000 | 25 BTC (Alice's block, 277,316) |
-| 420,000 | 12.5 BTC |
-| 630,000 | 6.25 BTC |
-| 840,000 | 3.125 BTC |
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide compresses mining to what an analyst needs: where new coins come from and what a miner is paid. It matters here because a trace backwards can end at a coinbase or a pool payout, and students must recognize both. Emphasize that the previous slide showed how a block is won (proof of work); here mining matters only as a source of funds and a payer of fees.
-
-**Key Points**
-- The coinbase is the first transaction in every block; it pays the subsidy plus all fees in the block.
-- The subsidy halves every 210,000 blocks: 50, 25, 12.5, 6.25, 3.125 BTC. Alice's block 277,316 paid 25 BTC plus fees, as day 1 showed.
-- The subsidy is 3.125 BTC [24 Oct 2026]{.asof}; it halves again at block 1,050,000.
-- Coinbase outputs mature after 100 blocks.
-- Pool payouts look like one transaction paying many addresses.
-
-**Walkthrough**
-1. Read the halving table from the top; find Alice's block in the 25 BTC era.
-2. Point to the current row: 3.125 BTC from block 840,000.
-
-**Sources**
-- @bitcoin.orgdevelopers_blockchaindeveloper_2024
-- @antonopoulos_masteringbitcoin3e_2023 [ch. 12]
-- @narayanan_bitcoincryptocurrencytechnologies_2016
-
-:::
-
-## The Merkle root commits to every transaction {.smaller}
-
-:::: {.columns}
-::: {.column width="52%"}
-**Bottom line:** one hash in the block header covers every transaction in the block. Change any transaction and that hash changes, so the block no longer matches its header.
-
-- The txids are hashed in pairs, then the results are paired and hashed again, until a single hash remains: the Merkle root [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- With an odd number, "the txid without a partner is hashed with a copy of itself" [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- The root sits in the header, which the next block's header hashes in turn (day 1) [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-:::
-::: {.column width="48%"}
-```{dot}
-//| fig-width: 4.5
-//| fig-height: 4.5
-digraph Merkle {
-  rankdir=BT;
-  bgcolor="transparent";
-  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
-  edge [color="#64748b", arrowsize=0.7];
-
-  A [label="txid A"]; B [label="txid B"]; C [label="txid C"]; D [label="txid D", fillcolor="#fef3c7", color="#f59e0b"];
-  AB [label="hash AB", fillcolor="#e0f2fe", color="#38bdf8"];
-  CD [label="hash CD", fillcolor="#e0f2fe", color="#38bdf8"];
-  R [label="Merkle root\nin the header", fillcolor="#dcfce7", color="#22c55e"];
-
-  A -> AB; B -> AB; C -> CD; D -> CD;
-  AB -> R; CD -> R;
-  {rank=same; A; B; C; D;}
-}
-```
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide introduces the Merkle tree, built from the hashes students met on day 1 (04-CP). It matters here because the Merkle root is why one header commits to all of a block's transactions, and it is the basis of the inclusion proof on the next slide. Emphasize the tamper evidence: altering any transaction changes the root, then the header, then every later block's link.
-
-**Key Points**
-- Leaves are txids; parents are hashes of child pairs; the root is in the block header.
-- An odd leaf is paired with a copy of itself.
-- Changing any transaction changes the root and breaks the header chain.
-
-**Walkthrough**
-1. Start at the four txids at the bottom.
-2. Hash A with B and C with D.
-3. Hash the two results into the root in the header.
-
-**Sources**
-- @bitcoin.orgdevelopers_blockchaindeveloper_2024
-
-:::
-
-## A Merkle proof shows a tx is in a block {.smaller}
-
-:::: {.columns}
-::: {.column width="55%"}
-**Bottom line:** a short list of hashes proves that a transaction is in a block, without the rest of the block. It proves inclusion; it says nothing about who sent the money.
-
-- To check transaction D in a block of four (A to D), a client needs only C's hash, the hash AB and the root. The developer guide's own example has five transactions, so its proof adds one more hash [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- Lightweight (SPV) wallets use this to check their payments without a full copy of the chain [@bitcoin.orgdevelopers_blockchaindeveloper_2024; @nakamoto_bitcoinpeertopeerelectronic_2008].
-- A proof grows by one hash each time a block's size doubles [@narayanan_bitcoincryptocurrencytechnologies_2016]. Block 277,316 holds 419 transactions, so a proof needs 9 hashes (2⁹ = 512).
-
-[Try it: Prove it is in the block (five-minute lab)](/assets/labs/merkle-trees/index.html)
-:::
-::: {.column width="45%"}
-```{dot}
-//| fig-width: 4.5
-//| fig-height: 4.5
-digraph Proof {
-  rankdir=BT;
-  bgcolor="transparent";
-  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
-  edge [color="#64748b", arrowsize=0.7];
-
-  C [label="C (given)", fillcolor="#e0f2fe", color="#38bdf8"];
-  D [label="D (checked)", fillcolor="#fef3c7", color="#f59e0b"];
-  AB [label="AB (given)", fillcolor="#e0f2fe", color="#38bdf8"];
-  CD [label="CD (worked out)"];
-  R [label="Root: matches\nthe header?", fillcolor="#dcfce7", color="#22c55e"];
-
-  C -> CD; D -> CD;
-  AB -> R; CD -> R;
-  {rank=same; C; D;}
-}
-```
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide shows the Merkle proof: the payoff of the tree for anyone who must show a transaction is in a block. It matters here because analysts meet SPV wallets and inclusion proofs, and must be clear what such a proof does and does not establish. Emphasize that inclusion is not attribution.
-
-**Key Points**
-- A Merkle proof is the transaction plus the sibling hashes up to the root.
-- The verifier rebuilds the root and compares it with the header.
-- Proof length is about log2 of the number of transactions: 9 hashes for block 277,316's 419.
-- SPV wallets verify payments this way.
-- A proof shows inclusion in a block, not who controls the outputs.
-
-**Walkthrough**
-1. Given C, hash C with D to get CD.
-2. Given AB, hash AB with CD to get the root.
-3. If it matches the header's root, D is in the block.
-
-**Sources**
-- @bitcoin.orgdevelopers_blockchaindeveloper_2024
-- @nakamoto_bitcoinpeertopeerelectronic_2008
-- @narayanan_bitcoincryptocurrencytechnologies_2016
-
-:::
-
-## Reading Alice's payment, field by field {.smaller}
-
-:::: {.columns}
-::: {.column width="57%"}
-Bitcoin Core's decode, trimmed [@antonopoulos_masteringbitcoinprogramming_2017]:
-
-```json
-{ "version": 1, "locktime": 0,
-  "vin": [{ "txid": "7957a35f...6f18", "vout": 0,
-            "sequence": 4294967295 }],
-  "vout": [
-  { "value": 0.01500000, "n": 0, "scriptPubKey": {
-   "type": "pubkeyhash", "addresses": ["1GdK9Uzp..."]}},
-  { "value": 0.08450000, "n": 1, "scriptPubKey": {
-   "type": "pubkeyhash", "addresses": ["1Cdid9KF..."]}}
-  ] }
-```
-
-<div style="font-size: 0.8em;">
-
-| Field | What you record |
-| --- | --- |
-| `type`: pubkeyhash, both outputs | P2PKH: an older single-key wallet |
-| `sequence` 4294967295 | `0xffffffff`: no RBF signal |
-| `locktime` 0 | No time restriction |
-| 258 bytes, 0.0005 BTC fee | ≈ 194 sat/vB |
-| Output 1 to `1Cdid9KF...` | The address the input came from: change |
-
-</div>
-:::
-::: {.column width="43%"}
-In mempool, an open-source explorer [@mempool_mempool_2026; @mempoolspace_transaction0627052b_2013] [31 Oct 2026]{.asof}:
-
-![](../images/mempool-alice-payment.png){fig-alt="mempool's transaction page for Alice's payment: 696,684 confirmations, 194 sat/vB, one P2PKH input from 1Cdid9KF... with nSequence 0xffffffff, two P2PKH outputs" width="100%"}
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide reads day 1's payment again, this time for the fields a trace records, first in Bitcoin Core's decode and then in mempool, the explorer the course labs run. It matters here because it is the worked example for annotating a hop, in today's lab and in day 6's trace: every row of the table comes from the decode or from an earlier slide, and the explorer shows the same values. Emphasize that the change here is easy: Alice's change went back to the address that received Joe's payment.
-
-**Key Points**
-- In full: txid 0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2; input 7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18 output 0; output hashes ab68025513c3dbd2f7b92a94e0581f5d50f654e7 and 7f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8.
-- Both outputs are P2PKH.
-- The input's address and type are not in `vin`: they are on the output it spends, output 0 of transaction 7957a35f…6f18, which paid 0.1 BTC to 1Cdid9KF…. Students look them up there, not inside `vin`.
-- Sequence 0xffffffff: no BIP 125 signal. Locktime 0: no restriction.
-- Fee rate ≈ 194 sat/vB.
-- The second output pays 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK, the address Joe paid: Alice reused her address for change.
-- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. The screenshot is mempool, open source under AGPL-3.0 [31 Oct 2026]{.asof}, on the public site mempool.space; the course lab runs the same software on the course chain.
-- mempool does the lookup the decode leaves to you: it shows the input's address (1Cdid9KF…), amount (0.1 BTC) and previous output type (P2PKH) beside the input, and works out the fee rate (194 sat/vB) and confirmations: 696,684 [31 Oct 2026]{.asof}, a count that grows with every block.
-- The "Details" button opens the nSequence and type rows; the screenshot hides the script rows, the miner row and the size, virtual size and weight rows lower down. The page gives confirmations, not a block-height row. Confirmed transactions get no RBF badge: read nSequence.
-- mempool shows times in the viewer's own time zone: the screenshot's 18:11:54 is 23:11:54 UTC, when block 277,316 was mined. Record times in UTC.
-- Ignore the dollar figure and the red "Overpaid" badge: they are mempool's own estimates, not fields of the transaction. The lab instance runs offline, so its dollar figures mean nothing at all.
-- mempool shows no owner names and does not mark change: the table's last row is the analyst's call.
-
-**Walkthrough**
-1. Find version, locktime and the input's sequence in the decode.
-2. Find each output's type and address.
-3. Fill the table: wallet type, RBF, locktime, fee rate, change.
-4. Point to the same values in mempool: input address and type, nSequence, fee rate, confirmations.
-
-**Sources**
-- @antonopoulos_masteringbitcoinprogramming_2017
-- @harding_bip125optinfull_2015
-- @mempool_mempool_2026
-- @mempoolspace_transaction0627052b_2013
-
-:::
-
-## Co-spending and change: two clues to carry {.smaller}
-
-**Bottom line:** spending two addresses together suggests one owner, and the leftover output suggests which address is change. Day 6 turns both into method and shows when they fail.
-
-:::: {.columns}
-::: {.column width="55%"}
-- **Co-spending:** A1 and A2 sign one transaction, so one wallet most likely holds both keys [@nakamoto_bitcoinpeertopeerelectronic_2008; @meiklejohn_fistfulbitcoinscharacterizing_2013].
-- It fails for a CoinJoin, where several people sign one transaction [@gmaxwell_coinjoinbitcoinprivacy_2013].
-- **Change:** a new address, the same script type as the inputs and an un-round amount (0.29, not 1.00) all point at A3 [@meiklejohn_fistfulbitcoinscharacterizing_2013; @frowis_safeguardingevidentialvalue_2020].
-- On the course scale, co-spending alone is **Moderate** (CoinJoin is a known false positive); a change call (naming one output as the change) on the round amount alone is **Low**.
-:::
-::: {.column width="45%"}
-```{dot}
-//| fig-width: 4.5
-//| fig-height: 4.5
-digraph Clues {
-  rankdir=TB;
-  bgcolor="transparent";
-  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
-  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
-
-  A1 [label="A1: 0.60 BTC", fillcolor="#fef3c7", color="#f59e0b"];
-  A2 [label="A2: 0.70 BTC", fillcolor="#fef3c7", color="#f59e0b"];
-  T [label="One transaction\nfee 0.01 BTC", fillcolor="#e0f2fe", color="#38bdf8"];
-  B [label="Bob: 1.00 BTC"];
-  C [label="A3 (new): 0.29 BTC\nlikely change", fillcolor="#dcfce7", color="#22c55e"];
-
-  A1 -> T; A2 -> T;
-  T -> B; T -> C;
-  {rank=same; A1; A2;}
-  {rank=same; B; C;}
-}
-```
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide sets up the two Bitcoin clues day 6 teaches as heuristics: co-spending (common-input ownership) and change detection. It matters here because day 6's trace names a heuristic for every hop, and students should arrive there already seeing both clues in a transaction. Emphasize that these are clues with known failures, rated on the course scale, not proof.
-
-**Key Points**
-- Co-spending: inputs signed together most likely share an owner; the Nakamoto paper itself notes that multi-input transactions reveal this.
-- CoinJoin breaks co-spending by combining several people's inputs.
-- Change clues: a fresh address, script type matching the inputs, an un-round amount.
-- Co-spending alone: Moderate. A round-amount change call alone: Low. Day 6 shows how independent lines raise them.
-
-**Walkthrough**
-1. Alice spends A1 (0.60) and A2 (0.70) together: co-spending.
-2. 1.30 in, 1.29 out: fee 0.01.
-3. Bob gets the round 1.00; A3, new, gets 0.29: likely change.
-
-**Sources**
-- @nakamoto_bitcoinpeertopeerelectronic_2008
-- @meiklejohn_fistfulbitcoinscharacterizing_2013
-- @gmaxwell_coinjoinbitcoinprivacy_2013
-- @frowis_safeguardingevidentialvalue_2020
-
-:::
-
-## Recap: what to record for every hop {.smaller}
-
-- **Scripts:** each output is locked by a script; its type (P2PKH, P2SH, P2WPKH, P2WSH, P2TR) fingerprints the wallet.
-- **Hidden rules:** P2SH and Taproot show their spending rule only when spent, Taproot often not even then.
-- **Time:** a transaction has no timestamp; record block height and the miner's block time.
-- **Fees:** record the fee rate in sat/vB and whether the wallet signaled RBF; any unconfirmed transaction can still be replaced.
-- **Origin:** a coinbase is newly mined coins; the subsidy is 3.125 BTC [24 Oct 2026]{.asof}.
-- **Clues:** co-spending and change.
-- **Next, lesson ②:** wallet types. Clustering, change detection and peel chains, with their failures, are day 6.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide summarizes what students should record at each hop and hands over to lesson ② on wallet types; clustering and peel chains are day 6. It matters here because the afternoon lab reads the wallet's transactions with exactly these fields, and day 6's trace records them at every hop. Emphasize the habit: the same fields for every hop.
-
-**Key Points**
-- Script type per input and output.
-- What a P2SH or Taproot output does and does not reveal.
-- Block height and block time, never "the transaction's time".
-- Fee rate and the replace-by-fee signal.
-- Coinbase origin and the current subsidy, dated.
-- Co-spending and change, carried into day 6.
-
-**Walkthrough**
-1. Ask students to list, without the slide, what they record for each hop. (Script types, block height and block time, fee rate and RBF signal, coinbase origin, co-spending and change.)
-2. Read the bullets as the check on their answers.
-3. Ask: an explorer shows a transaction "at 14:02". What do you record? (The block height and the block's time, as the miner's claim; the transaction carries no time of its own.)
-4. Point to lesson ②: wallet types.
-
-**Sources**
-- @antonopoulos_masteringbitcoin3e_2023 [chs. 6, 7, 9, 12]
-- @lombrozo_bip141segregatedwitness_2015
-- @harding_bip125optinfull_2015
-- @bitcoincore_bitcoincore29_2025
-- @meiklejohn_fistfulbitcoinscharacterizing_2013
-
-:::
-
-<!-- Hidden 24 Oct 2026 when this lesson was rebuilt to read a transaction for the day 2 trace (Build Tracker D2 ①): kept for reuse, not shown. -->
-
-:::: {.content-hidden}
 
 ## Agenda
 - First, we start with wallets, keys, and addresses: what a Bitcoin user actually controls.
@@ -1714,7 +2154,6 @@ None
 :::: {.content-hidden}
 
 ## Evolution of Mining Hardware {.smaller}
-
 
 - In Bitcoin's early years, ordinary **CPUs** could mine blocks; miners soon shifted to **GPUs**, which performed SHA-256 hashing much faster through parallel computation.
 - A brief **FPGA** phase followed, but by about **2013** specialized **ASIC** miners had become the practical standard because they were far faster and more energy efficient.
