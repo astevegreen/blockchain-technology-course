@@ -26,11 +26,6 @@ slide index), which is never listed here.
 - `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
   new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
   and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
-- `blockchain-course/lessons/ethereum/08-EF-layer2s_and_bridges.qmd:378`: the slide "Cheap Solana tokens draw
-  pump-and-dumps" is now copied into 07-EF beside the rug-pull slide (owner, 13 Nov 2026). 08-EF's rebuild must
-  remove its copy as a move, not a cut, so `#/cheap-solana-tokens-draw-pump-and-dumps` lands in 07-EF and the
-  mind map's link follows it. Meanwhile 08-EF's copy says "a quiet 'soft rug' pull", but its source defines a soft
-  rug as liquidity "abruptly withdrawn"; 07-EF's copy drops "quiet". [13 Nov 2026, 07-EF rebuild and its reviewer]
 - 07-EF has no quiz bank of its own (only `quizes/quiz_json/weekone_check-quiz-bank.json` cites it), so nothing
   tests the rebuilt 07-EF's new slides: the three checks (Sync direction, which pool to quote, Bybit exits), the worked six
   checks on TKN, the MEME practice answers and the review. [13 Nov 2026, 07-EF rebuild]
@@ -45,9 +40,19 @@ slide index), which is never listed here.
   names the old title "Recap: every label, a source and a confidence" (now "Review: …"; the old anchor still resolves).
   [13 Nov 2026, 01-FO rebuild]
 - 01-FO's hidden slides that the day map moves (`docs/build-spec.md:84-86`) are not yet in their new lessons:
-  "Bridges & Swaps" (both) to 08-EF, "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"
+  "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"
   to 05-FO, the three Silk Road slides to 03-FO. Carry them over when each destination is rebuilt.
   [13 Nov 2026, 01-FO rebuild]
+- No quiz bank tests the rebuilt 08-EF's new slides: the two checks (who can stop funds; out of an optimistic
+  rollup in minutes), "Intents: you name the result, a relayer pays it", the worked bridge-type reading, the Bitget
+  practice and answers, and the review. [13 Nov 2026, 08-EF rebuild]
+- 01-FO's hidden "Bridges & Swaps" laundering-flow diagram (USDC to DEX to ETH to instant exchange to Monero) was
+  not carried into 08-EF, which teaches bridge types, not flows; it fits day 8's cross-chain trace or day 9. Its
+  sources `salisu_blockchainforensicsmodern_2023` and `lin_tracktraceautomatically_2025` went with it.
+  [13 Nov 2026, 08-EF rebuild]
+- `blockchain-course/assets/labs/beat-the-freeze/index.html:49` still names the old slide "Bitget: bridges moved
+  it faster than freezes"; it is now "Answers: bridges moved it faster than freezes". The old anchor still lands
+  (hidden marker), so only the label is stale. [13 Nov 2026, 08-EF rebuild]
 - `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json:92`: `lesson_block` names "A pending
   transaction already shows the trade", now merged into "A router call names the path and the minimum out" (old
   anchor kept); the bank has no questions on the rebuilt 03-EF's checks, the paymaster slide, the bundler practice or
