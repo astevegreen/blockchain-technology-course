@@ -15,39 +15,43 @@ format:
 
 ## The protocol paid: find out which attack {.smaller}
 
-**Bottom line:** 09-FO followed thefts from a person's wallet. This lesson follows thefts from a contract that holds many people's money. Three attack types recur: re-entering a contract, borrowing with a flash loan and moving a price. Each leaves its own shape in one transaction. Name the shape, then read the case write-up.
+::: {style="font-size: .85em;"}
 
-::: {style="font-size: .8em;"}
+**The case:** a lending protocol's pool is suddenly empty, and the agent asks which attack did it. The victim is not a person who signed something: it is a contract that held many people's money, and the whole theft sits in one transaction. Reading that transaction tells you which attack it was; reading the wrong one sends the case write-up the wrong way.
 
-| Question | The answer tells you |
-| --- | --- |
-| What is a DeFi pool, and who can call it? | Why the victim is a contract |
-| What is reentrancy? | The repeat inside one transaction |
-| What happened to The DAO? | The first big case, and its fork |
-| What is a flash loan? | Why the attacker needs no money |
-| What does a price oracle trust? | Why moving a price pays |
-| What did bZx and Euler show? | The two flash-loan cases |
-| How do the three look apart? | The pattern for each |
-| Where does the loot go? | Back to day 7's trace |
+**The last lesson left off** with thefts from a person's wallet, where the victim's own signature or key let the money out. Here the protocol paid, in three parts:
+
+1. **Reentrancy:** a contract that pays out before it records the payment, and The DAO, the first big case.
+2. **Flash loans and oracles:** borrowed money that moves a price, at bZx and Euler.
+3. **Telling them apart, and following the money:** the pattern each leaves, where it sits on OWASP's list, and the bridge the loot crosses.
+
+**By the end:** given one transaction that emptied a DeFi pool, say whether it shows reentrancy, a flash loan, a moved price or a missing check (often two of these together), what the chain shows of the loss, how sure you are (High, Moderate or Low), and how to follow the proceeds across a bridge.
+
+**The point to earn:** a flash loan is the attacker's money, and the flaw is what that money exploits. Name both, and say what shows the loss [@qin_attackingdefiecosystem_2021; @ethereum.org_smartcontractsecurity_2026].
 
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 8's second lesson: attacks on DeFi contracts rather than on a person's wallet. It matters here because outcome 5 asks students to recognize these attack types from their transaction patterns and the case write-ups. Emphasize that no code is read in this lesson; the one contract read is at the start of the day 8 lab. Allow about 50 minutes; the reentrancy and oracle slides take the most time.
+This slide opens day 8's second lesson with a case and a question: a lending pool is empty and the agent asks which attack did it. It matters here because 09-FO ended with thefts from a person's wallet, and this lesson's victims are contracts, where the analyst must name the attack type from the transaction pattern before reading the write-up. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- 09-FO covered approvals, drainers, EIP-7702 and address poisoning: thefts from an account.
-- This lesson: thefts from a contract, where the flaw is in the contract's logic or in what it trusts.
-- The analyst's job is to say which attack type the transactions show, and how sure.
+- Students know from 09-FO that an approval, a poisoned address or a stolen key let a person's money out. Here nobody signed anything: the contract's own rules, or what it trusted, let the money out.
+- The case runs through the lesson as the question "which attack was this transaction?" Part 1 gives the first shape (a call inside itself), part 2 the second and third (a loan, a moved price), and part 3 sets the three side by side and follows the money out.
+- The point is a claim the lesson earns: a flash loan is the attacker's capital, not the flaw. The same loan-first, repay-last shape fills thousands of ordinary arbitrage transactions, so only the loss, or the protocol's write-up, marks an attack.
+- No Solidity is read in this lesson; the one contract read is at the start of the day 8 lab.
+- Where the money goes after the exploit is the second half of the lab, and the next lesson (11-FO) teaches how to read an exploit contract.
 
 **Walkthrough**
-1. Read the bottom line aloud.
-2. Walk the table; each row is one or two slides.
+1. Read the case and leave the agent's question open; the lesson answers it.
+2. Read the link back to 09-FO, then name the three parts.
+3. Read the objective aloud. Each part ends with a check every student answers, and the close asks the objective again.
+4. Time plan, 50 minutes: opening 3, pool slide 2, part 1 10 (check 3), part 2 15 (check 3), part 3 9, practice 4, answers 3 and review 4. The five-minute vault lab and the Find the line game are outside the plan: run them only with time in hand.
 
 **Sources**
-None
+- @qin_attackingdefiecosystem_2021
+- @ethereum.org_smartcontractsecurity_2026
 
 :::
 
@@ -228,6 +232,45 @@ This slide turns reentrancy into a pattern an analyst can spot in a trace. It ma
 **Sources**
 - @l34_ethereum_dao_vulnerability_2016 (recursive calls in a single transaction)
 - @ethereum.org_smartcontractsecurity_2026
+
+:::
+
+## Check: is this trace a reentrancy? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+A pool holds 6 ETH, of which one account deposited 1 ETH. One transaction, sent by a contract, calls the pool's withdraw. The call trace then shows: withdraw, pay 1 ETH to that contract, withdraw again, pay 1 ETH, and so on, nested, five times in all. The pool ends with 1 ETH. (The values are made up.)
+
+**Write one line:** is this reentrancy, and how sure are you? Yes, no, or cannot say, and what shows it?
+
+::: {.fragment}
+**Answer:** yes, **Moderate** from the trace alone. The same function is called again inside its first call, each time paying the same contract, and the pool lost 5 ETH against a 1 ETH deposit [@ethereum.org_smartcontractsecurity_2026]. **High** needs the protocol's write-up. Without the loss it would be **Low**, because some contracts call back legitimately.
+
+**Part 1 in one line:** reentrancy is one function called inside itself before the contract records the payment, and the loss is what makes the nesting an attack [@l34_ethereum_dao_vulnerability_2016].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 1 with a check every student answers. It gives a made-up trace with the three rows the reading slide taught: a contract as caller, the same call nested, and a loss larger than the deposit. It matters here because students must recognize reentrancy in a trace and say how sure they are, not read Solidity. Emphasize that the confidence word depends on the loss row.
+
+**Key Points**
+- Expected answer: yes, Moderate. Nested repeat calls paying one contract, with a pool loss of 5 ETH on a 1 ETH deposit, match the reading slide's rows; High needs the write-up.
+- If a student says Low, ask which row is missing; none is. The loss is on the slide.
+- The variant on the reading slide (three nested calls, no loss beyond the deposit) is the contrast: that one is Low as an attack.
+- The part's synthesis, on the slide: the loss is what separates an attack from a callback.
+
+**Walkthrough**
+1. Read the trace aloud.
+2. Give every student thirty seconds to write one line: yes, no, or cannot say, and what shows it.
+3. Take a show of hands, then reveal the answer and its reason.
+4. Read the part 1 synthesis.
+
+**Sources**
+- @ethereum.org_smartcontractsecurity_2026
+- @l34_ethereum_dao_vulnerability_2016
 
 :::
 
@@ -443,6 +486,51 @@ This slide gives the flash-loan pattern to look for in a trace. It matters here 
 
 :::
 
+## Check: put the attack's steps in order {.smaller}
+
+::: {style="font-size: .85em;"}
+
+A trace shows four steps in one transaction, listed here in the wrong order:
+
+- **A.** Send the loan back to the lending pool, with the fee.
+- **B.** Borrow a large sum from the lender, against collateral valued at the moved price.
+- **C.** Take a flash loan of a large sum from a pool.
+- **D.** Trade the borrowed money on a thin exchange pool, which moves its price.
+
+**Write the order, then say which step is the theft.**
+
+::: {.fragment}
+**Answer:** C, D, B, A. The loan opens the transaction and its repayment closes it [@aave_flashloans_2026]. The theft is step B: the lender pays out against a price the attacker moved in step D [@ethereum.org_smartcontractsecurity_2026; @qin_attackingdefiecosystem_2021]. Without B, steps C, D and A are an arbitrage.
+
+**Part 2 in one line:** a flash loan is the attacker's capital, and the flaw is the price a lender trusted, or a check it left out [@qin_attackingdefiecosystem_2021; @certik_eulerincident_2023].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with a check every student answers: put the steps of the bZx shape in order and name the theft. It matters here because the order, loan first and repayment last with the use between, is how the pattern shows in a trace. Emphasize that the theft is the borrow at the bad price, not the loan.
+
+**Key Points**
+- Expected answer: C, D, B, A. The loan brackets the transaction (steps 1 and 6 of the bZx table), the trade moves the price (steps 2 to 4) and the borrow at the bad price is the theft (step 5).
+- Students often name the flash loan as the theft; the part's point is that the loan is only the money, and most flash loans are ordinary arbitrage.
+- Euler's order differs in the middle (a gift and a liquidation, not a price move) but is bracketed the same way.
+
+**Walkthrough**
+1. Read the four steps aloud.
+2. Give every student a minute to write the order and name the theft.
+3. Take answers, then reveal the order and the reason.
+4. Read the part 2 synthesis.
+
+**Sources**
+- @aave_flashloans_2026
+- @ethereum.org_smartcontractsecurity_2026
+- @qin_attackingdefiecosystem_2021
+- @certik_eulerincident_2023
+
+:::
+
 ## Three patterns in a trace look different {.smaller}
 
 ::: {style="font-size: .85em;"}
@@ -506,7 +594,7 @@ This slide sets the three attack types side by side. It matters here because stu
 :::
 
 - **A map, not a lesson:** the other entries (access control, input validation, arithmetic, overflow, proxies) are not taught here. Say which entry a finding matches; the case write-up decides how sure.
-- **Not on the map:** 09-FO's attacks (approvals, drainers, EIP-7702, address poisoning, stolen keys) go after a person's signature or key, not a flaw in a contract's code, and OWASP's list covers weaknesses "found in smart contracts" [@owasp_smartcontracttop10_2026].
+- **Not on the map:** the last lesson's attacks (approvals, drainers, EIP-7702, address poisoning, stolen keys) go after a person's signature or key, not a flaw in a contract's code, and OWASP's list covers weaknesses "found in smart contracts" [@owasp_smartcontracttop10_2026].
 
 **Ask:** Euler's attack used a flash loan. Which two OWASP entries does the finding name?
 
@@ -535,7 +623,7 @@ This slide places the three attack types of this lesson, and Euler's missing che
 
 ## After the exploit, the money moves on {.smaller}
 
-**Bottom line:** the theft is one transaction; the laundering takes weeks. Euler's attacker used the routes of 06-FO and 09-FO, and then gave the money back [@eulerfinance_warpeacescenes_2024].
+**Bottom line:** the theft is one transaction; the laundering takes weeks. Euler's attacker used the routes of the privacy-tool and wallet-drain lessons, and then gave the money back [@eulerfinance_warpeacescenes_2024].
 
 ::: {style="font-size: .85em;"}
 
@@ -610,7 +698,8 @@ This slide links the exploit to the trace that follows it. It matters here becau
 :::::
 
 - **Steps:** paste the hash or GUID; read the status; take the far side's hash; open it on the far chain.
-- **How sure:** the page alone is the bridge's word. Kelp's forged message was a real delivery on the endpoint [@layerzero_kelpdao_2026].
+- **How sure:** the page alone is the bridge's word. Kelp's forged message was a real delivery on the endpoint [@layerzero_kelpdao_2026]. The same GUID in the send's event on one chain and the arrival's event on the other pairs them without the page.
+- **Part 3 in one line:** name the money and the flaw in OWASP's words, then check the bridge's page against both chains.
 
 **Ask:** the lab cannot open this page. What on the two chains gives you the same pair?
 
@@ -643,33 +732,130 @@ This slide names the second of the lab's three ways across a bridge: the bridge'
 
 :::
 
-## What to carry out of this lesson {.smaller}
+## Practice: name the pattern, follow a bridge hop {.smaller}
 
-- The victim is a pool: a contract anyone, or any contract, can call.
-- Reentrancy: one function called inside itself, paying one contract; The DAO, 2016.
-- A flash loan lasts one transaction and is not an attack by itself; look for the loss.
-- Oracle manipulation: borrowed money moves a price a lender trusts; bZx, 2020.
-- Euler, 2023: a flash loan and a missing check, with the attacker on both sides.
-- Name the money and the flaw; say how sure, and what shows the loss.
-- Then follow the proceeds: mixers, sanctioned addresses, messages and returns.
+::: {style="font-size: .8em;"}
 
-**Check:** one transaction borrows from Aave, trades on a thin pool, borrows from a lender and repays Aave; the lender is poorer. Name the money and the flaw.
+For each transaction, name the money and the flaw (or say it is neither), what shows the loss, and how sure you are (High, Moderate or Low). The values are made up.
+
+1. **Transaction 1.** A contract calls a vault's withdraw. The trace nests the same withdraw call four times, each paying that contract. The contract had deposited 2 ETH; the vault ends 8 ETH poorer. No loan appears.
+2. **Transaction 2.** It opens with a 20 million DAI transfer from a lending pool. Next come large trades on one thin exchange pool, then a borrow from a second lender, then a transfer back to the first pool, slightly larger. The second lender ends 3 million DAI poorer. No call nests.
+3. **Transaction 3.** A bot borrows 5,000 ETH from a lending pool, trades on two exchanges and repays the pool with the fee. No pool ends poorer, and the bot keeps 2 ETH.
+4. **The loot.** The proceeds of transaction 2 are later sent over a LayerZero bridge, and you have only the send's transaction hash. Say the steps that find where it arrived, and what makes the pairing more than the bridge's word.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the lesson in seven lines and hands over to 11-FO and the lab. It matters here because the D8 lab opens with the one contract read of outcome 5, then traces an exploit's proceeds. Emphasize the sixth line: the money and the flaw are two parts of one finding.
+This slide has students apply the three parts to three transactions and one bridge hop, with a confidence word for each reading. It matters here because the analyst's job is to say which attack a transaction shows and how sure, and then to follow the money out. Emphasize that transaction 3 has the loan shape and no loss.
 
 **Key Points**
-- Terms: DeFi pool, reentrancy, flash loan, price oracle, oracle manipulation, TWAP, self-liquidation.
-- Cases: The DAO (2016), bZx (2020), Euler (2023).
+- Each item repeats a reading the lesson worked: transaction 1 the reentrancy reading, transaction 2 the bZx shape, transaction 3 the bot on the "A flash-loan attack: borrow first, repay last" slide's Ask. Item 4 is the bridge slide's four steps, with the send's GUID on the far chain as the check.
+- The answers are on the next slide; keep it hidden until students have written theirs.
+- The made-up values are small on purpose; the reading, not the figures, is the exercise.
 
 **Walkthrough**
-1. Ask a student to say each line in their own words.
-2. Ask the Check. (The money is a flash loan; the flaw is a moved price the lender trusted: oracle manipulation, as at bZx.)
+1. Give students four minutes in pairs to write a line for each of the four items, with a confidence word where one applies.
+2. Take transaction 1 before moving on; ask which row of the reading slide they quoted first.
+3. For transaction 3, ask what is missing. For item 4, ask what the lab cannot open and what it uses instead.
 
 **Sources**
-None
+- @ethereum.org_smartcontractsecurity_2026
+- @qin_attackingdefiecosystem_2021
+- @layerzero_scan_2026
+
+:::
+
+## Answers: the pattern and the paired arrival {.smaller}
+
+::: {style="font-size: .72em;"}
+
+| Item | Reading | How sure, and why | What would change it |
+| --- | --- | --- | --- |
+| **1** | Reentrancy, with no flash loan: nested repeat calls paying one contract, and a loss of 8 ETH against a 2 ETH deposit [@ethereum.org_smartcontractsecurity_2026] | **Moderate:** the trace shows the repeat and the loss | **High** with the protocol's write-up; **Low** with no loss, since some contracts call back legitimately |
+| **2** | Money: a flash loan from the first pool. Flaw: a moved price the second lender trusted, so oracle manipulation, the bZx shape [@qin_attackingdefiecosystem_2021]. That a loan was used is a fact the transfers show | **Moderate:** the loan and the lender's loss are in the trace, but the price move is inferred from the trades | **High** with the protocol's post-mortem naming the oracle; if the lender instead lacked a check, the flaw is a missing check, as at Euler [@certik_eulerincident_2023] |
+| **3** | A flash loan with no victim: consistent with arbitrage [@aave_flashloans_2026] | No attack finding: no pool lost anything. State that the loan is a fact and the intent is not shown | A pool that ends poorer, or a write-up, would turn it into an attack finding |
+| **4** | Paste the hash or GUID into the bridge's explorer; read the status; take the far side's hash; open it on the far chain [@layerzero_scan_2026] | **Moderate** from the page alone, because it is the bridge's own account; stronger when the GUID in the send's event matches the arrival's event on the two chains | A forged delivery counts as real on the bridge's own records, as at Kelp, so the two chains stay the check [@layerzero_kelpdao_2026] |
+
+: {tbl-colwidths="[8,38,26,28]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the answers to the practice, each with its confidence word and what would change it. It matters here because the feedback is where students check their own reading, and answering first and then hearing the reasons teaches more than reading a summary. Emphasize the last column: the reason for the word matters as much as the word.
+
+**Key Points**
+- Transaction 1 is the nested pattern from the reading slide with a loss of 8 ETH against a 2 ETH deposit. There is no loan, so the money was the attacker's own, as at The DAO.
+- Transaction 2 has the loan-first, repay-last shape of bZx. The loan is a fact the transfers show. The finding that it was oracle manipulation rests on the trades on a thin pool and the lender's loss, and the post-mortem would make it High.
+- Transaction 3 has the same shape as transaction 2 and no loss, which is why it is not an attack finding. A flash loan alone proves nothing about intent.
+- Item 4 repeats the bridge slide's four steps. The page is the bridge's word, so the arrival is checked on the far chain by the same GUID; Kelp's forged message was a real delivery on the endpoint.
+
+**Walkthrough**
+1. Reveal the slide after students have written their lines.
+2. Read each row, and ask a pair who chose a different word to say why.
+3. Stress the last column for each item.
+
+**Sources**
+- @ethereum.org_smartcontractsecurity_2026
+- @qin_attackingdefiecosystem_2021
+- @certik_eulerincident_2023
+- @aave_flashloans_2026
+- @layerzero_scan_2026
+- @layerzero_kelpdao_2026
+
+:::
+
+## Review: three patterns, one trail out {.smaller}
+
+[]{#what-to-carry-out-of-this-lesson}
+
+::: {style="font-size: .72em;"}
+
+**The objective:** given one transaction that emptied a DeFi pool, say whether it shows reentrancy, a flash loan, a moved price or a missing check, what shows the loss, how sure you are, and how to follow the proceeds across a bridge. Answer each question from memory, then reveal.
+
+| Question | Answer |
+| --- | --- |
+| **1.** Who is the victim, and why can an attacker reach it? | [A pool: a contract that anyone, or any contract, can call [@qin_attackingdefiecosystem_2021].]{.fragment} |
+| **2.** What does reentrancy look like in a trace, and what makes it an attack? | [The same function called inside itself, paying one contract, with a loss larger than the deposit; The DAO, 2016 [@l34_ethereum_dao_vulnerability_2016].]{.fragment} |
+| **3.** A transaction opens with a large loan and ends repaying it. Is that an attack? | [Not by itself: a flash loan is the attacker's money, and most are arbitrage. Look for the loss [@aave_flashloans_2026].]{.fragment} |
+| **4.** How does borrowed money move a price a lender trusts? | [A large trade on the exchange pool the lender reads; bZx, 2020 [@qin_attackingdefiecosystem_2021].]{.fragment} |
+| **5.** What was Euler's flaw, and what did the flash loan do? | [A missing health check in the donate function; the loan was the money, and the attacker sat on both sides of the liquidation [@eulerfinance_warpeacescenes_2024].]{.fragment} |
+| **6.** What do you write in the finding? | [The money and the flaw, how sure, and what shows the loss, using OWASP's names [@owasp_smartcontracttop10_2026].]{.fragment} |
+| **7.** The exploit is done. How do you follow the proceeds over a bridge? | [Look the send up, take the far side's hash and open it on the far chain; the page alone is the bridge's word [@layerzero_scan_2026].]{.fragment} |
+
+: {tbl-colwidths="[45,55]"}
+
+**Next:** Bytecode and Decompiling; NFT Wash Trading, where the exploit contract itself is read. Can you now tell the agent which attack emptied the pool, and what shows the loss?
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reviews the lesson against its objective: seven questions, covering the three parts and the point, answered from memory before each answer appears. It matters here because recalling an answer fixes it better than hearing a summary, and the questions show whether students can now do what the opening promised. Emphasize question 3: it is the point of the lesson, asked a second time.
+
+**Key Points**
+- Question 3 repeats part 2's check and the opening's point: a flash loan is the money, not the flaw. A class that still calls the loan the theft needs the order-the-steps check again.
+- Question 6 is the finding the practice asked for: money, flaw, confidence and the loss.
+- Question 7 sets up the lab, which follows an exploit's proceeds across a bridge.
+- No new facts appear here; every answer was taught on an earlier slide.
+- The next lesson, 11-FO, teaches how to read the exploit contract itself; it is named here and not taught.
+
+**Walkthrough**
+1. Read the objective.
+2. For each question, give students a few seconds to answer aloud or on paper, then reveal the answer.
+3. Ask the class the objective as a question: can you now say which attack emptied the pool, and what shows the loss?
+
+**Sources**
+- @qin_attackingdefiecosystem_2021
+- @l34_ethereum_dao_vulnerability_2016
+- @aave_flashloans_2026
+- @eulerfinance_warpeacescenes_2024
+- @owasp_smartcontracttop10_2026
+- @layerzero_scan_2026
 
 :::
 
