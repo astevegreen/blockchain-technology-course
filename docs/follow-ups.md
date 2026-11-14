@@ -47,15 +47,6 @@ slide index), which is never listed here.
   example is mined at 887,986. Run it through the `source` skill, then fix. The Answers slide's notes also contradict
   themselves: the Overall Slide Concept says "three agreeing clues give Moderate", while the slide and Key Points say
   two. [14 Nov 2026, 02-BF quiz bank]
-- `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json` has no questions on the
-  01-PC rebuild's three checks, two worked Tron reads, Raft and PBFT, the practice or the review. [13 Nov 2026, 01-PC rebuild]
-- `quizes/quiz_json/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-quiz-bank.json`:
-  the bank has no questions on the rebuild's proof-of-work slide, four checks, worked confirmation count, practice or
-  review. Its q3, q6, q7 and q9 (CFT/BFT and n = 3t + 1) trace only to hidden slides, so their `lesson_block`s read
-  "No slide now: ...". Owner, 14 Nov 2026 (approving the recommendation): move the CFT/BFT questions to
-  01-PC's bank and drop the n = 3t + 1 ones. 01-PC's "Permissioned: the operator decides
-  who writes" now teaches Raft (runs while a majority stays up) and PBFT (runs while under a third lie), though not
-  the n = 3t + 1 formula. [13 Nov 2026, 01-CM rebuild; 01-PC rebuild]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
   trace to 05-EF slides hidden on 31 Oct 2026 (q8 and q9 read "No slide now: ..."); the slides rebuilt on 13 Nov 2026
   (the two checks, the Terra slide, the practice and review) have few questions.
@@ -77,10 +68,14 @@ slide index), which is never listed here.
   each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
 - Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF,
-  06-EF and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF
+  06-EF and 04-CP banks (also 05-EF, whose wave regenerates it). Wave 2 has no session for the 06-EF
   and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
   label. The `specific_source_lesson` strings in the 04-EF and 04-CP banks still name old titles (the check does not
   read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
+- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`: the
+  "Each confirmation makes reversal harder" slide quotes "somewhat arbitrary" with no citation on the slide (its notes
+  credit the developer guide; the slide cites the payment-processing page). Cite the right source; run the `source`
+  skill. [14 Nov 2026, 01-CM quiz bank]
 - 02-IN's mempool slide quotes the Bitcoin.org guide ("When a peer shuts down, its memory pool is lost", undated) and its notes say
   Bitcoin Core keeps it in memory, not on disk; Bitcoin Core 0.14.0 (Mar 2017) saves the mempool to `mempool.dat` on shutdown.
   Run the `source` skill to date and narrow the claim. [14 Nov 2026, 02-IN quiz rebuild]

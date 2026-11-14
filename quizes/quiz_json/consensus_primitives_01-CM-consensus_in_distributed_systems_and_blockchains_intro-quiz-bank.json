@@ -1,391 +1,562 @@
 {
   "lesson_id": "consensus_primitives_01_cm_consensus_in_distributed_systems_and_blockchains_intro",
-  "lesson_title": "Consensus in Distributed Systems and Blockchains: An Introduction",
-  "date_generated": "2026-04-26",
+  "lesson_title": "Ledger and Finality",
+  "date_generated": "2026-11-14",
   "topic": "primitives",
   "tags": [
     "consensus-primitives",
     "primitives",
     "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
     "consensus",
-    "distributed-systems",
-    "bft",
-    "slva",
     "finality",
-    "quorums",
-    "byzantine-fault-tolerance",
-    "crash-fault-tolerance",
-    "partial-synchrony",
-    "flp-impossibility",
-    "nakamoto-consensus",
+    "ledger",
+    "proof-of-work",
+    "proof-of-stake",
+    "confirmations",
     "quiz-bank"
   ],
   "metadata": {
     "module": "consensus_primitives",
     "lesson_file_stem": "01-CM-consensus_in_distributed_systems_and_blockchains_intro",
-    "lesson_source_path": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd",
-    "reading_source_path": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt",
-    "reading_status": "acquired",
+    "reading_status": "partial",
     "source_mix": {
-      "lesson_source_questions": 10,
-      "reading_source_questions": 3
+      "lesson_grounded_questions": 14,
+      "reading_grounded_questions": 6
     },
-    "generation_notes": "Questions prioritize mechanism tracing, scenario diagnosis, quorum reasoning, timing assumptions, and consensus-family tradeoffs. Publication metadata and platform trivia are intentionally avoided."
+    "lesson_source_path": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd",
+    "note": "The lesson names no assigned reading. Reading questions rest on documents the lesson cites and quotes (Nakamoto, Douceur, Decker and Wattenhofer, the Bitcoin.org developer guides, Payment Processing, the Arbitrum glossary), and each states a fact that is on a visible slide. Only the visible slides before the first content-hidden block count; the hidden slides get no questions. Coverage: one question for each visible check, worked, practice, answers and review slide and the proof-of-work slide, plus the trust, consensus, ledger, confirmation and proof-of-stake slides. The Raft and PBFT (crash and Byzantine fault tolerance) questions of the earlier bank moved to the 01-PC bank, and the n = 3t + 1 questions were dropped."
   },
   "questions": [
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A node receives a transaction with a valid digital signature, but two different blocks try to spend the same coin. What does the system need beyond local signature checking?",
-      "correct_answer": "System-wide consensus on the canonical ledger history, because local validity alone cannot choose between conflicting spends.",
+      "question_stem": "An agent's draft says: \"The chain is immutable, so this payment can never be undone.\" The payment is two minutes old, in Bitcoin's newest block. Which rewrite is accurate?",
+      "correct_answer": "Say the record is tamper-evident, give its confirmation count and the time read, and say the newest blocks can still be replaced.",
       "incorrect_answers": [
-        "Stronger signature verification for each spend, because valid signatures alone resolve conflicting ledger entries locally.",
-        "A first-seen rule at each node, because the earliest signed spend gives peers the canonical history without extra voting.",
-        "Extra transaction encryption before broadcast, because hidden payloads let validators accept both spends in one ledger."
+        "Keep \"immutable\", and add that the payment is final, because Bitcoin declares a payment final once it is in any block.",
+        "Say the record is tamper-evident, and add that the payment is final, because hash-chaining stops anyone replacing new blocks.",
+        "Replace \"immutable\" with \"trustless\", because no single party owns the record, so nothing on it can ever be undone later."
       ],
-      "explanation": "The lesson distinguishes local validation from consensus. A valid signature can show that a transaction was authorized, but the network still needs agreement on one ordered ledger history to prevent conflicting spends from both being accepted.",
+      "explanation": "Hashes and copies make an edit to old entries show, so the record is tamper-evident, but the newest blocks can still be replaced while two valid versions compete. Bitcoin never declares a payment final, so the sentence gives the count and the time read.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "consensus",
-        "local-validation",
-        "double-spending",
-        "slides",
-        "scenario"
+        "tamper-evident",
+        "immutability",
+        "misconception",
+        "finality",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Consensus decides which history we all accept",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Why Agreement Matters"
+      "lesson_block": "Check: fix \"immutable, so the record is certain\"",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Check: fix \"immutable, so the record is certain\""
     },
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "Two correct nodes finalize different blocks at the same height and neither block can be rolled back under the protocol rules. Which correctness guarantee is most directly broken?",
-      "correct_answer": "Safety, because the protocol has allowed conflicting finalized outcomes.",
+      "question_stem": "An attacker runs a thousand Bitcoin nodes from one rented server, each with its own identity, hoping to outvote the network. Why does the attacker's history not win?",
+      "correct_answer": "Nodes follow the chain with the most work, and a thousand nodes on one server add no mining power.",
       "incorrect_answers": [
-        "Liveness, because progress stops when validators split across branches.",
-        "Validity, because final blocks must be proposed by every honest node.",
-        "Progress, because finalized forks block any later block production."
+        "Each node's vote is weighted by the ETH locked up behind it, and the attacker's nodes hold none of that.",
+        "Nodes follow the history most nodes hold, and a thousand nodes are still too few to outnumber the network.",
+        "Nodes count identities, but the network drops duplicate identities that come from one server address."
       ],
-      "explanation": "Safety, also framed as finality or consistency in the lesson's SLVA/FPIC mapping, means the system should never commit conflicting values. Finalizing two incompatible blocks at the same height violates that guarantee.",
-      "difficulty_level": 2,
+      "explanation": "Bitcoin does not count nodes; it follows the chain with the most work. Extra identities add no work, so the attacker's history has no more work than before. What would work is most of the mining power, which costs real hardware and electricity.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "slva",
-        "safety",
-        "finality",
-        "slides",
-        "misconception"
+        "sybil-attack",
+        "proof-of-work",
+        "misconception",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: The Correctness Framework",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Foundations of Consensus"
+      "lesson_block": "Check: can a thousand fake nodes outvote?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Check: can a thousand fake nodes outvote?"
     },
     {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "During a round, one node sends block A to half the validators and block B to the other half while pretending to follow the protocol. Which failure model best describes this behavior?",
-      "correct_answer": "Byzantine fault, because the node is active and equivocal rather than merely stopped.",
+      "question_stem": "Two transfers are each two minutes old: one on Tron, whose explorer shows its block as solidified, and one on Bitcoin. What can the analyst state?",
+      "correct_answer": "Tron as settled, since a solidified block no longer rolls back; Bitcoin only with its confirmation count and time read.",
       "incorrect_answers": [
-        "Crash fault, because peers infer the sender stopped after seeing partial evidence.",
-        "Omission fault, because some validators miss the proposal seen by other peers.",
-        "Timing fault, because correct proposals arrive in different round slots at peers."
+        "Both as settled, because two minutes have passed on each chain and both chains treat that age as final, so no recheck.",
+        "Neither as settled, because no chain finalizes a transfer within two minutes, so even a solidified block can still roll back.",
+        "Bitcoin as settled, because the transfer is in a block, and Tron only after six confirmations have passed on it."
       ],
-      "explanation": "The lesson defines Byzantine behavior as arbitrary or malicious behavior, including sending conflicting information to different peers. A crashed node stops; this node continues participating while lying differently to different recipients.",
-      "difficulty_level": 2,
+      "explanation": "The answer depends on each chain's rule, not the clock. Tron's documentation says a solidified block does not roll back. On Bitcoin, two minutes is likely no more than one confirmation, so the analyst gives the count and the time read, and checks again.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "byzantine-fault",
-        "equivocation",
-        "failure-models",
-        "slides",
-        "scenario"
+        "finality",
+        "tron",
+        "confirmations",
+        "comparison",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: Failure Models",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Failure Models"
+      "lesson_block": "Check: two transfers, two minutes old. Settled?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Check: two transfers, two minutes old. Settled?"
     },
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "Why does a fully asynchronous network make deterministic consensus so hard when even one node may fail?",
-      "correct_answer": "A delayed message can be indistinguishable from a failed node, so a protocol cannot always know whether waiting or deciding is safe for progress.",
+      "question_stem": "An agent asks whether miners were blocking a suspect's Bitcoin transfer that has sat unconfirmed for six hours. You looked on one public explorer. Which wording is right?",
+      "correct_answer": "Unconfirmed at the time read, on one explorer's mempool view; a low fee, miners leaving it out or a relay fault is not ruled out.",
       "incorrect_answers": [
-        "Asynchronous delivery forces all correct nodes to wait for the same message order, so deterministic decisions are unsafe until every proposal arrives.",
-        "A timeout lets validators distinguish crashed from delayed nodes in full asynchrony, so FLP is mainly about slow finality rather than correctness.",
-        "Fully asynchronous protocols need identical clocks before they can count votes, so finality fails whenever validators estimate timeouts differently."
+        "Censored by the miners, because six hours is far longer than the wait that Bitcoin's usual six confirmations allow for, so it was blocked.",
+        "Rejected by the network, because a transaction not mined within an hour has failed, so it is no longer pending at all.",
+        "Unconfirmed on every node, because all full nodes share one global mempool, and the explorer simply displays that list."
       ],
-      "explanation": "The lesson uses FLP to show the timing-model problem: without bounds on message delay, deterministic protocols cannot always distinguish slow communication from failure while guaranteeing both safety and liveness.",
+      "explanation": "There is no single mempool: each full node keeps its own, so an explorer shows one view. A low fee, miners leaving the transaction out on purpose and a relay problem all leave the same symptom, so the analyst reports what was seen and lists what cannot be ruled out.",
       "difficulty_level": 4,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "flp-impossibility",
-        "asynchrony",
-        "timing-models",
-        "slides",
-        "mechanism"
+        "mempool",
+        "censorship",
+        "alternatives",
+        "reporting",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: The Timing Limits - FLP and DLS Results",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: The Timing Limits - FLP and DLS Results"
+      "lesson_block": "Check: a transfer is stuck. What do you write?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Check: a transfer is stuck. What do you write?"
     },
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "In a standard BFT round pattern, what is the role of a quorum certificate?",
-      "correct_answer": "It is portable evidence that enough validators signed support for a proposal to justify advancing toward commit or finality.",
+      "question_stem": "Block 277,321 is the latest when you read Alice's payment, which sits in block 277,316. How many confirmations does it have, and what do you write?",
+      "correct_answer": "Six (277,321 minus 277,316 plus 1): write six confirmations at the time read, though Bitcoin never declares the payment final.",
       "incorrect_answers": [
-        "It is a leader-issued certificate that proves a proposed block is valid before validators have to vote on it in the current round.",
-        "It is a simple-majority receipt that lets the leader skip later commit logic because any majority is enough for BFT finality.",
-        "It is a membership proof that identifies the next proposer, rather than evidence that validators supported one specific proposal."
+        "Five (277,321 minus 277,316): write five confirmations, not counting the block the payment sits in, at the time read.",
+        "Six (277,321 minus 277,316 plus 1): write that the payment is final, because six is Bitcoin's own rule for finality.",
+        "Five (277,321 minus 277,316): write that the payment is final, because five is the count Bitcoin treats as fully settled."
       ],
-      "explanation": "The Propose, Vote, Commit structure relies on collecting a quorum of signed votes. A quorum certificate packages that support so later protocol steps can rely on it without re-asking every participant.",
+      "explanation": "A transaction's confirmations count its own block and every block on top, so the count is latest height minus the payment's height plus one: six. Bitcoin never declares a payment final, and six is only the usual wait for high-value payments. The sentence carries the time read, because the count keeps rising.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "bft",
-        "quorum-certificate",
-        "propose-vote-commit",
-        "slides",
-        "mechanism"
+        "confirmations",
+        "worked-example",
+        "finality",
+        "reporting",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: BFT Mechanics",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: BFT Mechanics"
+      "lesson_block": "Worked: count Alice's confirmations",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Worked: count Alice's confirmations"
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A BFT network has 7 validators and is designed around n = 3t + 1. How many Byzantine faults can it tolerate, and what quorum size matches the 2t + 1 rule?",
-      "correct_answer": "It can tolerate t = 2 Byzantine validators, requiring quorums of 5.",
+      "question_stem": "A 2 BTC payment sits in Bitcoin block 900,000, and block 900,001 is the latest when you look. What do you tell the agent?",
+      "correct_answer": "Two confirmations at the time read, short of the usual six; Bitcoin never declares it final, so check again before reporting.",
       "incorrect_answers": [
-        "It can tolerate t = 3 Byzantine validators, requiring quorums of 4 votes.",
-        "It can tolerate t = 1 Byzantine validator, requiring quorums of 3 votes.",
-        "It can tolerate t = 2 Byzantine validators if all 7 sign each commit."
+        "One confirmation at the time read, because only the block on top of the payment's own block counts toward its total, not that block.",
+        "Final, because a second block now sits on the payment's block, and a second block is enough to make it final for good.",
+        "Two confirmations, which is enough to state it as fact, since two blocks make a payment final on every chain at once."
       ],
-      "explanation": "For n = 3t + 1, a seven-node BFT system corresponds to t = 2. The quorum threshold is 2t + 1, so five signed votes are required to preserve the needed overlap despite Byzantine behavior.",
+      "explanation": "The count is 900,001 minus 900,000 plus 1, which is two. Two is short of the usual six, and Bitcoin never calls a payment final, so the sentence gives the count and the time read, and the analyst checks again before reporting it.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "quorum-thresholds",
-        "byzantine-fault-tolerance",
-        "bft",
-        "slides",
-        "application"
+        "confirmations",
+        "finality",
+        "practice",
+        "reporting",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: Quorums",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Quorums"
+      "lesson_block": "Practice: how final are three transfers?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Practice: how final are three transfers?"
     },
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "Why is quorum overlap central to BFT safety rather than just a convenient way to count votes?",
-      "correct_answer": "Two valid quorums must share at least one honest node, which prevents that honest node from supporting two conflicting finalized values.",
+      "question_stem": "An Arbitrum One transfer is a minute old. The sequencer has confirmed it, but its batch has not been posted to Ethereum. What do you write?",
+      "correct_answer": "Confirmed by the sequencer, a semi-trusted promise; not final on Ethereum until its batch is final there.",
       "incorrect_answers": [
-        "Quorum overlap ensures every commit quorum includes the current leader, letting that leader veto conflicting proposals before finality in each round.",
-        "Quorum overlap makes a simple majority safe in BFT, because any repeated signer is assumed not to equivocate across commits.",
-        "Quorum overlap reduces bandwidth by routing votes through a fixed subset of validators instead of broadcasting to the whole group."
+        "Final on Arbitrum, because the sequencer's confirmation is a vote by validators that cannot be reversed.",
+        "Final once the 6.4-day challenge period ends, as that wait applies to every transfer, not just withdrawals.",
+        "Confirmed, and final as soon as Ethereum's next block is added, whether the batch is posted or not."
       ],
-      "explanation": "The lesson emphasizes the intersection logic behind BFT quorum math. If two commit quorums intersect in at least one honest node, that honest node will not sign conflicting decisions, blocking two incompatible finalizations.",
+      "explanation": "Arbitrum's soft confirmation is the sequencer's promise. Hard finality comes only when the transfer's batch is posted to Ethereum and final there, so the sentence says confirmed by the sequencer, not yet final. The 6.4-day wait applies to withdrawals to Ethereum.",
       "difficulty_level": 4,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "quorum-overlap",
-        "safety",
-        "byzantine-fault-tolerance",
-        "slides",
-        "mechanism"
+        "arbitrum",
+        "sequencer",
+        "finality",
+        "trust",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: Quorums",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Quorums"
+      "lesson_block": "Answers: three transfers, and the word for each",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Answers: three transfers, and the word for each"
     },
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "A leader stops proposing blocks, so validators' timeouts expire and they move to a new view with a different leader. Which goal does this mechanism primarily support?",
-      "correct_answer": "Liveness, because the protocol needs a way to keep making progress when the current leader fails or is suspected.",
+      "question_stem": "Before reading a chain, what should an analyst expect it to tell them about a transfer?",
+      "correct_answer": "What was recorded, when, and how final it is; who did it is a separate judgment, and why it stalled is not on the chain.",
       "incorrect_answers": [
-        "Safety, because the new leader can ignore old votes and finalize whichever valid branch it sees first in the new view.",
-        "Validity, because a view change rechecks transaction signatures and removes invalid proposals before commit.",
-        "Fault detection, because a timeout proves the old leader was Byzantine rather than merely slow in that round."
+        "What was recorded, when, and how final it is, plus who controls the addresses, because a final record names its owner.",
+        "What was recorded and who did it, with a confidence word; whether it is final is left to the agent to decide later.",
+        "What was recorded and why a delayed transfer never confirmed, since a miner's reason is part of the block record."
       ],
-      "explanation": "View changes and timeouts are liveness recovery mechanisms in leader-based consensus. They let the system replace a failed or faulty leader while preserving safety constraints from earlier rounds.",
+      "explanation": "The chain tells the analyst what was recorded, when, and how final it is. Attribution is a judgment that needs its own evidence and a confidence word, and a delay may mean congestion, censorship or a relay problem, so the analyst names the explanations that cannot be ruled out.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "view-change",
-        "leader-failure",
-        "liveness",
-        "slides",
-        "scenario"
+        "reporting",
+        "attribution",
+        "finality",
+        "review",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: BFT Mechanics",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: BFT Mechanics"
+      "lesson_block": "Review: \"final\" depends on the chain",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Review: \"final\" depends on the chain"
     },
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "A consortium of known organizations wants final blocks that cannot later be reverted, and it worries that some participants may actively lie. Which consensus family best matches that design goal?",
-      "correct_answer": "BFT consensus, because it assumes known participants and can provide deterministic finality despite a bounded number of Byzantine faults.",
+      "question_stem": "What does a Bitcoin miner do to win the right to add a block?",
+      "correct_answer": "Changes the nonce and hashes the block's header again and again until the hash falls below the target, at real cost.",
       "incorrect_answers": [
-        "CFT consensus, because known participants are enough when the design assumes only crashes or missed messages from member nodes.",
-        "Nakamoto consensus, because proof of work supports open participation and gives probabilistic confidence as blocks get deeper rather than finality.",
-        "Local validation, because independent signature and balance checks can replace agreement on a shared transaction order for the consortium."
+        "Hashes each waiting transaction once and wins if its transactions' summary is the lowest hash that any miner submits.",
+        "Collects votes from other miners, each vote weighted by the computing work behind it, until two-thirds of that work agrees.",
+        "Guesses an account nonce for its address until the hash of the whole block falls below the target, at little cost."
       ],
-      "explanation": "The lesson compares CFT, BFT, and Nakamoto-style consensus by identity model, adversary model, and finality. Known membership plus malicious insiders points toward BFT rather than crash-only or probabilistic longest-chain consensus.",
-      "difficulty_level": 4,
+      "explanation": "The miner hashes the block's header: the previous block's hash, a summary of its transactions, the time and a nonce. No one can predict which nonce works, so the only way is to guess and check, and every guess costs computing time and electricity.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "bft",
-        "consensus-families",
-        "finality",
-        "slides",
-        "tradeoff"
+        "proof-of-work",
+        "mining",
+        "nonce",
+        "mechanism",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: Comparing Consensus Families",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Comparing Consensus Families"
+      "lesson_block": "Proof of work is guessing until a hash is low",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Proof of work is guessing until a hash is low"
     },
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "Why does proof of work use asymmetric difficulty?",
-      "correct_answer": "Producing a valid block requires costly trial-and-error, while checking that the proof satisfies the target is cheap for other nodes.",
+      "question_stem": "Which statement says correctly where the trust sits on Bitcoin and on Tron?",
+      "correct_answer": "Bitcoin: most of the mining power not attacking together. Tron: its 27 elected Super Representatives, who make blocks.",
       "incorrect_answers": [
-        "Producing and verifying blocks are both intentionally costly, so low-resource nodes are discouraged from checking the chain or joining consensus.",
-        "Producing a block is cheap once a miner has identity permission, while verification is the expensive Sybil-resistance step.",
-        "The puzzle selects a known leader deterministically, so other nodes trust the signed block header instead of checking the hash target."
+        "Bitcoin: on the 27 elected Super Representatives. Tron: on most of the mining power never attacking together.",
+        "Neither: both chains are trustless, because cryptography replaces every party the system might otherwise need.",
+        "Bitcoin: on the sequencer that puts its transactions in order. Tron: on the exchange that holds users' coins for its users."
       ],
-      "explanation": "Nakamoto-style consensus uses proof of work as Sybil resistance in open participation. The puzzle should be hard to solve but easy to verify, allowing the network to cheaply check expensive mining effort.",
+      "explanation": "A blockchain is not trustless: the trust moves to cryptography, the consensus rules and an assumption about the participants. On Bitcoin it sits on most of the mining power not attacking together; on Tron, on 27 elected Super Representatives; on Arbitrum, on its sequencer.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "proof-of-work",
-        "sybil-resistance",
-        "nakamoto-consensus",
-        "slides",
-        "mechanism"
+        "trust",
+        "trustless",
+        "bitcoin",
+        "tron",
+        "comparison",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: Nakamoto (Proof-of-Work) Consensus",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Nakamoto (Proof-of-Work) Consensus"
+      "lesson_block": "\"Trustless\" is wrong: the trust just moves",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: \"Trustless\" is wrong: the trust just moves"
     },
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "Framing blockchain consensus as atomic broadcast rather than a one-time vote emphasizes what practical requirement for ledger replicas?",
-      "correct_answer": "Correct nodes must deliver the same sequence of valid transactions so deterministic state machines evolve identically.",
+      "question_stem": "Alice signs two payments spending the same coins, one to Carol and one to Dave, and different nodes see a different one first. What does consensus promise?",
+      "correct_answer": "Honest nodes accept one history and never disagree on a decided entry, and the ledger keeps growing despite faults.",
       "incorrect_answers": [
-        "Correct nodes only need to agree on the current block, because later transaction order can be handled independently.",
-        "Correct nodes need the same set of valid transactions, but each replica may apply them in its own local order.",
-        "Validators must first assign unique identities to clients, after which transaction ordering is only a performance detail."
+        "Both payments are kept, because each is valid on its own, and the signatures decide which of them is paid first.",
+        "Each node keeps the payment it saw first, so different copies may keep different payments until the nodes compare them.",
+        "The hash links choose the earlier payment, because a hash shows which of two valid transactions was signed first."
       ],
-      "explanation": "Cachin and Vukolic connect blockchains to state-machine replication and atomic broadcast. The core issue is ordered delivery over time: if correct replicas process the same requests in different orders, their ledger states may diverge.",
+      "explanation": "Signatures and hashes show that each transaction is well formed, but they cannot choose between two that conflict. Consensus makes honest nodes accept the same history. Safety means honest nodes never disagree about a decision; liveness means the ledger keeps growing despite faults.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "atomic-broadcast",
-        "state-machine-replication",
-        "ledger-ordering",
-        "reading",
-        "assigned-reading",
-        "mechanism"
+        "consensus",
+        "double-spend",
+        "safety",
+        "liveness",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Reading: Consensus As Ordered Delivery",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Consensus As Ordered Delivery"
+      "lesson_block": "Consensus decides which history we all accept",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Consensus decides which history we all accept"
     },
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "In an eventual-synchrony model, what should happen during a period of arbitrary network delay if the fault assumptions still hold?",
-      "correct_answer": "The protocol may stop making progress, but it should not decide conflicting histories.",
+      "question_stem": "Three agencies keep one incident log and none is in charge. Which of a ledger's three additions answers who decides the order of entries?",
+      "correct_answer": "Consensus: a rule all the parties agree in advance for what is added next and in what order.",
       "incorrect_answers": [
-        "It should keep finalizing by treating delayed validators as crashed through the round.",
-        "It may allow temporary conflicting commits and repair them after stabilization.",
-        "It should switch to permissionless participation because fixed identities seem unreliable."
+        "Replication: every agency holds a full copy, so the agency holding the most entries sets the order.",
+        "Hash-linking: each block holds the previous block's hash, so the hashes sort the entries by time.",
+        "The append-only log: entries are added only at the end, so the first agency to write sets the order."
       ],
-      "explanation": "The reading stresses a practical safety/liveness split. During unstable network periods, FLP-style limits may block progress, but safety should remain intact; liveness resumes after the network stabilizes enough for timeouts and view changes to work.",
-      "difficulty_level": 3,
+      "explanation": "A ledger is a log kept by many parties with three additions. Replication answers who holds the record, hash-linking answers how an edit shows, and consensus answers who decides the order of what is added next.",
+      "difficulty_level": 2,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "eventual-synchrony",
-        "safety",
-        "liveness",
-        "reading",
-        "assigned-reading",
-        "scenario"
+        "ledger",
+        "consensus",
+        "replication",
+        "hash-linking",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Reading: Eventual Synchrony Protects Safety While Delaying Progress",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Eventual Synchrony Protects Safety While Delaying Progress"
+      "lesson_block": "A ledger is a shared log no one can quietly edit",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: A ledger is a shared log no one can quietly edit"
     },
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A permissioned blockchain orders transactions first, then each node applies a validity rule that depends on local wall-clock time and private configuration. What risk does this create?",
-      "correct_answer": "Correct nodes may compute different validity results after the same ordered prefix, undermining consistent ledger state.",
+      "question_stem": "An attacker with less than half of Bitcoin's mining power mines a private chain that leaves out Alice's payment. What happens as blocks build on the payment?",
+      "correct_answer": "The attacker's chance of catching up falls exponentially with each block it is behind, but never reaches zero.",
       "incorrect_answers": [
-        "The network gains Byzantine tolerance because each node independently rejects invalid transactions locally after shared ordering.",
-        "The issue is limited to throughput, since a total transaction order makes later validity decisions identical.",
-        "Consensus becomes unnecessary after ordering, because private validation rules can safely finalize local state."
+        "The attacker's chance falls to zero after six blocks, which is the point at which Bitcoin declares a payment final.",
+        "The attacker's chance stays the same, because only the work of its private chain decides which chain wins.",
+        "The attacker's chance rises with each block, because it can forge the signatures and rewrite the recent blocks."
       ],
-      "explanation": "The reading's external-validity discussion warns that blockchain validation must be deterministic and shared. If correct nodes evaluate validity differently after the same delivered sequence, ordering alone does not ensure consistent replicated state.",
+      "explanation": "With less than half the mining power, an attacker's chance of catching up falls exponentially with each block behind but never reaches zero, which is why confirmations lower the risk and never end it. Even a majority attacker can rewrite recent blocks but cannot forge a signature.",
       "difficulty_level": 4,
       "topic": "primitives",
       "tags": [
-        "consensus-primitives",
         "primitives",
         "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
-        "external-validity",
-        "deterministic-validation",
-        "state-machine-replication",
-        "reading",
-        "assigned-reading",
-        "application"
+        "confirmations",
+        "double-spend",
+        "probabilistic-finality",
+        "attack",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Reading: Validation Must Be Deterministic And Shared",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Validation Must Be Deterministic And Shared"
+      "lesson_block": "Each confirmation makes reversal harder",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Each confirmation makes reversal harder"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "On Ethereum an explorer shows a block as finalized. What does that mean, and what would reversing it cost?",
+      "correct_answer": "Validators holding two-thirds of staked ETH voted for its checkpoint; reversing it costs at least a third of all stake.",
+      "incorrect_answers": [
+        "Its 12-second slot has passed, so reversing it would cost only the one proposer that staked a 32 ETH deposit, nothing more.",
+        "Six blocks now sit on it, so reversing it would take most of the network's computing power for about an hour.",
+        "The sequencer has confirmed it, so reversing it would cost nothing until its batch is posted to Ethereum, which is slow."
+      ],
+      "explanation": "Ethereum's finality is a protocol state: when votes from at least two-thirds of all staked ETH cover a pair of checkpoints, the older one is finalized with every block before it. Reversing it would cost the attackers at least a third of all staked ETH, because the rules destroy the stake of validators who vote for two conflicting histories.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "proof-of-stake",
+        "finality",
+        "ethereum",
+        "validators",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Proof of stake finalizes by a two-thirds vote",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Proof of stake finalizes by a two-thirds vote"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "As Nakamoto's white paper describes it, how do nodes choose among competing chains, and why does that make an old block costly to rewrite?",
+      "correct_answer": "They follow the chain with the greatest total work, so a rewrite must redo that block's work and the work of every block after it.",
+      "incorrect_answers": [
+        "They follow the chain held by the most nodes, so a rewrite needs most of the whole network to switch to the new copy.",
+        "They follow the chain with the most transactions, so a rewrite must refill the old block with more transactions than before.",
+        "They follow the chain whose newest block has the lowest hash, so a rewrite needs only one lucky guess at that block now."
+      ],
+      "explanation": "Nodes follow the chain with the greatest total work. To rewrite an old block an attacker must redo its work and the work of every later block, faster than the honest miners add new ones.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "proof-of-work",
+        "most-work-rule",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Proof of work is guessing until a hash is low",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Proof of work is guessing until a hash is low",
+      "specific_source_reading": "Nakamoto, Bitcoin: A Peer-to-Peer Electronic Cash System: nodes follow the chain with the greatest total work; each guess spends CPU time and electricity, as the slide states it"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "Douceur's Sybil attack is one party creating many identities. Why do open chains make influence cost something instead of counting identities?",
+      "correct_answer": "Anyone can create a thousand identities for almost nothing, so a head count is easy to win; work or stake cannot be faked.",
+      "incorrect_answers": [
+        "Counting identities is too slow for strangers, so work or stake is used to speed up how fast each vote is tallied.",
+        "Strangers cannot be trusted to vote honestly, so open chains count only the votes of members who were named in advance.",
+        "Identities are checked against a register by the network, but the checks are slow, so cost replaces the register."
+      ],
+      "explanation": "On an open chain anyone can create identities, so a head count could be outvoted by a crowd of fake ones. Making influence cost computing work or locked-up stake means a thousand identities buy nothing. Ledgers with known members can count votes instead.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "sybil-attack",
+        "open-chains",
+        "proof-of-stake",
+        "proof-of-work",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Open chains buy openness with slower finality",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Open chains buy openness with slower finality",
+      "specific_source_reading": "Douceur, The Sybil Attack: one party can present many identities; open chains therefore weigh influence by work or stake, as the slide states it"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "Bitcoin's developer guide calls the usual wait of six confirmations \"somewhat arbitrary\". What does that mean for how an analyst writes a report?",
+      "correct_answer": "Six is a convention, not a rule, so the analyst states the count relied on and the time read, never calling it final.",
+      "incorrect_answers": [
+        "Six is a protocol limit, so the analyst may write final once a payment reaches six, whatever its size or the time.",
+        "Six is a fixed wait that applies only to small payments, so a high-value payment needs a larger number set by the network.",
+        "Six is a rule that Ethereum copied from Bitcoin, so the analyst can use six for any chain's payment, whatever its rule."
+      ],
+      "explanation": "Bitcoin never declares a payment final; six confirmations, about an hour, is the usual wait for high-value payments, and the developer guide itself calls the number somewhat arbitrary. The analyst names the count and the time read so the agent can judge it.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "confirmations",
+        "finality",
+        "convention",
+        "reporting",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Each confirmation makes reversal harder",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Each confirmation makes reversal harder",
+      "specific_source_reading": "Bitcoin.org developer guide and Bitcoin Project, Payment Processing: six confirmations is the usual wait for high-value payments; the guide calls the number somewhat arbitrary, as the slide states it"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "Bitcoin's developer guide says a transaction paying the minimum fee \"should be prepared to wait a long time\". Why?",
+      "correct_answer": "Miners pick mostly by fee per byte, so a minimum-fee transaction is passed over for better-paying ones.",
+      "incorrect_answers": [
+        "Nodes drop minimum-fee transactions from relay, so the sender must rebroadcast before any miner can see it.",
+        "Miners must take transactions in the order their node first received them, and minimum-fee ones arrive last.",
+        "It must wait for the next target adjustment, every 2,016 blocks, before any miner may include it at all."
+      ],
+      "explanation": "Each full node keeps its own mempool, and miners pick transactions mostly by fee per byte. A minimum-fee transaction can wait a long time for a quiet block, so a stuck transfer may mean a low fee, not censorship.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "mempool",
+        "fees",
+        "congestion",
+        "censorship",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Delay may mean congestion, not censorship",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Delay may mean congestion, not censorship",
+      "specific_source_reading": "Bitcoin.org developer guide, Transactions and P2P Network: miners choose mostly by fee per byte; a minimum-fee transaction should be prepared to wait a long time, as the slide states it"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "Two Bitcoin miners find valid blocks at nearly the same time, and the next block extends one of them. What happens to the transactions in the other block?",
+      "correct_answer": "That block becomes stale and its transactions go back into the mempool to wait for a later block.",
+      "incorrect_answers": [
+        "Those transactions are cancelled, and each sender must sign them again before any miner can include them.",
+        "Those transactions stay in the stale block, which nodes keep as a second record of the same history.",
+        "Those transactions are confirmed in both blocks, so each of them has two confirmations at the same time."
+      ],
+      "explanation": "Network delay makes nodes differ on which block came first. Nodes follow the chain with the most work, so when the next block extends one side the other becomes stale. Its transactions return to the mempool and can be mined again, with no attacker involved.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "stale-block",
+        "fork",
+        "mempool",
+        "network-delay",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A stale block is routine, not an attack",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: A stale block is routine, not an attack",
+      "specific_source_reading": "Decker and Wattenhofer, Information Propagation in the Bitcoin Network, and Bitcoin.org P2P Network guide: delay lets two blocks compete; a stale block's transactions return to the mempool, as the slide states it"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "Per the Arbitrum glossary, when is an Arbitrum One transfer hard-final, and how long does a withdrawal to Ethereum wait?",
+      "correct_answer": "Once its batch is posted to Ethereum and final there; a withdrawal waits a 6.4-day challenge period.",
+      "incorrect_answers": [
+        "Once the sequencer confirms it; a withdrawal waits 6.4 minutes, which is about one Ethereum epoch of time.",
+        "Once six Ethereum blocks sit on its batch; a withdrawal waits about an hour for those six blocks to settle.",
+        "Once 19 of 27 elected producers have built on it; a withdrawal waits 6.4 days for that vote to pass there."
+      ],
+      "explanation": "Arbitrum's soft finality is the sequencer's promise. Hard finality comes when the batch is posted to Ethereum and final there, and a withdrawal to Ethereum also waits out a 6.4-day challenge period. The figures carry their date (23 Oct 2026) because upgrades change them.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "arbitrum",
+        "layer-2",
+        "finality",
+        "challenge-period",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Each chain puts a different number on \"final\"",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Each chain puts a different number on \"final\"",
+      "specific_source_reading": "Arbitrum glossary (Offchain Labs): soft finality is the sequencer's promise, hard finality is the batch final on Ethereum, withdrawals wait a 6.4-day challenge period [23 Oct 2026], as the slide states it"
     }
   ],
   "hierarchy": {
@@ -396,8 +567,8 @@
         "enabled": true,
         "lectures": [
           {
-            "id": "lec_consensus_intro_lesson_slides",
-            "title": "Consensus in Distributed Systems and Blockchains: An Introduction - lesson slides",
+            "id": "lec_ledger_and_finality_lesson",
+            "title": "Ledger and Finality - lesson synthesis",
             "enabled": true,
             "question_ids": [
               "q1",
@@ -409,17 +580,24 @@
               "q7",
               "q8",
               "q9",
-              "q10"
+              "q10",
+              "q11",
+              "q12",
+              "q13",
+              "q14"
             ]
           },
           {
-            "id": "lec_consensus_intro_assigned_reading",
-            "title": "Consensus in Distributed Systems and Blockchains: An Introduction - assigned reading",
+            "id": "lec_ledger_and_finality_reading",
+            "title": "Ledger and Finality - reading synthesis",
             "enabled": true,
             "question_ids": [
-              "q11",
-              "q12",
-              "q13"
+              "q15",
+              "q16",
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
