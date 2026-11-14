@@ -235,6 +235,30 @@ class PointerCheckTest(unittest.TestCase):
         # a code after the title on the same line is found even when an earlier sentence names another lesson
         self.assertEqual(len(self.prose("Day 2 is 01-CM. Open the slide %s of 02-BF.\n" % old)), 1)
 
+    def test_href_accepts_only_ids_on_headings_or_anchor_spans(self) -> None:
+        self.write("b/02-BF-bitcoin.qmd", lesson("Bitcoin", (
+            "## Mining a Candidate Block {#old-heading-id}\n\n"
+            "Some text {#prose-id} and a [note]{#note-id} here.\n\n[]{#span-id}\n")))
+
+        def page(slug: str) -> str:
+            return ('{ title: "Mining a Candidate Block", href: "../../../lessons/b/02-BF-bitcoin.html#/%s" }' % slug) + chr(10)
+        self.assertEqual(self.prose(page("old-heading-id")), [])
+        self.assertEqual(self.prose(page("span-id")), [])
+        self.assertTrue(any("not a visible slide" in f for f in self.prose(page("prose-id"))))
+        self.assertTrue(any("not a visible slide" in f for f in self.prose(page("note-id"))))
+
+    def test_title_with_no_lesson_code_must_be_visible_in_one_lesson(self) -> None:
+        self.write("b/02-IN-intro.qmd", lesson("Intro", "## Mining a Candidate Block\n\nAlso here.\n"))
+        found = self.prose('Open the slide "Mining a Candidate Block".' + chr(10))
+        self.assertEqual(len(found), 1)
+        self.assertIn("several lessons", found[0])
+        self.assertIn("02-BF", found[0])
+        self.assertIn("02-IN", found[0])
+        # naming the lesson settles it
+        self.assertEqual(self.prose('Open the slide "Mining a Candidate Block" of 02-BF.' + chr(10)), [])
+        # a title in no lesson still fails as missing
+        self.assertTrue(any("no slide titled" in f for f in self.prose('Open the slide "Nowhere Slide".' + chr(10))))
+
     def test_main_fails_when_only_out_of_lesson_titles_are_stale(self) -> None:
         from unittest import mock
         with mock.patch.object(pc, "load_course", return_value=self.title_course()),                 mock.patch.object(pc, "check_titles", return_value=["card.md: stale title"]),                 mock.patch.object(pc, "check_lesson", return_value=[]):

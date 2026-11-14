@@ -83,6 +83,7 @@ LEAD_TITLE = re.compile(QUOTE + r"\s*\(?`?(?:slide\s+)?(?:in|of|from)?\s*`?lesso
 HREF_TITLE = re.compile(
     r"title:\s*" + QUOTE + r"\s*,?\s*href:\s*[\"']([^\"']*?lessons/[\w/]+?/(\d{2}-[A-Z]{2})-[\w-]+\.html)#/([^\"']+)[\"']")
 EXPLICIT_ID = re.compile(r"\{[^}]*#([\w-]+)[^}]*\}")  # {#old-id} on a heading or an empty span kept for old links
+ANCHOR_SPAN = re.compile(r"\[\]\{[^}]*#([\w-]+)[^}]*\}")  # an empty []{#old-id} span
 SENTENCE_END = re.compile(r"(?<=[.;!?])\s+(?=[A-Z0-9(*`\"])|\n\s*\n")
 FRONT_TITLE = re.compile(r"^title:\s*[\"']?(.*?)[\"']?\s*$", re.MULTILINE)
 
@@ -114,7 +115,7 @@ class Lesson:
     lines: list[tuple[int, str]] = field(default_factory=list)  # (1-based line, visible text)
     visible: set[str] = field(default_factory=set)  # slide titles, normalised
     hidden: set[str] = field(default_factory=set)
-    anchors: set[str] = field(default_factory=set)  # explicit {#id} anchors on visible lines, slug-keyed
+    anchors: set[str] = field(default_factory=set)  # explicit {#id} anchors on slide headings and empty spans, slug-keyed
     subject: str = ""  # the lesson's own title, from its front matter
 
     @property
@@ -256,7 +257,8 @@ def load_course(root: Path = LESSONS, sheet: Path = RUN_SHEET) -> Course:
         front = FRONT_TITLE.search(text[:2000])
         lesson.subject = norm_title(front.group(1)) if front else ""
         lesson.hidden = {norm_title(t) for t, shows in titles if not shows} - lesson.visible
-        lesson.anchors = {slug_key(a) for _, line in lesson.lines for a in EXPLICIT_ID.findall(line)}
+        lesson.anchors = {slug_key(a) for _, line in lesson.lines
+                          for a in (EXPLICIT_ID if SLIDE_HEADING.match(line) else ANCHOR_SPAN).findall(line)}
         lessons[lesson.code] = lesson
     return Course(lessons, taught)
 
@@ -548,6 +550,10 @@ def check_prose(path: Path, course: Course) -> list[str]:
     out = []
     for line, title, lesson in prose_titles(text, course):
         problem = title_problem(title, lesson, course)
+        if not problem and lesson is None:  # no lesson code in the sentence: the title must be one lesson's alone
+            shown = sorted(les.code for les in course.lessons.values() if norm_title(title) in les.visible)
+            if len(shown) > 1:
+                problem = f'"{title}" is a slide in several lessons ({", ".join(shown)}); name the lesson'
         if problem:
             out.append(f"{rel}:{line}: {problem}")
     for m in HREF_TITLE.finditer(text):
