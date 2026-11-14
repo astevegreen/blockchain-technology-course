@@ -15,7 +15,9 @@ test("the rails are the hooks, settings, sprint skills and agents, git hooks, wo
     "tools/hooks/sprint-guard.mjs", ".claude/settings.json", ".claude/settings.local.json", ".claude/skills/sprint-lane/SKILL.md",
     ".claude/agents/implementer.md", ".claude/agents/reviewer.md", ".githooks/pre-commit", ".github/workflows/check.yml",
     "tools/check.py", "tools/qmd_lint.py", "tools/asof.py", "tools/tests/test_check.py", "tools/tests/test_qmd_lint.py",
-    "tools/tests/test_asof.py", "quizes/verify_single_quiz.py", "blockchain-course/glossary/scripts/validate_glossary.py", "tools/sprint/rules.mjs",
+    "tools/tests/test_asof.py", "tools/pointer_check.py", "tools/tests/test_pointer_check.py", "tools/lab_manifest.py",
+    "quizes/verify_distractor_alignment.py", "quizes/pretest/verify_pretest.py", "quizes/posttest/verify_posttest.py",
+    "quizes/challenge/verify_challenge.py", "quizes/verify_single_quiz.py", "blockchain-course/glossary/scripts/validate_glossary.py", "tools/sprint/rules.mjs",
     "tools/agy.mjs", "tools/gemini-api.mjs", "tools/second-look.mjs", "tools/second-look.md", "tools/rail-audit.mjs", "tools/rail-audit.md", "GEMINI.md",
   ];
   const others = [

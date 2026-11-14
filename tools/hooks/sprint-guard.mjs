@@ -42,6 +42,8 @@ const LOCKED = [
   /^tools\/sprint\//, /^tools\/hooks\//, /^tools\/check\.py$/,
   // The checks tools/check.py runs and its tests, and the second look with its prompts and GEMINI.md.
   /^tools\/(qmd_lint|asof)\.py$/, /^tools\/tests\/test_(check|qmd_lint|asof)\.py$/, /^quizes\/verify_single_quiz\.py$/,
+  /^tools\/(pointer_check|lab_manifest)\.py$/, /^tools\/tests\/test_pointer_check\.py$/, /^quizes\/verify_distractor_alignment\.py$/,
+  /^quizes\/(pretest\/verify_pretest|posttest\/verify_posttest|challenge\/verify_challenge)\.py$/,
   /^blockchain-course\/glossary\/scripts\/validate_glossary\.py$/,
   /^tools\/agy\.mjs$/, /^tools\/gemini-api\.mjs$/, /^tools\/second-look/, /^tools\/rail-audit/, /^GEMINI\.md$/,
   // Generated: they change only by running their scripts (CLAUDE.md, hard rule 2).
