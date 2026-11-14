@@ -93,14 +93,15 @@ slide index), which is never listed here.
   read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
 
 ## Labs
-- The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
-  built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
-  draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
 - The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which
   reaches the bitcoin, final-trace, wallet and hide-and-trace labs only when the owner next rebuilds the base image
   (student-release, `rebuild_bases`); until then their dashboards may show "Offline". After that rebuild, drop the
   stopgap `sed` loop in `coinjoin-trace/mempool/load-chain.sh` and `bitcoin-trace/mempool/load-chain.sh`.
   [14 Nov 2026, wave 5a]
+- `dynamic-labs/wallet/gateway/static/wallet/index.html` shows public keys (`#pubs`), receiving (`#recv`,
+  `#msaddr0`) and change addresses (`#chg`, `#msaddr1`) without the shared look's role colours, while Day 2's
+  05-BF diagram colours them (public key `#e5f3fc`/`#56b4e9`, change `#fdf0d5`/`#e69f00`).
+  [14 Nov 2026, wave 5b second look]
 
 ## Quizzes and instructor tools
 - **The pretest page hides three things from the marker.** `/instructor/pretest`

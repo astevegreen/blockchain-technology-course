@@ -51,14 +51,14 @@ def tx_section(tx, height):
              row("Size", f'{tx["vsize"]} vB ({tx["weight"]} weight units)'),
              row("Locktime", tx["locktime"]),
              "</table>"]
-    parts.append(f"<h3>Inputs ({len(tx['vin'])})</h3><table>")
+    parts.append(f"<h3>Inputs ({len(tx['vin'])})</h3><table class=\"role-input\">")
     for n, vin in enumerate(tx["vin"]):
         prev = vin["prevout"]["scriptPubKey"]
         parts.append(row(f"Input {n}", f'{addr_link(prev["address"])}<br>'
                          f'{TYPES.get(prev["type"], prev["type"])}, {btc(vin["prevout"]["value"])}<br>'
                          f'spends output {vin["vout"]} of {code(vin["txid"])}'))
     parts.append("</table>")
-    parts.append(f"<h3>Outputs ({len(tx['vout'])})</h3><table>")
+    parts.append(f"<h3>Outputs ({len(tx['vout'])})</h3><table class=\"role-output\">")
     for vout in tx["vout"]:
         spk = vout["scriptPubKey"]
         parts.append(row(f'Output {vout["n"]}', f'{addr_link(spk["address"])}<br>'
@@ -117,6 +117,9 @@ code {{ font-size: .9em; }}
 nav li {{ display: inline; margin-right: .75rem; }}
 input {{ font: inherit; padding: .3rem .5rem; width: 100%; max-width: 40rem; box-sizing: border-box; }}
 .note {{ background: #fff6dd; padding: .5rem 1rem; border-left: 4px solid #e0a800; }}
+/* Inputs and outputs in the course's shared look (blockchain-course/assets/labs/shared/look.css). */
+.role-input th, tr.role-input th {{ border-left: 4px solid #0072b2; background: #e1effa; padding-left: .5rem; }}
+.role-output th, tr.role-output th {{ border-left: 4px solid #009e73; background: #dff4ec; padding-left: .5rem; }}
 @media (max-width: 40rem) {{ th {{ width: auto; display: block; }} td {{ display: block; padding-bottom: .5rem; }} }}
 </style>
 </head>

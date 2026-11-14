@@ -17,3 +17,9 @@ paths:
   mind-map pass and glossary run (`docs/build-spec.md`, "During the build").
 - Build a new or reworked lesson to `docs/lesson-standard.md` (write the titles first), and slide and notes text to
   `docs/writing-standard.md`; the reviewer measures the change against both. `docs/standards.md` indexes them.
+- A diagram node that draws a coin or key takes the labs' colours (`assets/labs/shared/look.css`) as
+  `fillcolor`/`color`: input `#e1effa`/`#0072b2`, output `#dff4ec`/`#009e73`, change `#fdf0d5`/`#e69f00`, private
+  key `#fbe6d9`/`#d55e00`, public key or address `#e5f3fc`/`#56b4e9`, signature `#f7e8f0`/`#cc79a7`; the
+  transaction itself `#f8fafc`/`#94a3b8`; the fee `style="rounded,dashed"`, `color="#6b7280"`. A label, edge or the
+  slide's text names the role too, so colour is never the only cue; a coin whose role the slide leaves open stays
+  neutral.
