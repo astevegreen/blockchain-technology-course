@@ -1,0 +1,604 @@
+{
+  "lesson_id": "bitcoin_06_bf_multisig_and_wallet_software",
+  "lesson_title": "Bitcoin - Multi-sig and Wallet Software",
+  "date_generated": "2026-11-14",
+  "topic": "bitcoin",
+  "tags": [
+    "bitcoin",
+    "06-bf-multisig-and-wallet-software",
+    "multisig",
+    "wallet-software",
+    "psbt",
+    "chain-limits",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "bitcoin",
+    "lesson_file_stem": "06-BF-multisig_and_wallet_software",
+    "reading_status": "partial",
+    "source_mix": {
+      "lesson_grounded_questions": 14,
+      "reading_grounded_questions": 6
+    },
+    "lesson_source_path": "blockchain-course/lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd",
+    "note": "The lesson names no assigned reading. Reading questions rest on the primary documents it cites (BIP 174, BIP 67, BIP 327, Electrum FAQ, Sparrow quick start), fetched 14 Nov 2026; BIP 174 was read only to its first 100,000 characters. Coverage: q1-q8 give one question to each visible check, worked example, practice, answers and review slide; q9-q14 cover the rule, witness, what-shows, key-order, Taproot and server slides."
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A real mainnet spend has one input from a 62-character bc1q address. Output 1 pays a single-key address and output 2 returns the larger amount to the paying address. What is the best call on the change?",
+      "correct_answer": "Output 2 is the change, Moderate: it returns to the input's own address, one strong clue, and a single input rules out a CoinJoin.",
+      "incorrect_answers": [
+        "Output 2 is the change, High: the same address and the same output type are two independent clues that point to one single, shared wallet.",
+        "Output 1 is the change, Moderate: a wallet's change normally goes to a single-key address, and the other amount is round.",
+        "No call can be made: a 2-of-3 wallet may pay itself, so an output back to the paying address says nothing about change."
+      ],
+      "explanation": "The change returns to the very address that paid, which is one strong clue; one input rules out a CoinJoin. A matching type is not a second clue, because an output to the same address always has the same type, so the call is Moderate, not High.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "change-attribution",
+        "confidence-words",
+        "p2wsh",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A real 2-of-3 spend, before the theory",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: A real 2-of-3 spend, before the theory"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "An agent asks whether an unspent 3... output is a 2-of-3 multi-sig. What can the analyst say?",
+      "correct_answer": "Not yet: it shows only a script hash.",
+      "incorrect_answers": [
+        "Yes: 3... is the P2SH form of multi-sig.",
+        "No: 3... outputs lock to a single key.",
+        "Yes: the address encodes its key count."
+      ],
+      "explanation": "Until it is spent, a 3... output is a hash of a script. It may be multi-sig, nested SegWit or any other script, so the type cannot be told. The rule is revealed only when the output is spent.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "p2sh",
+        "witness",
+        "chain-limits",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: which wrapper is this output?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Check: which wrapper is this output?"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A P2WSH 2-of-3 spend's witness is an empty item, two signatures, then a script listing keys K1, K2 and K3. A student writes that K3 did not sign. What is the best response?",
+      "correct_answer": "The explorer does not say. Signatures follow key order, so K1+K2, K1+K3 and K2+K3 all fit; only checking each signature against each key settles it.",
+      "incorrect_answers": [
+        "Correct: signatures follow key order, so the two signatures listed in order are K1's and K2's, and K3 was left out of the set of signers.",
+        "Correct only if K3 is listed last, because an explorer keeps the keys sorted and so the first two signatures belong to K1 and K2 alone.",
+        "Unfounded, but the empty first item stands for the skipped key, so the dummy shows that exactly one of the keys stayed out of the spend."
+      ],
+      "explanation": "Any pair of the three keys signs in key order, so the order alone rules out no pair. The explorer does not label signatures; a node settles it by checking each signature against each key.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "multisig",
+        "signatures",
+        "misconception",
+        "chain-limits",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: which key did not sign, and who signed?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Check: which key did not sign, and who signed?"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "An agent asks whether the real 2-of-3 spend was made with Electrum, given that its three keys run 02..., 03..., 02... in the script. What does the chain support?",
+      "correct_answer": "It names no program. Unsorted keys rule out a sortedmulti descriptor like Bitcoin Core's tutorial, but many programs build this script.",
+      "incorrect_answers": [
+        "Electrum, because it is the lightweight program that builds P2WSH 2-of-3 scripts and leaves its mark in the witness script.",
+        "Bitcoin Core, because its 2-of-3 tutorial builds a P2WSH script and no other open-source program makes a script of that shape in practice.",
+        "A hardware wallet, because the unsorted key order shows that each key was added from its own device at setup, as is the usual way."
+      ],
+      "explanation": "The chain shows a script type and a transaction, never a program's name. Unsorted keys rule out one setup, sortedmulti, and name none; wallet habits are leads to check, not a name.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "wallet-software",
+        "chain-limits",
+        "key-order",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: can you tell which software built it?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Check: can you tell which software built it?"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "Two signers have each run walletprocesspsbt on their own machines, and the PSBT has been combined and finalized. What is on chain before sendrawtransaction?",
+      "correct_answer": "None of the spend: still off chain.",
+      "incorrect_answers": [
+        "The unsigned spend is in the mempool.",
+        "One signature, relayed to the nodes.",
+        "The signed witness, once it is merged."
+      ],
+      "explanation": "In the worked 2-of-3, only the last step, sendrawtransaction, puts the spend on the network. A PSBT that is never broadcast leaves no trace on chain.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "psbt",
+        "bitcoin-core",
+        "worked-example",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A PSBT carries a half-signed spend",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: A PSBT carries a half-signed spend"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A second spend has one input from a 62-character bc1q address and a four-item witness: an empty item, two signature-sized items, then a script decoding as OP_PUSHNUM_2, three keys, OP_PUSHNUM_3, OP_CHECKMULTISIG. What is the reading?",
+      "correct_answer": "A P2WSH 2-of-3 multi-sig input with two signatures, since two items sit between the dummy and the script.",
+      "incorrect_answers": [
+        "A P2WSH 3-of-3 multi-sig input with three signatures, since the script lists three keys, all needed.",
+        "A P2SH-P2WSH 2-of-3 multi-sig input with two signatures, since the last item is a witness program in the scriptSig.",
+        "A P2WSH 2-of-2 multi-sig input with two signatures, since two signatures appear and the third key is a backup."
+      ],
+      "explanation": "A 62-character bc1q input is P2WSH. The decoded last item gives 2-of-3, and the two items between the empty dummy and the script are the signatures.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "p2wsh",
+        "multisig",
+        "witness",
+        "practice",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Practice: read a second real 2-of-3 spend",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Practice: read a second real 2-of-3 spend"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "In the second spend, an un-round amount goes to a new bc1q address of the input's type and 0.3 BTC goes to a single-key address. Why is the change call Moderate rather than High?",
+      "correct_answer": "Two weaker clues agree: the change has the input's script type and an un-round amount where 0.3 is round, but a careful wallet can defeat both clues.",
+      "incorrect_answers": [
+        "Only one clue applies, since the change went to a new address instead of back to the payer, and one strong clue gives Moderate, as before.",
+        "The explorer cannot say which two keys signed, and that uncertainty about the signers lowers every change call in the spend to Moderate.",
+        "Any spend that needs several signatures is Moderate, because the rule keeps a wallet's own outputs from being told apart by any explorer."
+      ],
+      "explanation": "The confidence word follows the clues. The input's type and an un-round amount agree, but a careful wallet can defeat both, so the call is Moderate. The case was Moderate too, for a different reason: one strong clue.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "change-attribution",
+        "confidence-words",
+        "clue-independence",
+        "practice",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Answers: the payment, the change, and how sure",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Answers: the payment, the change, and how sure"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst drafts: \"Three keys, so three people hold this wallet, and the first key listed is the lead signer.\" Which correction fits the lesson?",
+      "correct_answer": "Three keys do not show three people, since one person can hold all three, and the key order carries no rank at all.",
+      "incorrect_answers": [
+        "Three keys do show three holders, but the first key is the lead signer only when the building wallet sorted the keys.",
+        "Three keys show three people only if all three signed, and the first key listed is the one that signed first.",
+        "Three keys show three holders if the public keys all differ, and key order follows the order each holder joined."
+      ],
+      "explanation": "Bitcoin Core's tutorial builds a 2-of-3 from three wallets in one node, so keys are not people. Wallets sort keys by their bytes or order them as they choose, so position shows nothing about roles.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "multisig",
+        "key-order",
+        "misconception",
+        "chain-limits",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: read the rule, not the people",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Review: read the rule, not the people"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "In a spend of OP_2 <A> <B> <C> OP_3 OP_CHECKMULTISIG, what is the empty item before the signatures?",
+      "correct_answer": "A dummy the opcode takes and ignores.",
+      "incorrect_answers": [
+        "A placeholder for the key that skipped.",
+        "A marker holding the threshold value m.",
+        "A stand-in for the redeem script itself."
+      ],
+      "explanation": "The first item is a dummy that OP_CHECKMULTISIG takes and ignores; since SegWit it must be the empty byte array. It is not a placeholder for a key or the threshold.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "multisig",
+        "witness",
+        "dummy-item",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "The rule is written in the script",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: The rule is written in the script"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A P2WSH multi-sig input's witness has five items: an empty item, three signatures, then the witness script. What does the script's opening number show?",
+      "correct_answer": "That m is 3, because a spend supplies m signatures after the empty item and then the script.",
+      "incorrect_answers": [
+        "That n is 3, because the script lists three keys and only three signatures match here.",
+        "That m is 4, because the empty item counts as a signature slot, so four slots are filled.",
+        "That m is 2, because a 2-of-3 is the usual form and the spare third signature is never checked."
+      ],
+      "explanation": "The number before the keys is m, the minimum number of signatures that must match a key. A spend supplies m signatures, in key order, after the empty dummy.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "multisig",
+        "witness",
+        "signatures",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A spend's signatures follow the keys' order",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: A spend's signatures follow the keys' order"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "Which statement about the real 2-of-3 spend can an analyst write as a plain reading, with no confidence word?",
+      "correct_answer": "Two valid signatures met a 2-of-3 rule, and the script type, its three keys and its outputs are all shown on chain.",
+      "incorrect_answers": [
+        "The three keys belong to three people, since each of the three public keys sits in the witness script on chain.",
+        "A company or custodian is behind the keys, since a 2-of-3 rule is the usual setup for a company's treasury.",
+        "The keys are kept on separate devices, since the witness shows that each key signed from its own machine."
+      ],
+      "explanation": "The chain shows m, n, the keys, that m valid signatures were given, the script type and the outputs. Who holds the keys, whether an organisation is behind them and where they are kept are not shown.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "chain-limits",
+        "multisig",
+        "observed-fact",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "What a multi-sig spend shows, and what not",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: What a multi-sig spend shows, and what not"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A student sees the case's keys listed as 02..., 03..., 02... and writes that the first key is the lead signer. What does the lesson say about key order?",
+      "correct_answer": "Position follows how the building wallet ordered the keys, often by their bytes, so it shows nothing about roles.",
+      "incorrect_answers": [
+        "Position follows who joined the wallet first, so the first key's holder leads whenever the keys run in sorted order.",
+        "Position follows signing priority, and the unsorted 02..., 03..., 02... order shows the lead signer was chosen.",
+        "Position follows each key's value, so keys starting 02... outrank the key starting 03... and the first leads."
+      ],
+      "explanation": "BIP 67 sorts keys by their bytes so one set gives one address. Position follows the keys' bytes or the wallet's choice, not the people; the case's own keys are not even sorted.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "key-order",
+        "descriptors",
+        "misconception",
+        "multisig",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Key order in the script carries no meaning",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Key order in the script carries no meaning"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A bc1p spend reveals a script: <A> OP_CHECKSIG, <B> OP_CHECKSIGADD, <C> OP_CHECKSIGADD, OP_2 OP_NUMEQUAL. How is it read?",
+      "correct_answer": "A script-path 2-of-3: a signature count.",
+      "incorrect_answers": [
+        "A MuSig2 key-path spend of one joint key.",
+        "A 3-of-3 multi-sig where every key signs.",
+        "OP_CHECKMULTISIG under other opcode names."
+      ],
+      "explanation": "In tapscript, m-of-n uses OP_CHECKSIGADD, which adds one to a count for each valid signature, and the count is compared with m. OP_CHECKMULTISIG is disabled there; a MuSig2 key path would reveal no script.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "taproot",
+        "tapscript",
+        "multisig",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Taproot multi-sig can look like one key",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Taproot multi-sig can look like one key"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject uses Electrum on a public server. An agent asks who off chain might know this wallet's addresses. What is the best answer?",
+      "correct_answer": "The server operator, who can link the addresses it was asked about and sees the client's IP address; keys stay with the user.",
+      "incorrect_answers": [
+        "No one, because Electrum never sends private keys to the servers, so nothing about the wallet leaves the program, now or later on.",
+        "The subject's internet provider, who reads the wallet's addresses from the traffic and ties them to the account holder.",
+        "The miner of the block, who sees the wallet's addresses when each spend is mined and ties them to its IP address."
+      ],
+      "explanation": "A lightweight wallet asks a server about its addresses, so the server can link them and see where the request came from. Private keys are not sent, but addresses and IP address are.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "wallet-privacy",
+        "electrum",
+        "servers",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Servers learn which addresses a wallet has",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Servers learn which addresses a wallet has"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A signer on an air-gapped machine is handed a PSBT for a multi-sig spend. What does that file hold for the signer?",
+      "correct_answer": "The information necessary for a signer to produce signatures, so the file can be carried to the signer.",
+      "incorrect_answers": [
+        "Only the unsigned spend, so the signer must fetch what it needs from a full node before it signs.",
+        "The other signers' private keys, so the signer can produce every signature itself from the file alone.",
+        "A broadcast-ready transaction, so the signer's only job is to send it on to the network at once, unsigned."
+      ],
+      "explanation": "The slide quotes BIP 174: a PSBT is a file holding the information necessary for a signer to produce signatures. It is passed between signers, and nothing reaches the chain until the last step.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "psbt",
+        "offline-signing",
+        "signing-roles",
+        "scenario",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A PSBT carries a half-signed spend",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: A PSBT carries a half-signed spend",
+      "specific_source_reading": "BIP 174 (Chow), Partially Signed Bitcoin Transaction Format: purpose, as quoted on the slide"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "A hardware wallet and an air-gapped laptop are two of the three signers of a multi-sig spend. How can each take part?",
+      "correct_answer": "Each runs the same signing step on its own machine, adds one signature, and never sees another signer's private key.",
+      "incorrect_answers": [
+        "Each must be online to broadcast, since every signer sends its own signature to the network when it is done.",
+        "Each receives the other signers' private keys inside the file, so it can check their signatures before it signs.",
+        "Each signs only after the spend is on chain, since a PSBT is a record of a transaction that is already mined."
+      ],
+      "explanation": "The slide names air-gapped and hardware wallets among the signers a PSBT serves. Each signer works on its own machine, in any order, adds one signature and sees no one else's private key. Only the final step broadcasts.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "psbt",
+        "signing-roles",
+        "combiner",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A PSBT carries a half-signed spend",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: A PSBT carries a half-signed spend",
+      "specific_source_reading": "BIP 174 (Chow), Partially Signed Bitcoin Transaction Format: signers named on the slide"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does BIP 67 sort the keys of a multi-sig script by their bytes?",
+      "correct_answer": "So one key set gives one address.",
+      "incorrect_answers": [
+        "So the lowest key leads the signers.",
+        "So nodes can reject unsorted keys.",
+        "So cosigners can sign in any order."
+      ],
+      "explanation": "Without a standard order, n keys give many orderings and so many different addresses for one setup. Sorting gives one canonical script and address. The network cannot enforce it, because a P2SH address does not reveal its script.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "key-order",
+        "bip67",
+        "canonical-address",
+        "cause-effect",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Key order in the script carries no meaning",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Key order in the script carries no meaning",
+      "specific_source_reading": "BIP 67 (Kerin), Deterministic Pay-to-script-hash multi-signature addresses through public key sorting: motivation"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "A team says its Taproot output was set up with MuSig2 over five keys, and a spend shows one key and one signature. What do the team's statement and BIP 327 support?",
+      "correct_answer": "All five keys had to sign, and the chain still shows one key and one signature, so it does not show how many signed.",
+      "incorrect_answers": [
+        "Any three of the five keys could have signed, since MuSig2 is a threshold scheme the chain shows as one signature.",
+        "The spend shows all five keys, since MuSig2 lists each cosigner's key in a script path just as OP_CHECKSIGADD does so.",
+        "One key signed alone, since a single signature on chain means a single signer and a key path has no cosigners."
+      ],
+      "explanation": "BIP 327 calls MuSig2 an n-of-n scheme, not a threshold scheme: every signer takes part. Its output looks like a regular single-signer Taproot output, so a lone signature does not show a lone signer.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "musig2",
+        "taproot",
+        "n-of-n",
+        "misconception",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Taproot multi-sig can look like one key",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Taproot multi-sig can look like one key",
+      "specific_source_reading": "BIP 327 (Nick, Ruffing, Seurin), MuSig2 for BIP340-compatible multi-signatures: n-of-n and what an observer sees"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "An Electrum wallet never sends private keys to its servers, yet a public server can still link its addresses. What does the Electrum FAQ suggest to stop that?",
+      "correct_answer": "Run your own Electrum server, so that no outside operator can see which addresses your wallet asks it about.",
+      "incorrect_answers": [
+        "Keep the private keys on a hardware device, so the server can no longer tell which addresses are linked.",
+        "Use a VPN alone, since hiding the client's IP address also stops the server linking its addresses to you.",
+        "Create more addresses in the wallet, since a larger set of addresses hides which of them are the wallet's."
+      ],
+      "explanation": "The Electrum FAQ says the client never sends private keys, but it subscribes to its addresses, so a server can infer one owner and sees the client's IP address. Fast startup is traded for this exposure, and running your own server is the remedy.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "wallet-privacy",
+        "electrum",
+        "address-linkage",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Servers learn which addresses a wallet has",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Servers learn which addresses a wallet has",
+      "specific_source_reading": "Electrum documentation FAQ: privacy entries"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "A Sparrow user with significant funds connects it to a public server. What does the Sparrow quick start say is at stake?",
+      "correct_answer": "Privacy, not funds: public key information is shared with whoever runs the public server it uses, not the coins.",
+      "incorrect_answers": [
+        "Funds, because a public server holds the wallet's public key information and so can sign spends for the user too.",
+        "Neither, because a public server sees only addresses that are already public on the chain, so it learns nothing new.",
+        "Neither, because a public server sees only addresses already public on the chain, so it learns nothing new."
+      ],
+      "explanation": "The slide quotes the Sparrow quick start: on a public server the user is sharing public key information, and thus privacy, with whoever runs it. Sparrow can instead connect to a Bitcoin Core node or a private Electrum server.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "06-bf-multisig-and-wallet-software",
+        "wallet-privacy",
+        "sparrow",
+        "servers",
+        "scenario",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Servers learn which addresses a wallet has",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "06-BF-multisig_and_wallet_software.qmd: Wallet software builds, signs and broadcasts",
+      "specific_source_reading": "Sparrow quick start: choosing a server"
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_bitcoin",
+        "title": "Bitcoin",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_multisig_lesson",
+            "title": "Bitcoin - Multi-sig and Wallet Software - lesson synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12",
+              "q13",
+              "q14"
+            ]
+          },
+          {
+            "id": "lec_multisig_reading",
+            "title": "Bitcoin - Multi-sig and Wallet Software - reading synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q15",
+              "q16",
+              "q17",
+              "q18",
+              "q19",
+              "q20"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

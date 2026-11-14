@@ -52,10 +52,6 @@ slide index), which is never listed here.
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
-- 06-BF has no quiz bank of its own (only `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json` and
-  `weekone_check-quiz-bank.json` cite it), so nothing tests the rebuilt 06-BF's new slides: the three checks (which
-  wrapper; which key did not sign; which software built it), "three keys, one person", the PSBT steps, the lab-spend
-  practice and its Moderate change call, and the review. [13 Nov 2026, 06-BF rebuild]
 - `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` has no questions on the rebuild's two
   checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
 - `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json` has no questions on the
