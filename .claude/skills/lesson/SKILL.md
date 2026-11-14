@@ -9,7 +9,9 @@ paths:
 The rules (front matter, notes parts, citations, hiding, anchors) are in `.claude/rules/lessons.md`; this is the order.
 
 1. **Find it.** Ask the `scout` agent where the topic, heading or citation lives, then read the lesson by offset
-   around the hit. Lessons run to 2,000 lines.
+   around the hit. Lessons run to 2,000 lines. For a rework or rebuild, also grep `docs/follow-ups.md` for the
+   lesson's code (`02-BF`): each item there that the change settles is part of the job, and its bullet goes in the
+   same commit.
 2. **Edit the slide** in the sibling slides' style. What the slide teaches is the owner's call: when the request
    leaves it open, ask one question with a recommendation before writing. How you build it (structure, naming,
    placement) is yours: decide, and say why in the summary. A new or reworked lesson follows

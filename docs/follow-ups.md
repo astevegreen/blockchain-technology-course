@@ -15,9 +15,13 @@ slide index), which is never listed here.
 
 ## Lessons
 
-- Every lesson predates `docs/lesson-standard.md` (adopted 12 Nov 2026); bring each to it at its next rework,
-  titles first. The 04-FO trial found the common gaps: tasks practised that were never shown (check 8), no check
-  at a section's end (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO]
+- 24 lessons predate `docs/lesson-standard.md` (adopted 12 Nov 2026; every other lesson was rebuilt to it on
+  13 Nov): 03-IN, 04-IN, 05-IN; 01-DS to 04-DS; 01-CP, 02-CP, 03-CP, 05-CP; 02-CM, 03-CM;
+  01-BF, 03-BF, 04-BF; 02-EF, 06-EF; 02-PC; 01-AS to 05-AS. Bring each to it at its rebuild, titles first; the
+  bullets below tagged **Closes with** a lesson's rebuild ride with it (the `lesson` skill greps this file). The
+  04-FO trial found the common gaps: tasks practised that were never shown (check 8), no check at a section's end
+  (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO; list 14 Nov 2026, from each
+  lesson's last rebuild commit]
 
 - `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:208`: "Sendin tested 20 to 80 inputs" does not
   say whether these are the detector's settings or sweeps the paper observed; check `sendin_detectingcoldstorage_2018`
@@ -41,10 +45,6 @@ slide index), which is never listed here.
   reliable the method is", the BTC-e practice and answers, or the review; `quizes/lesson_synthesis/forensics_01-FO-*-synthesis.md:145`
   names the old title "Recap: every label, a source and a confidence" (now "Review: …"; the old anchor still resolves).
   [13 Nov 2026, 01-FO rebuild]
-- 01-FO's hidden Silk Road slides that the day map moves to 03-FO (`docs/build-spec.md:84-86`): 03-FO already
-  carries the market and the stolen-coins ledger trace; "The Break" (undercover buys, the IP leak, the arrest) is
-  legal process and stays hidden. Settle it when 03-FO is rebuilt. [13 Nov 2026, 01-FO rebuild; trimmed in the
-  05-FO rebuild, which took in "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"]
 - `quizes/quiz_json/forensics_05-FO-vasps_and_the_rules-quiz-bank.json` has no questions on the rebuilt 05-FO's
   three checks (which of the two is a VASP; a 2023 sanctions line today; is a 311 action an OFAC listing), the
   Travel Rule slide's check, the worked cluster reading, the practice and answers, or the review.
@@ -53,7 +53,7 @@ slide index), which is never listed here.
   (now "The BSA makes the business keep records"); the bank's q12 names "Tornado Cash: sanctioned 2022, delisted
   2025" (now "Date every sanctions claim: Tornado Cash").
   [13 Nov 2026, 05-FO rebuild]
-- `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
+- **Closes with the 04-BF rebuild.** `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);
   settle them when 04-BF is rebuilt. [13 Nov 2026, 05-FO rebuild]
@@ -88,7 +88,7 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:1016`
   lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
   identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
-- The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
+- **Closes with the 01-BF, 03-BF and 02-CP rebuilds.** The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
@@ -129,7 +129,8 @@ slide index), which is never listed here.
   "BFT Mechanics" and others), and the bank has no questions on the rebuild's proof-of-work slide, four checks,
   worked confirmation count, practice or review. q9 (BFT gives deterministic finality despite bounded Byzantine
   faults) and the other CFT/BFT and n = 3t + 1 questions trace only to hidden slides now that the visible table
-  drops the Raft/PBFT rows: pull them, or move them to 01-PC's bank. 01-PC's "Permissioned: the operator decides
+  drops the Raft/PBFT rows. Owner, 14 Nov 2026 (approving the recommendation): move the CFT/BFT questions to
+  01-PC's bank and drop the n = 3t + 1 ones. 01-PC's "Permissioned: the operator decides
   who writes" now teaches Raft (runs while a majority stays up) and PBFT (runs while under a third lie), though not
   the n = 3t + 1 formula. [13 Nov 2026, 01-CM rebuild; 01-PC rebuild]
 - Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
@@ -157,7 +158,7 @@ slide index), which is never listed here.
   `l33_nigeria_sec_…_2024`, `l33_fsca_…_2024`, `l33_government_of_india_union_budget_…_2022`,
   `l33_imf_imf_africa_s_digital_future_…_2024`; Reuters 401 to automated readers `l33_reuters_reuters_argentina_…_2024`.
   Each needs a live URL (or another source) and a `urldate`. [12 Nov 2026, adding read dates (R5)]
-- Hidden slides still cite the weak source `salisu_blockchainforensicsmodern_2023` (a low-tier journal article, W3
+- **Closes when a hidden slide citing it is shown again** (no work until then). Hidden slides still cite the weak source `salisu_blockchainforensicsmodern_2023` (a low-tier journal article, W3
   in `docs/analysis/2026-11-sources-review.md`): `blockchain-course/lessons/forensics/01-FO-*.qmd` (5 uses) and
   `forensics/02-FO-*.qmd` (8 uses). Replace or pair it if those slides are ever shown.
   [12 Nov 2026, replacing weak sources on the shown slides]
@@ -192,8 +193,6 @@ slide index), which is never listed here.
   "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
   [11 Nov 2026, building the bridge worked example]
 - The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
-- `dynamic-labs/lane-service/lab.yaml` `approx_download_mb: 139` still counts the 13 MB forensics snapshot the
-  launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` holds no solution now; it may come off
   `student-exclude.txt` and `tools/check.py` VM_RUNTIME_KEYS. [11 Nov 2026, step 7 archive]
 - `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
@@ -207,9 +206,8 @@ slide index), which is never listed here.
 ## Quizzes and instructor tools
 - **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
   `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
-- **Marking page untried in a class.** `/instructor/marking` passes its tests but no instructor has marked a real
-  post-test or lab point with it, and it does not track attendance (the certificate's third condition).
-  [12 Nov 2026, marking build]
+- **Marking page has no attendance.** `/instructor/marking` does not track attendance (the certificate's third
+  condition). Its first use in a class is step 4a of `docs/before-first-class.md`. [12 Nov 2026, marking build]
 
 ## Tooling and rules
 - **The parenthesis date format reaches the lessons only.** `tools/asof.py` reads `blockchain-course/lessons/`;
@@ -220,8 +218,6 @@ slide index), which is never listed here.
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
   so the day 3 game needs the live lab [11 Nov 2026, building the game]
 
-- `dynamic-labs/cross-chain/lab.yaml` memory_mb (90) and approx_download_mb (170) are estimates, not measured on a
-  student release. Measure after the next release build that includes the exploit services. [11 Nov 2026, exploit build]
 - The glossary lists "Access control (smart contracts)" only as an alias of the permissioned-ledger entry (04-DS);
   the Find the line card (`docs/lab-cards/find-the-line.md`, line 5) wants the alias given its own definition (who a
   contract lets do each thing: `onlyOwner`, an approval, no check). Needs the glossary pipeline. [11 Nov 2026, Find the
