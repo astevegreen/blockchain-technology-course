@@ -82,10 +82,6 @@ slide index), which is never listed here.
   **Sources** lists seem one slide off (the keys a slide cites are listed under the next slide's notes). Re-pair
   each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
-- `quizes/quiz_json/forensics_13-FO-state_actors_north_korea-quiz-bank.json` has no questions on the rebuilt 13-FO's
-  new slides: the check (who may say "Lazarus"), the worked Bybit five rows, the Drift answers and their confidence
-  word, and the review. Its q1 anchors to the opening slide, whose table it drew on is gone. [13 Nov 2026, 13-FO rebuild]
-
 - Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 02-BF, 01-EF,
   06-EF, 02-FO and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF,
   02-FO and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
