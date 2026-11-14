@@ -6,7 +6,7 @@
 | --- | --- |
 | Lab | Beat the freeze (review idea 18, "Can it be frozen?") |
 | Replaces | nothing |
-| Opens from | `lessons/ethereum/08-EF-layer2s_and_bridges.qmd`, "Bitget: bridges moved it faster than freezes" |
+| Opens from | `lessons/ethereum/08-EF-layer2s_and_bridges.qmd`, "Answers: bridges moved it faster than freezes" |
 | Day | Day 4, lesson ③ (layer 2s and bridges) |
 | Kind | prediction lab (five minutes) |
 

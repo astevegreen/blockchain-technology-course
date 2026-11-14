@@ -28,18 +28,12 @@ slide index), which is never listed here.
   and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
 - `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
   (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
-  or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",
-  "Your Turn: Read the Coin Contract", "Recognize It: ..."), as does `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:197`
-  and `:223`. [13 Nov 2026, 04-EF rebuild]
+  or the review. [13 Nov 2026, 04-EF rebuild]
 - `quizes/quiz_json/forensics_12-FO-aml_typologies_frameworks-quiz-bank.json` has no questions on the rebuilt 12-FO's
   new slides (the part 1 and part 2 checks, the drainer answers with their confidence words, the review). [13 Nov 2026, 12-FO rebuild]
 - `quizes/quiz_json/forensics_05-FO-vasps_and_the_rules-quiz-bank.json` has no questions on the rebuilt 05-FO's
   three checks (which of the two is a VASP; a 2023 sanctions line today; is a 311 action an OFAC listing), the
   Travel Rule slide's check, the worked cluster reading, the practice and answers, or the review.
-  Three quiz pointers name old titles (the hidden anchors still land): that bank's q6 and
-  `quizes/quiz_json/daily_d9_review_of_day8-quiz-bank.json` q14 name "A firm that ignores the BSA can be shut down"
-  (now "The BSA makes the business keep records"); the bank's q12 names "Tornado Cash: sanctioned 2022, delisted
-  2025" (now "Date every sanctions claim: Tornado Cash").
   [13 Nov 2026, 05-FO rebuild]
 - **Closes with the 04-BF rebuild.** `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
@@ -58,80 +52,39 @@ slide index), which is never listed here.
   Permissionless finance, Correlation, Forensic analysis and Blockchain vulnerability. Restore the first seven to
   `glossary/lesson_terms/` (from git history before this run) when the laundering-flow material above gets a home.
   [13 Nov 2026, glossary run after the lesson rebuilds]
-- `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json:92`: `lesson_block` names "A pending
-  transaction already shows the trade", now merged into "A router call names the path and the minimum out" (old
-  anchor kept); the bank has no questions on the rebuilt 03-EF's checks, the paymaster slide, the bundler practice or
-  the review. [13 Nov 2026, 03-EF rebuild]
-- `dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md:172` names the old 04-EF title "Upgradeability and Proxy
-  Patterns"; it is now "A proxy lets the code change; ask who upgrades" (the old anchor still resolves).
-  [13 Nov 2026, 04-EF rebuild]
-- Quiz `reading` fields name 01-EF slide titles the rebuild renamed: `quizes/quiz_json/weekone_check-quiz-bank.json:332`,
-  `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:118` and `:144`; and the 01-EF bank has no questions on the
+- `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json` has no questions on the rebuilt 03-EF's checks,
+  the paymaster slide, the bundler practice or the review. [13 Nov 2026, 03-EF rebuild]
+- The 01-EF bank (`quizes/quiz_json/ethereum_01-EF-ethereum_intro-quiz-bank.json`) has no questions on the
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
-- `docs/lab-cards/is-it-final-yet.md:9` and `:90` name the old 01-EF title "Pending, then included, then final"; it
-  is now "Pending, included, then final 15 minutes later" (the old anchor still resolves). [13 Nov 2026, 01-EF rebuild review]
-- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:1016`
-  lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
-  identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
 - **Closes with the 01-BF, 03-BF and 02-CP rebuilds.** The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
-- `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:136` names the old 05-BF title "What each wallet type leaves
-  the analyst"; it is now "Each wallet type leaves different evidence" (the old anchor still lands). [13 Nov 2026, 05-BF rebuild]
-- `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd` opening notes say day 2 (Wallet Types) showed
-  that an exchange gives each customer a deposit address; the rebuilt 05-BF leaves deposit addresses, sweeps and
-  omnibus wallets to 04-FO, so the recall should not claim day 2 taught them. [13 Nov 2026, 05-BF rebuild]
 - `quizes/quiz_json/bitcoin_05-BF-wallet_types-quiz-bank.json` has two questions (keys not coins; one seed, many
   addresses) and none on the rebuilt 05-BF's new slides: custody versus storage, the two checks (cold storage at an
   exchange; two addresses from one seed), the worked three-address-types slide, the worked Low assessment, the
   three-wallet practice and the review. [13 Nov 2026, 05-BF rebuild]
-- `quizes/pretest/pretest_week1-quiz-bank.json` (around line 283): the custody item's explanation says customer coins
-  "often sit pooled in omnibus accounts", which the rebuilt 05-BF no longer teaches (04-FO does); repoint that sentence
-  to 04-FO. The correct answer still traces to "Whoever holds the key controls the coins". [13 Nov 2026, 05-BF rebuild]
 - 06-BF has no quiz bank of its own (only `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json` and
   `weekone_check-quiz-bank.json` cite it), so nothing tests the rebuilt 06-BF's new slides: the three checks (which
   wrapper; which key did not sign; which software built it), "three keys, one person", the PSBT steps, the lab-spend
   practice and its Moderate change call, and the review. [13 Nov 2026, 06-BF rebuild]
-- The 02-BF rebuild renamed slides that other files name: `dynamic-labs/wallet/gateway/static/lab/index.html:48` and
-  `quizes/quiz_json/weekone_check-quiz-bank.json:252` ("Coinbase pays the miner: subsidy plus fees", now "A trace
-  ending at a coinbase reached new coins"); `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:135,140`,
-  `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:40` and
-  `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:218,250` ("Co-spending and change: two clues to
-  carry", now "Co-spent inputs point to one owner" and "Change is the output back to the payer");
-  `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json:98,179` ("Script type says what kind of wallet paid",
-  "A Merkle proof shows a tx is in a block"). Old anchors still land; update the strings. [13 Nov 2026, 02-BF rebuild]
-- `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` predates the rebuild: q9 (proof of work)
-  names the now-hidden "Mining a Candidate Block", other items name slides hidden since 24 Oct, and the bank has no
-  questions on the rebuild's two checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
-- `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json`: the 01-PC rebuild
-  merged "Tron works like Ethereum, with T-addresses" and "27 elected producers; final after 19 confirm" into "What
-  carries over: T-addresses and 19 of 27" (old anchors still land); the bank's `lesson_block` and anchor fields
-  (around lines 97-130) name the old titles. It has no questions on the rebuild's three checks, two worked Tron
-  reads, Raft and PBFT, the practice or the review. [13 Nov 2026, 01-PC rebuild]
+- `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` has no questions on the rebuild's two
+  checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
+- `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json` has no questions on the
+  01-PC rebuild's three checks, two worked Tron reads, Raft and PBFT, the practice or the review. [13 Nov 2026, 01-PC rebuild]
 - `quizes/quiz_json/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-quiz-bank.json`:
-  q1-q13's `lesson_block`s name slides hidden since 23 Oct ("Why Agreement Matters", "Failure Models", "Quorums",
-  "BFT Mechanics" and others), and the bank has no questions on the rebuild's proof-of-work slide, four checks,
-  worked confirmation count, practice or review. q9 (BFT gives deterministic finality despite bounded Byzantine
-  faults) and the other CFT/BFT and n = 3t + 1 questions trace only to hidden slides now that the visible table
-  drops the Raft/PBFT rows. Owner, 14 Nov 2026 (approving the recommendation): move the CFT/BFT questions to
+  the bank has no questions on the rebuild's proof-of-work slide, four checks, worked confirmation count, practice or
+  review. Its q3, q6, q7 and q9 (CFT/BFT and n = 3t + 1) trace only to hidden slides, so their `lesson_block`s read
+  "No slide now: ...". Owner, 14 Nov 2026 (approving the recommendation): move the CFT/BFT questions to
   01-PC's bank and drop the n = 3t + 1 ones. 01-PC's "Permissioned: the operator decides
   who writes" now teaches Raft (runs while a majority stays up) and PBFT (runs while under a third lie), though not
   the n = 3t + 1 formula. [13 Nov 2026, 01-CM rebuild; 01-PC rebuild]
-- Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
-  breaks each" (the old anchor still resolves): `quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json:209`
-  and `:258`, `quizes/quiz_json/weekone_check-quiz-bank.json:115` and `:118`. The 02-IN bank's proof-of-work
-  question (`:313`) now rests on notes only, and it has no questions on the rebuild's checks, worked slide, practice
-  and review. [13 Nov 2026, 02-IN rebuild review]
-- `quizes/quiz_json/daily_d2_review_of_day1-quiz-bank.json`: its 02-IN account-model question should point at the
-  slide "One Ethereum payment: nonce, value and fee"; the UTXO-versus-account table it read is gone. [13 Nov 2026, 02-IN rebuild review]
-- `blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd:239` points to 02-IN's
-  account table and block-card nonce; the rebuild cut both (the Ethereum slide still shows an account's nonce).
-  Repoint it at its next rework. [13 Nov 2026, 02-IN rebuild review]
+- The 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`): its proof-of-work
+  question rests on notes only, and it has no questions on the rebuild's checks, worked slide, practice and review.
+  [13 Nov 2026, 02-IN rebuild review]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
-  trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 971); the slides rebuilt on 13 Nov 2026
-  (lines 17-970: the two checks, the Terra slide, the practice and review) have few questions, and two questions'
-  `lesson_block` still names "Why Investigators and Users Care", now folded into the opening slide.
+  trace to 05-EF slides hidden on 31 Oct 2026 (q8 and q9 read "No slide now: ..."); the slides rebuilt on 13 Nov 2026
+  (the two checks, the Terra slide, the practice and review) have few questions.
   [11 Nov 2026, writing the Spot the fake questions; updated 13 Nov 2026, 05-EF rebuild]
 - `blockchain-course/lessons/conclusion/05-AS-future_trajectories_and_synthesis.qmd:368`: the Cambridge figure for
   Bitcoin's electricity use (138 TWh, 0.54% of global use) cites no `Blockchain.bib` key.
@@ -158,11 +111,13 @@ slide index), which is never listed here.
 
 - `quizes/quiz_json/forensics_13-FO-state_actors_north_korea-quiz-bank.json` has no questions on the rebuilt 13-FO's
   new slides: the check (who may say "Lazarus"), the worked Bybit five rows, the Drift answers and their confidence
-  word, and the review. Its stale bits too: two `specific_source.anchor` titles name the old Bybit and Drift
-  headings, q13's explanation calls the analyst move "the practice slide's model answer" (now on the Answers slide),
-  and q1 anchors to the opening, whose table it drew on is gone. [13 Nov 2026, 13-FO rebuild]
-- `docs/build-spec.md:89`: the "Lessons by day" table puts state actors first on day 9, but decision D runs 12-FO →
-  13-FO → 14-FO (13-FO now links back to 12-FO's Ronin on the Diamond); reorder the row. [13 Nov 2026, 13-FO rebuild]
+  word, and the review. Its q1 anchors to the opening slide, whose table it drew on is gone. [13 Nov 2026, 13-FO rebuild]
+
+- Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 02-BF, 01-EF,
+  06-EF, 02-FO and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF,
+  02-FO and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
+  label. The `specific_source_lesson` strings in the 02-IN, 04-EF and 04-CP banks still name old titles (the check does not
+  read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs

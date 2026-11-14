@@ -6,7 +6,7 @@
 | --- | --- |
 | Lab | Is it final yet? (review idea 9) |
 | Replaces | `pos-micro` (archived: it taught that going offline is slashed) |
-| Opens from | `lessons/ethereum/01-EF-ethereum_intro.qmd`, "Pending, then included, then final" |
+| Opens from | `lessons/ethereum/01-EF-ethereum_intro.qmd`, "Pending, included, then final 15 minutes later" |
 | Day | Day 3, lesson ① (accounts, the EVM and transactions) |
 | Kind | prediction lab (five minutes) |
 
@@ -87,5 +87,5 @@ The victim, times and blocks are made up for the lab and say so.
 ## Approval
 
 - Owner: "Approve all four" and "Keep day 3" (10 Nov 2026)
-- Built 11 Nov 2026: `blockchain-course/assets/labs/is-it-final-yet/`; opens from the "Pending, then included, then final" slide in 01-EF.
+- Built 11 Nov 2026: `blockchain-course/assets/labs/is-it-final-yet/`; opens from the "Pending, included, then final 15 minutes later" slide in 01-EF.
 - Corrected 11 Nov 2026: Tronscan's transaction and block pages print "CONFIRMED" and "Confirmed SRs: 19", not "Solidified"; the lane keeps the protocol's word (`@tron_consensus_2026`). Read on tronscan.org pages found by web search, 11 Nov 2026.

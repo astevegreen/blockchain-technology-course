@@ -57,8 +57,8 @@ morning?"
 Left out, for the owner to see:
 
 - The MD5 collision demo goes: it shows two inputs with one hash, which is a collision, not a way back from a
-  hash, so it does not serve this lab's belief. Collisions stay on the day 1 ② slide "One ID names one
-  transaction: no collisions" (the Cryptography Lab's weak-hash collision went when that lab was archived on
+  hash, so it does not serve this lab's belief. Collisions stay on the day 1 ② slide "A hash is a
+  fingerprint of the data" (the Cryptography Lab's weak-hash collision went when that lab was archived on
   11 Nov 2026).
 - The old lab's algorithm picker (MD5, SHA-1, a toy hash), side-by-side inputs and uniform-distribution demo
   go; the action shows the avalanche on every try. The primer's "You are done when" line for Hashing changes to

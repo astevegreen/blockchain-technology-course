@@ -132,12 +132,12 @@ scale"); a fact read straight off the chain takes none. Each question names the 
    output (C0) is change and the shop's 0.06 is the payment, at **Low**: both outputs are new
    P2WPKH addresses, so only the round amount separates them. The wallet page makes it certain, but
    that certainty comes from the phrase, off the chain (Q3). Slides:
-   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Co-spending and change: two clues to carry", and
-   `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd`, "What each wallet type leaves the analyst".
+   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Change is the output back to the payer", and
+   `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd`, "Each wallet type leaves different evidence".
 2. **Does the chain tie receiving addresses 0 and 1 to one owner?** Yes, at **Moderate**: block 16
    spends both, one strong line, and CoinJoin is the known false positive. Change address 0 with
    them is **Low**, because it rests on the change call in question 1 (Q4). Slide:
-   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Co-spending and change: two clues to carry".
+   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Co-spent inputs point to one owner".
 3. **Is Dana's wallet linked to the treasury?** Not on the chain: no transaction moves coins between
    them or spends from both, and a common payer (the faucet) is not a common owner. Off the chain,
    yes: Dana's master fingerprint (`73c5da0a`) equals key A's, so one seed holds both, and

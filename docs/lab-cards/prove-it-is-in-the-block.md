@@ -7,7 +7,7 @@
 | --- | --- |
 | Lab | Prove it is in the block (review idea 12): the proof step `merkle-trees` gains |
 | Replaces | the current `merkle-trees` page, rebuilt on the shared shell in the same folder (its "edit a leaf and the path turns red" becomes the tamper move); with it, the Cryptography Lab's Merkle page stops being the only Merkle proof students have (lab plan, note 3) |
-| Opens from | `lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "A Merkle proof shows a tx is in a block". `lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`, "Practice: Micro Labs", keeps its link, since the folder does not move |
+| Opens from | `lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "A Merkle proof shows inclusion, not the sender". `lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`, "Practice: Prove it is in the block", keeps its link, since the folder does not move |
 | Day | Day 2, lesson ① (reading a Bitcoin transaction) |
 | Kind | prediction lab (five minutes) |
 

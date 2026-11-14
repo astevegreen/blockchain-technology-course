@@ -154,11 +154,17 @@ class Planning(unittest.TestCase):
     def test_quiz_bank_change(self) -> None:
         bank = "quizes/quiz_json/bitcoin_01-BF-bitcoin_origins_and_mechanics-quiz-bank.json"
         names, _ = self.names([bank])
-        self.assertEqual(names, ["quiz banks", "quiz bundle", "distractor alignment", "quiz engine tests"])
+        self.assertEqual(names, ["lesson pointers", "quiz banks", "quiz bundle", "distractor alignment", "quiz engine tests"])
 
     def test_pretest_change_runs_the_verifiers_that_read_it(self) -> None:
         names, _ = self.names(["quizes/pretest/pretest_week2-quiz-bank.json"])
-        self.assertEqual(names, ["pretest", "post-test"])
+        self.assertEqual(names, ["lesson pointers", "pretest", "post-test"])
+
+    def test_files_that_name_slides_check_lesson_pointers(self) -> None:
+        for path in ("docs/lab-cards/is-it-final-yet.md", "blockchain-course/assets/labs/merkle-trees/index.html",
+                     "dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md", "dynamic-labs/wallet/gateway/static/lab/index.html"):
+            names, _ = self.names([path])
+            self.assertIn("lesson pointers", names, path)
 
     def test_challenge_bank_change(self) -> None:
         names, _ = self.names(["quizes/challenge/challenge-bank.md"])

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -138,6 +139,79 @@ class PointerCheckTest(unittest.TestCase):
         self.assertEqual(len(notes), 2)
         self.assertIn("`decimals()` beside 04-CP", notes[0])
         self.assertIn("\"spaceship\"", notes[1])
+
+
+    # --- slide titles named by quiz banks, answer keys, lab cards and lab pages ---
+
+    def title_course(self):
+        return pc.load_course(self.root, self.sheet)
+
+    def bank(self, name: str, questions: list) -> list[str]:
+        path = self.root.parent / name
+        path.write_text(json.dumps({"questions": questions}), encoding="utf-8")
+        return pc.check_bank(path, self.title_course())
+
+    def test_bank_lesson_block_fails_only_on_a_hidden_slide(self) -> None:
+        qs = [{"id": "q1", "lesson_block": "Old Mempool Slide"},
+              {"id": "q2", "lesson_block": "Some free label"},
+              {"id": "q3", "lesson_block": "Mining a Candidate Block"}]
+        found = self.bank("bitcoin_02-BF-x-quiz-bank.json", qs)
+        self.assertEqual(len(found), 1)
+        self.assertIn("q1 lesson_block", found[0])
+        self.assertIn("hidden slide", found[0])
+
+    def test_bank_reading_and_anchor_fail_when_missing(self) -> None:
+        qs = [{"id": "q1", "specific_source": {"lesson": "02-BF", "reading": "Gone Slide"}},
+              {"id": "q2", "specific_source": {"lesson": "02-BF", "anchor": "Mining a Candidate Block"}}]
+        found = self.bank("bitcoin_02-BF-x-quiz-bank.json", qs)
+        self.assertEqual(len(found), 1)
+        self.assertIn("q1 specific_source.reading", found[0])
+
+    def test_bank_reading_file_paths_are_skipped(self) -> None:
+        qs = [{"id": "q1", "specific_source": {"lesson": "02-BF", "reading": "/tmp/r.txt", "anchor": "Section 3"}}]
+        self.assertEqual(self.bank("bitcoin_02-BF-x-quiz-bank.json", qs), [])
+
+    def prose(self, text: str) -> list[str]:
+        path = self.root.parent / "card.md"
+        path.write_text(text, encoding="utf-8")
+        return pc.check_prose(path, self.title_course())
+
+    def test_prose_quoted_title_beside_a_lesson(self) -> None:
+        found = self.prose('Open the slide "Old Mempool Slide" in lessons/b/02-BF-bitcoin.qmd.\n')
+        self.assertEqual(len(found), 1)
+        self.assertIn("Old Mempool Slide", found[0])
+        self.assertEqual(self.prose('Open the slide "Mining a Candidate Block" in lessons/b/02-BF-bitcoin.qmd.\n'), [])
+
+    def test_prose_without_a_lesson_is_not_checked(self) -> None:
+        self.assertEqual(self.prose('The word "Nothing Here" appears in a sentence.\n'), [])
+
+    def test_bank_sources_slide_and_hidden_anchor_fail(self) -> None:
+        qs = [{"id": "q1", "sources": [{"lesson": "02-BF", "slide": "Old Mempool Slide"}]},
+              {"id": "q2", "specific_source": {"lesson": "02-BF", "anchor": "Old Mempool Slide"}},
+              {"id": "q3", "sources": [{"lesson": "02-BF", "slide": "Mining a Candidate Block"}]}]
+        found = self.bank("bitcoin_02-BF-x-quiz-bank.json", qs)
+        self.assertEqual(len(found), 2)
+        self.assertIn("q1 sources.slide", found[0])
+        self.assertIn("q2 specific_source.anchor", found[1])
+
+    def test_prose_path_then_two_titles_joined_by_and(self) -> None:
+        found = self.prose('See `lessons/b/02-BF-bitcoin.qmd`, "Mining a Candidate Block" and "Old Mempool Slide".\n')
+        self.assertEqual(len(found), 1)
+        self.assertIn("Old Mempool Slide", found[0])
+
+    def test_main_fails_when_only_out_of_lesson_titles_are_stale(self) -> None:
+        from unittest import mock
+        with mock.patch.object(pc, "load_course", return_value=self.title_course()),                 mock.patch.object(pc, "check_titles", return_value=["card.md: stale title"]),                 mock.patch.object(pc, "check_lesson", return_value=[]):
+            self.assertEqual(pc.main([]), 1)
+        with mock.patch.object(pc, "load_course", return_value=self.title_course()),                 mock.patch.object(pc, "check_titles", return_value=[]),                 mock.patch.object(pc, "check_lesson", return_value=[]):
+            self.assertEqual(pc.main([]), 0)
+
+    def test_href_slug_must_match_a_visible_slide(self) -> None:
+        def page(title: str, slug: str) -> str:
+            return ('{ title: "%s", href: "../../../lessons/b/02-BF-bitcoin.html#/%s" }' % (title, slug)) + chr(10)
+        bad = self.prose(page("Mining a Candidate Block", "old-mempool-slide"))
+        self.assertTrue(any("not a visible slide" in f for f in bad))
+        self.assertEqual(self.prose(page("Mining a Candidate Block", "mining-a-candidate-block")), [])
 
 
 if __name__ == "__main__":

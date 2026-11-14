@@ -169,7 +169,7 @@ scale"); a fact read straight off the chain takes none. Each question names the 
    **High**: block 2's `Upgraded` log, block 3's `delegatecall` and the ERC-1967 slot read agree.
    Only the admin, Account 0, can swap it (**High**: the verified source and block 2's sender agree),
    and a swap changes the rules for every holder at once (Q3). Slide:
-   `blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd`, "Upgradeability and Proxy Patterns".
+   `blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd`, "A proxy lets the code change; ask who upgrades".
 2. **How much cUSD does Account 3 hold?** None at block 17, though its `Transfer` logs add up to
    1,100: block 9's `destroyBlackFunds` wiped the balance and wrote no `Transfer` log. **High**: the
    contract read and the `DestroyedBlackFunds` log agree. A tool that reads only `Transfer` logs

@@ -14,6 +14,12 @@ lesson (not HTML comments, code blocks or `.content-hidden` slides) and reports 
     that the lesson does not have;
   - a time word beside it says the idea came earlier ("seen", "yesterday", "this morning") but the
     lesson comes later, or says it comes later ("tomorrow", "comes back to") but it was already taught.
+It also reads the files outside the lessons that name a slide of a lesson and reports a title that is hidden
+or that the lesson does not have: a quiz bank's `lesson_block` (hidden only: it is a free label), `reading`,
+`specific_source.anchor` and `sources[].slide`; the instructor answers files (`INSTRUCTOR_ANSWERS.md`), the lab
+cards (`docs/lab-cards/`) and the lab pages (`blockchain-course/assets/labs/*/index.html`,
+`dynamic-labs/*/gateway/static/`). Quiz lesson syntheses (`quizes/lesson_synthesis/`) are skipped: they are
+regenerated.
 With --notes it also prints, as `note:` lines, pointers whose topic it could not find: a backticked
 term beside a lesson code, or a "day N's <term>", that no visible slide of that lesson or day shows.
 Topic notes are leads for a person to read, never failures.
@@ -26,6 +32,7 @@ pointer it resolved; --by-lesson groups the findings under each lesson's day and
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -67,6 +74,14 @@ TOPIC_STOP = {"lesson", "lessons", "slide", "slides", "lab", "labs", "case", "ca
               "example", "first", "second", "third", "last", "morning", "afternoon", "review", "this", "that",
               "same", "own", "other", "graded", "point", "points", "check", "start", "end", "with", "from",
               "question", "questions", "skills", "methods", "method", "work", "idea", "ideas", "habit", "rule"}
+# Slide titles named outside the lessons: `path.qmd`, "Title"  |  "Title" (`path.qmd`)  |  slide "Title"  |  lab page links.
+QUOTE = r"[\"“]([^\"”]{4,120})[\"”]"
+PATH_TITLES = re.compile(
+    r"lessons/[\w/]+?/(\d{2}-[A-Z]{2})-[\w-]+\.qmd`?[\s,:|]{0,3}((?:[\"“][^\"”]{4,120}[\"”](?:,?\s+(?:and\s+)?)?)+)")
+SLIDE_TITLE = re.compile(r"\bslides?\s+" + QUOTE)
+LEAD_TITLE = re.compile(QUOTE + r"\s*\(?`?(?:slide\s+)?(?:in|of|from)?\s*`?lessons/[\w/]+?/(\d{2}-[A-Z]{2})\b")
+HREF_TITLE = re.compile(
+    r"title:\s*" + QUOTE + r"\s*,?\s*href:\s*[\"']([^\"']*?lessons/[\w/]+?/(\d{2}-[A-Z]{2})-[\w-]+\.html)#/([^\"']+)[\"']")
 FRONT_TITLE = re.compile(r"^title:\s*[\"']?(.*?)[\"']?\s*$", re.MULTILINE)
 
 
@@ -220,6 +235,7 @@ def norm_title(raw: str) -> str:
     title = re.sub(r"\{[^}]*\}\s*$", "", raw)
     title = re.sub(r"<[^>]+>", "", title)
     title = re.sub(r"[*_`\"“”‘’']", "", title)
+    title = re.sub(r"\s*(?:-+|[‐-―])\s*", "-", title)  # hyphen, "--", en and em dash all fold to one
     return re.sub(r"\s+", " ", title).strip().lower()
 
 
@@ -412,6 +428,133 @@ def check_lesson(lesson: Lesson, course: Course, listing: list[str] | None = Non
     return found
 
 
+def lesson_of(name: str, course: Course) -> Lesson | None:
+    """The lesson a path, file stem or code names ("04-EF-smart_contracts.qmd", "04-EF")."""
+    base = name.replace("\\", "/").rsplit("/", 1)[-1]
+    code = re.search(r"(?<![\w-])(\d{2}-[A-Z]{2})(?![\w])", base) or re.search(r"_(\d{2}-[A-Z]{2})-", base)
+    return course.lessons.get(code.group(1)) if code else None
+
+
+def slug_key(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def title_problem(title: str, lesson: Lesson | None, course: Course, hidden_only: bool = False) -> str | None:
+    """Why `title` is not a visible slide title (of `lesson`, or of any lesson when it is None); None when it is."""
+    key = norm_title(title)
+    pool = [lesson] if lesson else list(course.lessons.values())
+    if any(key in les.visible for les in pool):
+        return None
+    where = lesson.code if lesson else "any lesson"
+    if any(key in les.hidden for les in pool):
+        return f'"{title}" is a hidden slide in {where}'
+    return None if hidden_only else f'{where} has no slide titled "{title}"'
+
+
+def bank_titles(bank: dict, stem_lesson: Lesson | None, course: Course):
+    """(question id, field, title, lesson, hidden_only) for each slide title a quiz question names."""
+    for question in bank.get("questions", []):
+        qid = question.get("id", "?")
+        source = question.get("specific_source")
+        named = source.get("lesson") if isinstance(source, dict) else None
+        lesson = (lesson_of(named, course) if named else None) or stem_lesson
+        if isinstance(source, dict):
+            outside = str(source.get("reading", "")).startswith("/")  # a reading file: the anchor is its section, not a slide
+            for field in ("anchor", "reading"):
+                value = source.get(field)
+                if outside:
+                    continue
+                if isinstance(value, str) and not value.startswith("/") and ".txt" not in value:
+                    yield qid, f"specific_source.{field}", value, lesson, False
+        if isinstance(question.get("lesson_block"), str):
+            yield qid, "lesson_block", question["lesson_block"], lesson, True
+        for item in question.get("sources") or []:
+            if isinstance(item, dict) and item.get("slide") and item.get("lesson"):
+                yield qid, "sources.slide", item["slide"], lesson_of(item["lesson"], course), False
+
+
+def check_bank(path: Path, course: Course) -> list[str]:
+    try:
+        bank = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(bank, dict):
+        return []
+    rel = path.relative_to(REPO).as_posix()
+    stem = lesson_of(path.name, course)
+    out: list[str] = []
+    for qid, field, value, lesson, hidden_only in bank_titles(bank, stem, course):
+        if lesson is None:
+            continue
+        known = lesson.visible | lesson.hidden
+        parts = [value]
+        if norm_title(value) not in known and all(norm_title(p) in known for p in re.split(r";\s*", value)):
+            parts = re.split(r";\s*", value)  # two titles joined by a semicolon
+        for part in parts:
+            problem = title_problem(part, lesson, course, hidden_only)
+            if problem:
+                out.append(f"{rel}: {qid} {field}: {problem}")
+    return out
+
+
+def prose_titles(text: str, course: Course) -> list[tuple[int, str, Lesson | None]]:
+    """(line, title, lesson) for each slide title a prose or page file names; lesson is None when none is named."""
+    found: dict[tuple[int, str], Lesson | None] = {}
+
+    def line_of(pos: int) -> int:
+        return text.count("\n", 0, pos) + 1
+
+    for m in PATH_TITLES.finditer(text):
+        for quote in re.finditer(QUOTE, m.group(2)):
+            found[(line_of(m.start(2) + quote.start()), quote.group(1))] = course.lessons.get(m.group(1))
+    for m in HREF_TITLE.finditer(text):
+        found[(line_of(m.start()), m.group(1))] = course.lessons.get(m.group(3))
+    for m in LEAD_TITLE.finditer(text):
+        found.setdefault((line_of(m.start()), m.group(1)), course.lessons.get(m.group(2)))
+    for m in SLIDE_TITLE.finditer(text):
+        codes = CODE.findall(text[max(0, m.start() - 160):m.start()])
+        found.setdefault((line_of(m.start()), m.group(1)), course.lessons.get(codes[-1]) if codes else None)
+    return [(line, re.sub(r"\s+", " ", title), les) for (line, title), les in sorted(found.items())]
+
+
+def check_prose(path: Path, course: Course) -> list[str]:
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    rel = path.relative_to(REPO).as_posix()
+    out = []
+    for line, title, lesson in prose_titles(text, course):
+        problem = title_problem(title, lesson, course)
+        if problem:
+            out.append(f"{rel}:{line}: {problem}")
+    for m in HREF_TITLE.finditer(text):
+        lesson = course.lessons.get(m.group(3))
+        if lesson and slug_key(m.group(4)) not in {slug_key(t) for t in lesson.visible}:
+            out.append(f"{rel}:{text.count(chr(10), 0, m.start()) + 1}: link #{m.group(4)} is not a visible "
+                       f"slide of {lesson.code}")
+    return out
+
+
+def title_files() -> list[Path]:
+    """Every file outside the lessons that may name a slide title."""
+    skip = {"lesson_synthesis", "dist", "templates", "vendor", "node_modules"}
+    banks = [p for p in (REPO / "quizes").rglob("*.json") if not skip & set(p.relative_to(REPO).parts)]
+    prose = sorted((REPO / "dynamic-labs").glob("*/quizes/INSTRUCTOR_ANSWERS.md"))
+    prose += sorted((REPO / "docs" / "lab-cards").glob("*.md"))
+    prose += sorted((REPO / "blockchain-course" / "assets" / "labs").glob("*/index.html"))
+    prose += [p for p in sorted((REPO / "dynamic-labs").glob("*/gateway/static/**/*.html")) if "vendor" not in p.parts]
+    return sorted(banks) + prose
+
+
+def check_titles(course: Course, only: set[Path] | None = None) -> list[str]:
+    out: list[str] = []
+    for path in title_files():
+        if only is None or path.resolve() in only:
+            out += check_bank(path, course) if path.suffix == ".json" else check_prose(path, course)
+    return out
+
+
 def report(scan: list[Lesson], shown: list[Finding], by_lesson: bool) -> list[str]:
     if not by_lesson:
         return [f.text() for f in shown]
@@ -435,18 +578,19 @@ def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     course = load_course()
+    wanted = {p.resolve() for p in args.files}
+    stale = check_titles(course, wanted or None)
     if args.files:
-        wanted = {p.resolve() for p in args.files}
         scan = [les for les in course.lessons.values() if les.path.resolve() in wanted]
     else:
         scan = sorted((les for les in course.lessons.values() if les.slot),
                       key=lambda les: (les.slot.day, les.slot.slot))
     listing: list[str] | None = [] if args.list else None
     findings = [f for les in scan for f in check_lesson(les, course, listing)]
-    lines = (listing or []) + report(scan, [f for f in findings if args.notes or not f.note], args.by_lesson)
+    lines = (listing or []) + report(scan, [f for f in findings if args.notes or not f.note], args.by_lesson) + stale
     if lines:
         print("\n".join(lines))
-    return 1 if any(not f.note for f in findings) else 0
+    return 1 if stale or any(not f.note for f in findings) else 0
 
 
 if __name__ == "__main__":

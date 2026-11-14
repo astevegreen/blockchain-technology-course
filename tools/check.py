@@ -684,7 +684,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("glossary", validate_glossary))
     if lessons_changed or touched("blockchain-course/assets/mindmap.html"):
         plan.checks.append(Check("mind-map links", lambda: as_notes(mindmap_links())))
-    if lessons_changed or touched("quizes/run-sheet/") or touched("tools/pointer_check.py"):
+    if (lessons_changed or touched("quizes/run-sheet/") or touched("quizes/quiz_json/") or touched("quizes/pretest/") or touched("docs/lab-cards/")
+            or touched("blockchain-course/assets/labs/") or touched("dynamic-labs/")
+            or touched("tools/pointer_check.py")):
         plan.checks.append(Check("lesson pointers", lesson_pointers))
 
     bibs = sorted(f.relative_to(REPO).as_posix() for f in (COURSE / "lessons" / "references").glob("*.bib"))

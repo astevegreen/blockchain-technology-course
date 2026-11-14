@@ -86,7 +86,7 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | 6 (settled) | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware: the payment and the cash-out (Colonial Pipeline; ransomware-as-a-service, 85), with darknet markets as a destination and a cash-out route (01-FO's Silk Road slides), one lesson merged from two, L | Attribution and confidence: labels and their sources, how well the heuristics have been measured, confidence language, ending with one model explanation in outcome 9's five parts (01-FO recut; 83, 84), L | 7, 8, 20, 21, 25, 27, 28, 40, 45 |
 | 7 (settled) | Mixers and CoinJoin (02-FO part 2, with the mixers update), M | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | 9, 11, 23 |
 | 8 (settled) | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 13-17, 19, 22, 24, 47 |
-| 9 (settled) | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Fusing on-chain findings with other sources, new, L | 26, 29, 30, 37 |
+| 9 (settled) | AML typologies, organized with ATT&CK and the Diamond Model, new, L | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | Fusing on-chain findings with other sources, new, L | 26, 29, 30, 37 |
 
 Day 1 also has the Welcome (01-IN), M. Day 5's week-one check takes the 08:45 quiz's place. Day 10 has no lessons: its morning review answers
 students' questions and teaches nothing new.
