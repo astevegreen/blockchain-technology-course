@@ -40,7 +40,7 @@ INLINE_CODE = re.compile(r"(`+)(?:(?!\1).)+?\1")
 LINK_TARGET = re.compile(r"\]\([^)]*\)|<https?://[^>]*>|https?://\S+")
 BIB_KEY = re.compile(r"^@\w+\s*\{\s*([^,\s]+)\s*,", re.MULTILINE)
 EMPTY_ALT_IMAGE = re.compile(r"!\[\s*\]\(([^)]*)\)(\{[^}]*\})?")  # ![](src){attrs}: alt must come from fig-alt
-RAW_BLOCK =re.compile(r"<(style|script)\b", re.IGNORECASE)
+RAW_BLOCK = re.compile(r"<(style|script)\b", re.IGNORECASE)
 
 
 @dataclass
