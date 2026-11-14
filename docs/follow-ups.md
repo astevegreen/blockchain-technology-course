@@ -82,16 +82,9 @@ slide index), which is never listed here.
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
 - `docs/lab-cards/is-it-final-yet.md:9` and `:90` name the old 01-EF title "Pending, then included, then final"; it
   is now "Pending, included, then final 15 minutes later" (the old anchor still resolves). [13 Nov 2026, 01-EF rebuild review]
-- The 04-CP rebuild moved the slide "A Tron address is an Ethereum address plus 41" (Tron's own worked example,
-  `tron_accounts_2026`) out of 04-CP, which now has it hidden. `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd:91`
-  has one derivation bullet; take the slide or its example there at 01-PC's rework. [13 Nov 2026, 04-CP rebuild]
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:1016`
   lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
   identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
-- `quizes/quiz_json/daily_d2_review_of_day1-quiz-bank.json`: its Tron question (q7, one key behind an Ethereum and
-  a Tron address) was pulled on the owner's word because it read a hidden slide; restore it when 01-PC carries the
-  Tron slide. The 04-CP questions have none on the rebuild's four checks, the two worked slides, the signed fields
-  (nonce, chain ID), the practice or the review. [13 Nov 2026, 04-CP rebuild]
 - The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
@@ -123,17 +116,19 @@ slide index), which is never listed here.
 - `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` predates the rebuild: q9 (proof of work)
   names the now-hidden "Mining a Candidate Block", other items name slides hidden since 24 Oct, and the bank has no
   questions on the rebuild's two checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
-- Outline move A4 puts Raft and PBFT, by name, in `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`,
-  which does not teach them yet; 01-CM's "Open chains buy openness with slower finality" keeps the known-members
-  fact without the names (`castro_practicalbyzantinefault_1999`, `ongaro_searchunderstandableconsensus_2014`).
-  Add them at 01-PC's rework. [13 Nov 2026, 01-CM rebuild]
+- `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json`: the 01-PC rebuild
+  merged "Tron works like Ethereum, with T-addresses" and "27 elected producers; final after 19 confirm" into "What
+  carries over: T-addresses and 19 of 27" (old anchors still land); the bank's `lesson_block` and anchor fields
+  (around lines 97-130) name the old titles. It has no questions on the rebuild's three checks, two worked Tron
+  reads, Raft and PBFT, the practice or the review. [13 Nov 2026, 01-PC rebuild]
 - `quizes/quiz_json/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-quiz-bank.json`:
   q1-q13's `lesson_block`s name slides hidden since 23 Oct ("Why Agreement Matters", "Failure Models", "Quorums",
   "BFT Mechanics" and others), and the bank has no questions on the rebuild's proof-of-work slide, four checks,
   worked confirmation count, practice or review. q9 (BFT gives deterministic finality despite bounded Byzantine
   faults) and the other CFT/BFT and n = 3t + 1 questions trace only to hidden slides now that the visible table
-  drops the Raft/PBFT rows: pull them, or move them to 01-PC's bank when 01-PC teaches Raft and PBFT.
-  [13 Nov 2026, 01-CM rebuild]
+  drops the Raft/PBFT rows: pull them, or move them to 01-PC's bank. 01-PC's "Permissioned: the operator decides
+  who writes" now teaches Raft (runs while a majority stays up) and PBFT (runs while under a third lie), though not
+  the n = 3t + 1 formula. [13 Nov 2026, 01-CM rebuild; 01-PC rebuild]
 - Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
   breaks each" (the old anchor still resolves): `quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json:209`
   and `:258`, `quizes/quiz_json/weekone_check-quiz-bank.json:115` and `:118`. The 02-IN bank's proof-of-work

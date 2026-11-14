@@ -93,7 +93,7 @@ From `docs/build-spec.md`, "Pretest blueprint". Concept numbers are the Notion "
 | 5 | q16 | 48 FATF Travel Rule | MC | 05-FO, "The Travel Rule sends the sender's data along" |
 | 5 | q17 | 49 Permissioned ledgers | MC | 01-PC, "The trace stops at the operator's edge" |
 | 5 | q43 | 46 Stablecoins as a laundering rail | MC | 01-PC, "Energy pays for a USDT move: who staked it?" (Tron lab gate) |
-| 5 | q44 | 46 Stablecoins as a laundering rail | MC | 01-PC, "Tron works like Ethereum, with T-addresses"; "This afternoon: a transfer, a sweep, a freeze" (Tron lab gate) |
+| 5 | q44 | 46 Stablecoins as a laundering rail | MC | 01-PC, "What carries over: T-addresses and 19 of 27"; "Next: a transfer, a sweep, a freeze" (Tron lab gate) |
 | 6 | q18 | 7 Transaction tracing | W | 02-FO, "Every hop in your trace names its heuristic" |
 | 6 | q19 | 8 Clustering heuristics and tracing patterns (e.g. peel chains) | W | 02-FO, "Co-spending links inputs, unless it's a CoinJoin" |
 | 6 | q20 | 20 Ransomware payments and payment portals | W | 03-FO, "The portal and chat are leads; ask for them" |

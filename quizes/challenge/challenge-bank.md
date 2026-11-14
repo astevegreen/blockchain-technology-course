@@ -212,5 +212,5 @@ hot wallet. The address held no TRX; another account paid for the forward. Whose
 - Note who paid for the forward, not only who sent it: the account that delegated Energy or sent TRX is a link of
   its own.
 
-**Traces to:** 04-FO "On Ethereum, a sweep forwards the deposit"; 04-FO "Name the deposit, not the sweep"; 04-FO "Practice: characterize three patterns"; 01-PC "Tron works like Ethereum, with T-addresses"; 01-PC "Energy pays for a USDT move: who staked it?"
+**Traces to:** 04-FO "On Ethereum, a sweep forwards the deposit"; 04-FO "Name the deposit, not the sweep"; 04-FO "Practice: characterize three patterns"; 01-PC "What carries over: T-addresses and 19 of 27"; 01-PC "Energy pays for a USDT move: who staked it?"
 
