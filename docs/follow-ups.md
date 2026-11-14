@@ -36,11 +36,6 @@ slide index), which is never listed here.
   and `:223`. [13 Nov 2026, 04-EF rebuild]
 - `quizes/quiz_json/forensics_12-FO-aml_typologies_frameworks-quiz-bank.json` has no questions on the rebuilt 12-FO's
   new slides (the part 1 and part 2 checks, the drainer answers with their confidence words, the review). [13 Nov 2026, 12-FO rebuild]
-- `quizes/quiz_json/forensics_01-FO-illicit_finance_regulation_case_studies-quiz-bank.json` has no questions on the
-  rebuilt 01-FO's checks (which label to trust; a measured error rate and High), the FRE 702 slide "Courts now ask how
-  reliable the method is", the BTC-e practice and answers, or the review; `quizes/lesson_synthesis/forensics_01-FO-*-synthesis.md:145`
-  names the old title "Recap: every label, a source and a confidence" (now "Review: …"; the old anchor still resolves).
-  [13 Nov 2026, 01-FO rebuild]
 - `quizes/quiz_json/forensics_05-FO-vasps_and_the_rules-quiz-bank.json` has no questions on the rebuilt 05-FO's
   three checks (which of the two is a VASP; a 2023 sanctions line today; is a 311 action an OFAC listing), the
   Travel Rule slide's check, the worked cluster reading, the practice and answers, or the review.

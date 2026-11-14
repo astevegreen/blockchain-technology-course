@@ -138,11 +138,17 @@ Five parts in plain words: (1) bottom line: a bitcoin mixer; (2) what the chain 
 - `A label is only as good as its source`
 - `Platforms run your heuristics at scale`
 - `Clustering works for most, fails in known ways`
+- `Check: which label would you trust, and why?`
 - `Bitcoin Fog: why the court trusted the trace`
+- `Courts now ask how reliable the method is`
+- `Check: does a measured error rate support High?`
 - `The chain shows a service; records show who`
 - `Attribution confidence: count kinds of evidence`
 - `A model explanation: Bitcoin Fog`
-- `Recap: every label, a source and a confidence`
+- `BTC-e: weak KYC made the cluster actionable`
+- `Practice: explain BTC-e in five parts`
+- `Answers: a five-part explanation of BTC-e`
+- `Review: every label, a source and a confidence`
 
 ## Anti-Trivia Guidance
 
@@ -155,7 +161,7 @@ Five parts in plain words: (1) bottom line: a bitcoin mixer; (2) what the chain 
 
 ## Readiness Check
 
-- Is the synthesis grounded only in the assigned lesson? Yes. It uses only the nine visible slides and their notes.
+- Is the synthesis grounded only in the assigned lesson? Yes. It uses only the visible slides and their notes.
 - Are the assessment targets comprehension-focused rather than trivia-focused? Yes.
 - Are tags normalized and useful for future quiz pooling? Yes.
-- Are any important ambiguities or missing context noted? Yes. Facts that change carry an "as of" date, and the hidden slides (Silk Road, BTC-e, Colonial Pipeline, Ronin, DEXs, bridges, regulation) are not sources for this bank.
+- Are any important ambiguities or missing context noted? Yes. Facts that change carry an "as of" date, and the hidden slides (Silk Road, Colonial Pipeline, Ronin, DEXs, bridges, regulation) are not sources for this bank.
