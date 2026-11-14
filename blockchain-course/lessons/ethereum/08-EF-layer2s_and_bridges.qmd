@@ -44,13 +44,13 @@ This slide opens the lesson with a case and a question: Bitget's stolen money le
 - The Bitget case runs through the lesson: the opening names it, part D teaches the bridge types it used, and part E is the practice on its routes.
 - An L2 runs transactions off Ethereum and posts their data back; a bridge moves value between chains. Either way the record of one movement sits on two chains.
 - The point is a claim the lesson earns: once students can name the type, they know where to look and who could freeze.
-- This week teaches no tracing: students read and characterize. Day 8 traces funds across a bridge.
+- This week teaches no tracing beyond where it stops: part D's swap slide says why matching by amount and time fails across a swap. Students read and characterize; Day 8 traces funds across a bridge.
 
 **Walkthrough**
 1. Read the case and leave the agent's question open; part E answers it.
 2. Read the link back to the last lesson, then name the five parts.
 3. Read the objective aloud. Parts A and B end with a check every student answers, part D ends with a worked reading, part E is the practice, and the close asks the objective again.
-4. Time plan, 50 minutes: opening 2 minutes, part A 9, part B 9, part C 6, bridges by type (part D) 14, Bitget practice (part E) 7, review and next 3. Part C is the first to cut if time runs short.
+4. Time plan, 50 minutes: opening 2 minutes, part A 8, part B 9, part C 5, bridges by type (part D) 16, Bitget practice (part E) 7, review and next 3. Part C is the first to cut if time runs short.
 
 **Sources**
 - @bitget_securityincident_2026
@@ -623,7 +623,7 @@ This slide defines the fourth type, intents, with Across as the example. It matt
 - At Across, the user deposits into Across's contract on chain A and names the destination chain and recipient. A relayer pays the user on chain B from its own tokens, and Across repays the relayer later through Ethereum.
 - So intents are the liquidity type's newest form: in both, someone else's funds pay on the far chain.
 - Students met two other relays this morning in 03-EF: the MEV-Boost relay passes blocks to validators, and a gas relayer pays a user's gas. This relayer pays the user.
-- The deposit's own event carries the destination chain and the recipient, which is the record the next slide reads.
+- The deposit's own event carries the destination chain and the recipient, which is the record the worked slide after the next reads.
 
 **Walkthrough**
 1. Read the definition of an intent.
@@ -635,6 +635,56 @@ This slide defines the fourth type, intents, with Across as the example. It matt
 - @across_intentlifecycle_2026
 - @across_trackingdeposits_2026
 - @bitquery_bitgethack_2026
+
+:::
+
+## In a swap, only memos tie deposit to payout {.smaller}
+
+- A cross-chain swap pays out a different coin: ETH goes into THORChain on Ethereum and BTC comes out on Bitcoin [@bitquery_bitgethack_2026]. The two amounts differ by a price, not just a fee.
+- Published methods pair a deposit with its arrival by amount and time, and each assumes the same coin on both sides, or two Ethereum-style (EVM) chains sharing one address:
+
+::: {style="font-size: .85em;"}
+
+| Method | What it needs |
+| --- | --- |
+| CONNECTOR | Candidates "with matching asset types" [@lin_connectorenhancingtraceability_2024] |
+| Track and Trace | Contract-based, EVM-compatible bridges [@lin_tracktraceautomatically_2025] |
+| Yan and colleagues | The same address on both EVM chains [@yan_tracingcrosschain_2025] |
+
+: {tbl-colwidths="[30,70]"}
+
+:::
+
+- None covers a swap, and the course found no public method that does. THORChain's own records join the two. The deposit's memo names the coin and address wanted [@thorchain_memos_2026], and the payout's memo is `OUT:` followed by the deposit's hash, so it names the deposit [@thornode_outboundmemos_2026] [10 Nov 2026]{.asof}.
+
+**How sure:** joined by the two memos, **High**. A payout matched to a swap by amount and time alone is a lead, **Low**.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide marks the limit of matching by amount and time: it fails when the bridge swaps one coin for another. It matters here because North Korea's launderers move ETH mainly into BTC and list THORChain among their bridges [@msmt_dprkcyber_2025], and an analyst who pairs the two sides by a similar value is guessing through a price. Emphasize that across a swap the protocol's own record is the link, and without it the trace stops at a lead.
+
+**Key Points**
+- On most bridges the far side pays the same token, a little under the deposit for the fee, so an amount and a time window can pick out candidates. On THORChain, ETH goes in and BTC comes out, so the amounts compare only through an exchange rate.
+- The research methods all set this case aside. CONNECTOR keeps only candidates of the same asset type. Track and Trace says it applies to contract-based, non-privacy, EVM-compatible bridges. Yan and colleagues rely on the same address on both EVM chains. Bitcoin has neither Ethereum's tokens nor its addresses.
+- The course searched for a public method that matches the two sides of a swap by amount and time, in November 2026, and found none. Say it as that: no method found, not proof that none exists.
+- THORChain writes the link itself. The deposit's memo names the coin and the address to pay, and every outbound carries a memo; a swap payout's is `OUT:` followed by the inbound transaction's hash. Day 8's lab reads Bybit's deposits and their payouts this way.
+- The `OUT:` memo may not last: a THORNode issue, opened in July 2025 and still open, proposes removing outbound memos [@thornode_outboundmemos_2026] [10 Nov 2026]{.asof}. A later case may have only amount and time, and then the word is Low.
+
+**Walkthrough**
+1. Read the first bullet: a different coin comes out.
+2. Read the table: what each published method needs, and that a swap to Bitcoin meets none of them.
+3. Read the memo line: the deposit names where to pay; the payout names the deposit.
+4. Ask (made-up numbers): a 0.27 BTC payout lands 40 minutes after a 10 ETH deposit to THORChain, with no memo you can read. What do you write? (Expected answer: a lead, Low; only amount and time match, through a price.)
+
+**Sources**
+- @bitquery_bitgethack_2026
+- @lin_connectorenhancingtraceability_2024
+- @lin_tracktraceautomatically_2025
+- @yan_tracingcrosschain_2025
+- @thorchain_memos_2026
+- @thornode_outboundmemos_2026
+- @msmt_dprkcyber_2025
 
 :::
 
@@ -726,7 +776,7 @@ Three routes Bitget's funds took (routes from Bitquery; amounts and chains made 
 
 1. **USDC.** On Ethereum, 2,000,000 USDC goes into Circle's CCTP contract and is burned. On Solana, 2,000,000 USDC appears at a new address, created by Circle's contract.
 2. **ETH through Across.** On Ethereum, 500 ETH is deposited into Across, naming Base and an address. On Base, 499.6 ETH reaches that address from another address's own balance.
-3. **ETH through THORChain.** On Ethereum, 300 ETH goes to THORChain with a memo naming BTC and a Bitcoin address. On Bitcoin, THORChain pays BTC to that address.
+3. **ETH through THORChain.** On Ethereum, 300 ETH goes to THORChain with a memo naming BTC and a Bitcoin address. On Bitcoin, THORChain pays BTC to that address, with an `OUT:` memo naming the deposit's hash.
 
 :::
 
@@ -761,7 +811,7 @@ Part D is done; this slide has students apply the four types to three of Bitget'
 | --- | --- | --- | --- |
 | **1. USDC by CCTP** | Burn-and-mint, run by the issuer [@circle_cctp_2026] | Circle, which issues USDC | **High:** the burn and the mint are both Circle's contract |
 | **2. ETH by Across** | Intents: a relayer paid from its own funds [@across_intentlifecycle_2026] | None: no one issues ETH | **High:** the deposit names the recipient that was paid |
-| **3. ETH by THORChain** | Liquidity: a cross-chain swap [@bitquery_bitgethack_2026] | None: no one issues ETH or BTC | **High:** the memo names the coin and the address |
+| **3. ETH by THORChain** | Liquidity: a cross-chain swap [@bitquery_bitgethack_2026] | None: no one issues ETH or BTC | **High:** the deposit's memo names the coin and address; the payout's `OUT:` memo names the deposit [@thornode_outboundmemos_2026] |
 
 : {tbl-colwidths="[18,32,22,28]"}
 
@@ -782,7 +832,7 @@ This slide gives the practice answers and the case's result: the bridges moved t
 **Key Points**
 - Route 1: USDC crossed on Circle's own bridge, CCTP, which is burn-and-mint run by the issuer itself. Circle could freeze it on either side. High, because both records are Circle's contract.
 - Route 2: the ETH on Base came from a relayer's own balance, so the type is intents. No one issues ETH, so no issuer could freeze it. High, because the deposit names the recipient that was paid. If a student adds that the chain the funds reached might act, as Arbitrum's Security Council did at Kelp DAO, that is right too: it is not an issuer, and nothing in Bitget's case shows a chain doing so.
-- Route 3: THORChain is a cross-chain swap, the liquidity type. No issuer stands behind ETH or BTC. High, because the memo names the coin and the address.
+- Route 3: THORChain is a cross-chain swap, the liquidity type. No issuer stands behind ETH or BTC. High, because the deposit's memo names the coin and the address, and the payout's `OUT:` memo names the deposit.
 - The part's synthesis, on the slide: the type named who could freeze, and for most of the money no issuer could.
 - So only about \$339,000 was frozen, by Tether and Circle, of about \$387 million [30 Sep 2026]{.asof}. Issuers can freeze only their own stablecoins, and most of the money crossed as coins with no issuer.
 
@@ -796,6 +846,7 @@ This slide gives the practice answers and the case's result: the bridges moved t
 - @circle_cctp_2026
 - @across_intentlifecycle_2026
 - @bitquery_bitgethack_2026
+- @thornode_outboundmemos_2026
 - @theregister_bitgethack_2026
 
 :::

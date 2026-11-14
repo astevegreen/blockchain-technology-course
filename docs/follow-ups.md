@@ -177,9 +177,6 @@ slide index), which is never listed here.
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
-- The build spec's slide saying no public method matches funds across a swap (`docs/build-spec.md`, Additions,
-  "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
-  [11 Nov 2026, building the bridge worked example]
 - The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
 - `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
   missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
