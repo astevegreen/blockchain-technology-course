@@ -1,27 +1,30 @@
 {
   "lesson_id": "bitcoin_05_bf_wallet_types",
   "lesson_title": "Bitcoin - Wallet Types",
-  "date_generated": "2026-10-30",
+  "date_generated": "2026-11-14",
   "topic": "bitcoin",
   "tags": [
     "bitcoin",
     "05-bf-wallet-types",
     "wallet-types",
     "wallets",
+    "custody",
     "seed-phrases",
+    "xpub",
     "keys-and-addresses",
+    "confidence-words",
     "quiz-bank"
   ],
   "metadata": {
     "module": "bitcoin",
     "lesson_file_stem": "05-BF-wallet_types",
-    "reading_status": "none",
+    "reading_status": "partial",
     "source_mix": {
-      "lesson_grounded_questions": 2,
-      "reading_grounded_questions": 0
+      "lesson_grounded_questions": 10,
+      "reading_grounded_questions": 3
     },
     "lesson_source_path": "blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd",
-    "note": "q1 and q2 moved from the 02-BF bank on 30 Oct 2026 with the wallet slides they test."
+    "note": "Rebuilt 14 Nov 2026 for the rebuilt lesson: one question for each visible check, worked example, practice and review slide. q1 and q2 moved from the 02-BF bank on 30 Oct 2026. The lesson has no assigned reading file, so q11-q13 test the claims of sources the slides cite (BIP32, NIST, Scott 2022) as the slides state them; reading_status is partial."
   },
   "questions": [
     {
@@ -30,9 +33,9 @@
       "question_stem": "A learner says, \"My bitcoin is inside my wallet app, so losing the app deletes the coins.\" Which correction is best?",
       "correct_answer": "The coins are represented on-chain as UTXOs; the wallet manages keys, addresses, policies, and signatures that authorize spending them.",
       "incorrect_answers": [
-        "The coins are cached locally by the wallet app; the blockchain only records backup hints, labels, and recovery data for that wallet app.",
-        "The coins are tracked on-chain as account balances; the wallet signs balance updates that nodes apply to the user's account.",
-        "The coins are stored under one permanent receiving address; the wallet keeps the password that unlocks the address for spending."
+        "The coins are cached locally by the wallet app; the blockchain only records backup hints, labels and recovery data for it.",
+        "The coins are tracked on-chain as account balances; the wallet signs balance updates that nodes then apply to the user's account.",
+        "The coins are stored under one permanent receiving address; the wallet keeps the password that unlocks that address for any later spending."
       ],
       "explanation": "The lesson frames a wallet as a local key and policy manager, not as a coin container. Spendable value remains on-chain as UTXOs controlled by the relevant spending conditions.",
       "difficulty_level": 2,
@@ -44,7 +47,8 @@
         "utxo-model",
         "lesson",
         "slides",
-        "misconception"
+        "misconception",
+        "lesson-synthesis"
       ],
       "lesson_block": "A wallet holds keys, not coins",
       "source_type": "lesson_qmd",
@@ -71,11 +75,321 @@
         "wallets",
         "lesson",
         "slides",
-        "mechanism"
+        "mechanism",
+        "lesson-synthesis"
       ],
       "lesson_block": "One seed grows a whole tree of keys",
       "source_type": "lesson_qmd",
       "specific_source_lesson": "05-BF-wallet_types.qmd: A seed phrase is the whole wallet as words / One seed grows a whole tree of keys"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A report says a wallet is \"cold, so it belongs to the subject.\" What is the analyst's best response?",
+      "correct_answer": "Cold says where the key lives, not who holds it; exchanges keep most customer coins cold, so custody needs its own evidence.",
+      "incorrect_answers": [
+        "Cold wallets belong to users and hot wallets to exchanges, so the claim holds unless the exchange also uses hot wallets.",
+        "Cold storage and self-custody usually go together, so the claim stands unless the wallet shows recent online signing.",
+        "Custody follows storage: an offline key is held by its owner, and a custodian's keys must stay online for withdrawals."
+      ],
+      "explanation": "The lesson treats custody (who holds the key) and storage (where it lives) as two questions. A custodian runs hot and cold wallets, and an exchange keeps most customer coins cold, so cold does not imply self-custody.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "custody",
+        "storage",
+        "hot-cold-wallets",
+        "misconception",
+        "scenario",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Custody and storage are separate questions",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Custody and storage are separate questions"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject says, \"My bitcoin is on Coinbase, in cold storage, so only I can touch it.\" What does \"on Coinbase\" answer?",
+      "correct_answer": "Custody: Coinbase holds the key, so the subject does not.",
+      "incorrect_answers": [
+        "Storage: it says the subject's own key lives in a hot wallet.",
+        "Addresses: it names the subject's own address on the chain.",
+        "Confidence: it rates how sure the analyst is of the claim."
+      ],
+      "explanation": "On Coinbase is custody: the exchange holds the key and signs, and its books, not the chain, record the balance. Cold storage answers the separate storage question, and the claim that only the subject can touch it is wrong.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "custody",
+        "storage",
+        "exchanges",
+        "scenario",
+        "check",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Check: cold storage at an exchange. Whose key?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Check: cold storage at an exchange. Whose key?"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "Two addresses come from one seed, and the explorer lists no transaction involving both. What does the chain show about them?",
+      "correct_answer": "Nothing ties them together on the chain; only the seed, or the account's xpub, shows they belong together.",
+      "incorrect_answers": [
+        "That they come from different seeds, because addresses from one wallet always appear together in a transaction.",
+        "That they share a seed through the change chain, which is the only link an explorer can show for one wallet.",
+        "That the wallet is custodial, because the platform's books keep its addresses apart on the chain."
+      ],
+      "explanation": "Each address appears on its own, and addresses from one seed cannot easily be tied together on chain. The link is off-chain evidence: the phrase derives both, or the account's xpub lists both.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "seed-phrases",
+        "xpub",
+        "address-linking",
+        "block-explorer",
+        "check",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Check: does the chain show these are related?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Check: does the chain show these are related?"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst finds a `1` address and a `bc1q` address in one case. Could one seed phrase have made both?",
+      "correct_answer": "Yes: the paths differ only in purpose, which picks the address type, and nothing in the addresses shows the shared seed.",
+      "incorrect_answers": [
+        "No: a seed phrase makes one address type only, so two prefixes mean two wallets with two separate seed phrases.",
+        "Yes, but only if the `bc1q` address wraps the `1` address, because two types share a seed only through one hash.",
+        "No: the prefixes name different scripts, and the keys of one wallet can lock outputs to a single script type only."
+      ],
+      "explanation": "The worked slide derives a `1`, a `3` and a `bc1q` address from one test phrase by changing only the purpose level of the path. Each holds a 20-byte hash, and nothing in the addresses shows the seed they share.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "address-types",
+        "derivation-paths",
+        "seed-phrases",
+        "scenario",
+        "worked-example",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Worked: one seed, three address types",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Worked: one seed, three address types"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A `bc1q` address received 40 BTC two years ago and has not spent. Which assessment does the chain alone support?",
+      "correct_answer": "Storage is consistent with cold storage at Low confidence, from behaviour alone; who controls it stays open.",
+      "incorrect_answers": [
+        "Cold storage at High confidence, since two years without a spend is strong proof the owner holds the key.",
+        "Self-custody at Moderate confidence, since an exchange would have moved a balance this large by now.",
+        "Custodial at Moderate confidence, since a large balance at rest matches an exchange's cold reserve."
+      ],
+      "explanation": "The worked slide leaves custody open, because a custodian's cold wallet and a person's hardware wallet look the same on the chain. Storage rests on behaviour alone, so it is consistent with cold at Low.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "confidence-words",
+        "custody",
+        "storage",
+        "assessment",
+        "worked-example",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Worked: the unmoved balance, rated Low",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Worked: the unmoved balance, rated Low"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject's notes hold an account xpub and the words \"Trezor, safe\"; the xpub lists 30 addresses, three funded and unspent for eighteen months. Why is self-custody rated Moderate, not High?",
+      "correct_answer": "The notes are one source, and an accountant can hold an xpub without any key to spend.",
+      "incorrect_answers": [
+        "Cold storage is capped at Moderate on the course scale, so long-unspent funds stay there.",
+        "A Trezor is a custodial product, so its operator, not the subject, holds the key.",
+        "An xpub lists only a first account, so the funded addresses cannot be tied to the subject."
+      ],
+      "explanation": "The practice answer is Moderate because the notes are one source, and an xpub watches addresses without being able to spend. High would need a second, independent kind of evidence.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "confidence-words",
+        "xpub",
+        "custody",
+        "assessment",
+        "practice",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Practice: characterize three wallets",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Practice: characterize three wallets / Answers: three wallets, and what stays open"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A found seed phrase opens an empty wallet. What should the analyst try next?",
+      "correct_answer": "The passphrase, a wallet that reads other address types, and the gap limit.",
+      "incorrect_answers": [
+        "Nothing, because a valid phrase always opens the wallet that holds its own funds.",
+        "A chain query for the balance registered to the phrase's words on the network.",
+        "A second restore in the same wallet, since a wrong passphrase refuses to open."
+      ],
+      "explanation": "The review answer: a phrase that opens an empty wallet may need its passphrase, a wallet that reads the other address types, or a restore that goes past the gap limit of 20 unused addresses.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "seed-phrases",
+        "passphrase",
+        "gap-limit",
+        "scenario",
+        "review",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "Review: key controls, seed makes addresses",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Review: key controls, seed makes addresses"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet's three addresses lock outputs of 0.40, 0.15 and 0.08 BTC. What balance does the wallet show, and why?",
+      "correct_answer": "0.63 BTC, because the balance is the sum of the unspent outputs locked to all its addresses.",
+      "incorrect_answers": [
+        "0.40 BTC, because the wallet shows the output at the first address it gave to a payer.",
+        "0.48 BTC, because the wallet counts only the outputs at its receiving addresses, not its first one.",
+        "0.15 BTC, because the wallet shows the average of the outputs at its three addresses."
+      ],
+      "explanation": "A wallet manages many keys and addresses, and its balance is the sum of the unspent outputs locked to all of them. The coins stay on the chain as outputs; the wallet holds the keys.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "wallets",
+        "utxo-model",
+        "keys-and-addresses",
+        "mechanism",
+        "lesson-synthesis",
+        "slides"
+      ],
+      "lesson_block": "A wallet manages many keys and addresses",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: A wallet manages many keys and addresses"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A shop gives its web server an account's xpub so it can make fresh addresses. What does BIP32 warn about that xpub?",
+      "correct_answer": "If it leaks with one non-hardened child private key, the parent private key follows, so it needs care.",
+      "incorrect_answers": [
+        "It carries the private keys of its whole branch, so anyone who reads it can spend from the whole account.",
+        "It reveals the seed phrase itself, so other accounts and address types are open to any reader.",
+        "It lists only the used addresses, so it cannot show an auditor any payments not yet received."
+      ],
+      "explanation": "The xpub slide cites BIP32: an xpub derives public keys and addresses but no private key. Combined with one non-hardened child private key it gives the parent private key, so xpubs need more care than ordinary public keys.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "xpub",
+        "bip32",
+        "hardened-derivation",
+        "key-security",
+        "risk",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "An xpub reveals every address, past and future",
+      "source_type": "reading_source",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: An xpub reveals every address, past and future",
+      "specific_source_reading": "BIP32 (Wuille), as cited on the xpub slide: xpub plus one non-hardened child private key gives the parent private key"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "According to the NIST description, why are hot and cold wallets used for different balances?",
+      "correct_answer": "A hot wallet is online and quick to use, so it holds low-value funds; a cold wallet is offline, so it holds high-value funds at rest.",
+      "incorrect_answers": [
+        "A hot wallet needs a person to press a button to sign, so it holds large balances at rest; a cold wallet signs by itself without any person.",
+        "A hot wallet is held by an exchange and a cold wallet by the user, so each holds the balances its holder keeps under control.",
+        "A cold wallet is not connected, so it holds the in-transit funds that the wallet must be able to spend quickly and often."
+      ],
+      "explanation": "The hot or cold slide cites NIST: hot wallets are connected and built to be highly accessible, so they hold low-value or in-transit funds; cold wallets are not connected and built to be highly secure, so they hold high-value funds at rest, with a person acting to sign.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "hot-cold-wallets",
+        "storage",
+        "nist",
+        "comparison",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Hot or cold says where the key lives",
+      "source_type": "reading_source",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Hot or cold says where the key lives",
+      "specific_source_reading": "Lesavre, Varin and Yaga (NIST, 2021), as cited on the hot or cold slide: accessible hot wallets for low-value or in-transit funds, secure cold wallets for high-value funds at rest"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "Two customers of one exchange pay each other. Why might the chain show nothing?",
+      "correct_answer": "The exchange logs the transfer in its own books, off-chain, because it holds both of the customers' keys.",
+      "incorrect_answers": [
+        "The exchange must broadcast every payment, but explorers hide transfers between two accounts of one exchange.",
+        "Both customers hold their own keys, so the transfer stays in each device's record until a node requests it.",
+        "The exchange posts one combined transaction at day's end, so single customer payments are never recorded there."
+      ],
+      "explanation": "The custody slide cites the sources on hosted wallets: a custodial platform executes transactions for the user and records them in its own books, so a payment between two of its customers may never reach the chain.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "05-bf-wallet-types",
+        "custody",
+        "custodial-wallets",
+        "off-chain",
+        "exchanges",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Whoever holds the key controls the coins",
+      "source_type": "reading_source",
+      "specific_source_lesson": "05-BF-wallet_types.qmd: Whoever holds the key controls the coins",
+      "specific_source_reading": "Scott and Tierno (CRS, 2022), as cited on the custody slide: a platform records transfers between its customers in its own books, off-chain"
     }
   ],
   "hierarchy": {
@@ -86,12 +400,30 @@
         "enabled": true,
         "lectures": [
           {
-            "id": "lec_wallet_types",
-            "title": "Bitcoin - Wallet Types",
+            "id": "lec_wallet_types_lesson",
+            "title": "Bitcoin - Wallet Types - lesson synthesis",
             "enabled": true,
             "question_ids": [
               "q1",
-              "q2"
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_wallet_types_reading",
+            "title": "Bitcoin - Wallet Types - reading synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
             ]
           }
         ]

@@ -52,10 +52,6 @@ slide index), which is never listed here.
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
-- `quizes/quiz_json/bitcoin_05-BF-wallet_types-quiz-bank.json` has two questions (keys not coins; one seed, many
-  addresses) and none on the rebuilt 05-BF's new slides: custody versus storage, the two checks (cold storage at an
-  exchange; two addresses from one seed), the worked three-address-types slide, the worked Low assessment, the
-  three-wallet practice and the review. [13 Nov 2026, 05-BF rebuild]
 - 06-BF has no quiz bank of its own (only `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json` and
   `weekone_check-quiz-bank.json` cite it), so nothing tests the rebuilt 06-BF's new slides: the three checks (which
   wrapper; which key did not sign; which software built it), "three keys, one person", the PSBT steps, the lab-spend
