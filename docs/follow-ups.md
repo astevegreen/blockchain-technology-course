@@ -39,10 +39,22 @@ slide index), which is never listed here.
   reliable the method is", the BTC-e practice and answers, or the review; `quizes/lesson_synthesis/forensics_01-FO-*-synthesis.md:145`
   names the old title "Recap: every label, a source and a confidence" (now "Review: …"; the old anchor still resolves).
   [13 Nov 2026, 01-FO rebuild]
-- 01-FO's hidden slides that the day map moves (`docs/build-spec.md:84-86`) are not yet in their new lessons:
-  "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"
-  to 05-FO, the three Silk Road slides to 03-FO. Carry them over when each destination is rebuilt.
-  [13 Nov 2026, 01-FO rebuild]
+- 01-FO's hidden Silk Road slides that the day map moves to 03-FO (`docs/build-spec.md:84-86`): 03-FO already
+  carries the market and the stolen-coins ledger trace; "The Break" (undercover buys, the IP leak, the arrest) is
+  legal process and stays hidden. Settle it when 03-FO is rebuilt. [13 Nov 2026, 01-FO rebuild; trimmed in the
+  05-FO rebuild, which took in "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"]
+- `quizes/quiz_json/forensics_05-FO-vasps_and_the_rules-quiz-bank.json` has no questions on the rebuilt 05-FO's
+  three checks (which of the two is a VASP; a 2023 sanctions line today; is a 311 action an OFAC listing), the
+  Travel Rule slide's check, the worked cluster reading, the practice and answers, or the review.
+  Three quiz pointers name old titles (the hidden anchors still land): that bank's q6 and
+  `quizes/quiz_json/daily_d9_review_of_day8-quiz-bank.json` q14 name "A firm that ignores the BSA can be shut down"
+  (now "The BSA makes the business keep records"); the bank's q12 names "Tornado Cash: sanctioned 2022, delisted
+  2025" (now "Date every sanctions claim: Tornado Cash").
+  [13 Nov 2026, 05-FO rebuild]
+- `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
+  regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
+  Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);
+  settle them when 04-BF is rebuilt. [13 Nov 2026, 05-FO rebuild]
 - No quiz bank tests the rebuilt 08-EF's new slides: the two checks (who can stop funds; out of an optimistic
   rollup in minutes), "Intents: you name the result, a relayer pays it", the worked bridge-type reading, the Bitget
   practice and answers, and the review. [13 Nov 2026, 08-EF rebuild]
