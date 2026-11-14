@@ -26,10 +26,6 @@ slide index), which is never listed here.
 - `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
   new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
   and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
-- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:467`:
-  the welcome's closing pre-question ("what do you expect the chain to tell you?") says Ledger and Finality comes
-  back to it, but this slide's notes do not refer to it; add a one-line callback at its next rework.
-  [13 Nov 2026, reviewer on the 01-IN rebuild]
 - `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
   (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
   or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",
@@ -66,13 +62,27 @@ slide index), which is never listed here.
   of 04-CP (hidden there as "Bitcoin address types by prefix"); `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`
   should teach both. Its line 94 says "as 04-CP showed": use the lesson's name; its line 123 (notes) says the slide
   "extends day 1's address-prefix table", which day 1 no longer shows. [13 Nov 2026, 04-CP rebuild]
-- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:605`
+- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:1016`
   lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
   identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
 - `quizes/quiz_json/daily_d2_review_of_day1-quiz-bank.json`: its Tron question (q7, one key behind an Ethereum and
   a Tron address) was pulled on the owner's word because it read a hidden slide; restore it when 01-PC carries the
   Tron slide. The 04-CP questions have none on the rebuild's four checks, the two worked slides, the signed fields
   (nonce, chain ID), the practice or the review. [13 Nov 2026, 04-CP rebuild]
+- The 01-CM rebuild teaches proof of work in "Proof of work is guessing until a hash is low" (outline move A1, from
+  `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd:369` "Mining a Candidate Block"); 02-BF's
+  rebuild should hide that slide and recall 01-CM, keeping the Merkle root and the coinbase there. [13 Nov 2026, 01-CM rebuild]
+- Outline move A4 puts Raft and PBFT, by name, in `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`,
+  which does not teach them yet; 01-CM's "Open chains buy openness with slower finality" keeps the known-members
+  fact without the names (`castro_practicalbyzantinefault_1999`, `ongaro_searchunderstandableconsensus_2014`).
+  Add them at 01-PC's rework. [13 Nov 2026, 01-CM rebuild]
+- `quizes/quiz_json/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-quiz-bank.json`:
+  q1-q13's `lesson_block`s name slides hidden since 23 Oct ("Why Agreement Matters", "Failure Models", "Quorums",
+  "BFT Mechanics" and others), and the bank has no questions on the rebuild's proof-of-work slide, four checks,
+  worked confirmation count, practice or review. q9 (BFT gives deterministic finality despite bounded Byzantine
+  faults) and the other CFT/BFT and n = 3t + 1 questions trace only to hidden slides now that the visible table
+  drops the Raft/PBFT rows: pull them, or move them to 01-PC's bank when 01-PC teaches Raft and PBFT.
+  [13 Nov 2026, 01-CM rebuild]
 - Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
   breaks each" (the old anchor still resolves): `quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json:209`
   and `:258`, `quizes/quiz_json/weekone_check-quiz-bank.json:115` and `:118`. The 02-IN bank's proof-of-work
