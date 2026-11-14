@@ -121,9 +121,6 @@ slide index), which is never listed here.
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
 - The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
-- `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
-  missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
-  wave 3 fixes]
 - The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which
   reaches the bitcoin, final-trace, wallet and hide-and-trace labs only when the owner next rebuilds the base image
   (student-release, `rebuild_bases`); until then their dashboards may show "Offline". After that rebuild, drop the

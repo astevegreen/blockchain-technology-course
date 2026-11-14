@@ -18,6 +18,10 @@ a green run of changed files leaves a stamp in .git/check-stamps/ for --stamped.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
+import functools
+import http.server
+import threading
 import fnmatch
 import os
 import re
@@ -420,6 +424,84 @@ def lab_page_scripts(files: list[str]) -> list[str]:
     return failures
 
 
+LAB_DIR = re.compile(r"blockchain-course/assets/labs/([^/]+)/")
+CONSOLE_ERROR = re.compile(r'INFO:CONSOLE[^\]]*\] "(Uncaught.*?)", source: [^ ]*?/([^/ ]+) \((\d+)\)$', re.M)
+# The lab shell and some pages show a broken lab as a "lab-error" box instead of throwing; script and noscript text
+# is not shown.
+LAB_ERROR = re.compile(r'<(\w+)[^>]*class="lab-error"[^>]*>(.*?)</\1>', re.S)
+NOT_SHOWN = re.compile(r"<(noscript|script)\b[^>]*>.*?</\1>", re.S | re.I)
+
+
+def find_browser() -> str | None:
+    """Chrome or Edge, for loading lab pages headless."""
+    for name in ("chrome", "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "msedge"):
+        found = shutil.which(name)
+        if found:
+            return found
+    roots = [os.environ.get(v) for v in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]
+    for root in filter(None, roots):
+        for sub in (r"Google\Chrome\Application\chrome.exe", r"Microsoft\Edge\Application\msedge.exe"):
+            if (Path(root) / sub).exists():
+                return str(Path(root) / sub)
+    return None
+
+
+def pages_to_load(files: list[str], all_pages: list[str]) -> list[str]:
+    """A lab page is loaded when it or any file in its folder changed; a change in shared/ loads every page."""
+    labs = {m.group(1) for f in files if (m := LAB_DIR.match(f))}
+    if "shared" in labs:
+        return all_pages
+    return [p for p in all_pages if LAB_DIR.match(p).group(1) in labs]
+
+
+def lab_page_loads(pages: list[str]) -> list[str]:
+    """Open each lab page in a headless browser: a script that throws, or a file it asks for that is not there,
+    leaves the student a page that does nothing, though every script parses."""
+    browser = find_browser()
+    if not browser:
+        return ["no Chrome or Edge found: cannot load lab pages"]
+    missing: dict[str, set[str]] = {}
+    lock = threading.Lock()
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *args) -> None:
+            pass
+
+        def send_error(self, code, message=None, explain=None) -> None:
+            if code == 404 and not self.path.endswith("favicon.ico"):
+                referer = (self.headers.get("Referer") or "").split("?")[0]
+                with lock:
+                    missing.setdefault(referer, set()).add(self.path)
+            super().send_error(code, message, explain)
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Handler, directory=str(REPO)))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_address[1]}/"
+
+    def load(rel: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as profile:
+            code, out = run([browser, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
+                             f"--user-data-dir={profile}", "--enable-logging=stderr", "--v=0",
+                             "--virtual-time-budget=5000", "--dump-dom", base + rel], timeout=90)
+        found = [f"{rel}: {m.group(2)}:{m.group(3)}: {m.group(1)}" for m in CONSOLE_ERROR.finditer(out)]
+        found += [f"{rel}: the page shows a lab error: {' '.join(re.sub(r'<[^>]+>', ' ', m.group(2)).split())[:200]}"
+                  for m in LAB_ERROR.finditer(NOT_SHOWN.sub("", out))]
+        if code and not found:
+            found.append(f"{rel}: the browser exited {code}")
+        return found
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            failures = [line for lines in pool.map(load, pages) for line in lines]
+    finally:
+        server.shutdown()
+        server.server_close()
+    for rel in pages:
+        for path in sorted(missing.get(base + rel, ())):
+            failures.append(f"{rel}: asks for {path}, which is not there")
+    return failures
+
+
 def find_bash() -> str | None:
     """Git Bash; never the WSL launcher, which fails on this machine."""
     candidates = [Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Git" / "bin" / "bash.exe"]
@@ -719,6 +801,11 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
              else [f for f in present if LAB_PAGE.search(f)])
     if pages:
         plan.checks.append(Check("lab page scripts", lambda: lab_page_scripts(pages)))
+    loads = (pages if everything
+             else pages_to_load(files, sorted({*pages, *(f for f in tracked_files(".html")
+                                                        if LAB_PAGE.search(f) and (REPO / f).exists())})))
+    if loads:
+        plan.checks.append(Check("lab page loads", lambda: lab_page_loads(loads)))
 
     new = added if added is not None else ([] if everything else [f for f in files if f in present])
     if new:

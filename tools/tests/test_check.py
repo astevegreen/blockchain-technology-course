@@ -480,6 +480,39 @@ class Helpers(unittest.TestCase):
             self.assertEqual(len(failures), 1)
             self.assertTrue(failures[0].startswith(f"{rel}:4: SyntaxError"), failures[0])
 
+    @unittest.skipUnless(check.find_browser(), "no Chrome or Edge")
+    def test_lab_page_loads(self) -> None:
+        with tempfile.TemporaryDirectory(dir=check.REPO) as tmp:
+            page = Path(tmp) / "index.html"
+            rel = page.relative_to(check.REPO).as_posix()
+            (Path(tmp) / "here.js").write_text("window.here = 1;\n")
+            page.write_text('<html>\n<script src="here.js"></script>\n<script>\nvar a = here;\n</script>\n</html>\n')
+            self.assertEqual(check.lab_page_loads([rel]), [])
+            # Both scripts parse, so the syntax check passes them; only loading the page finds what is wrong.
+            page.write_text('<html>\n<script src="gone.js"></script>\n<script>\nvar a = 1;\nnotDefined();\n</script>\n</html>\n')
+            self.assertEqual(check.lab_page_scripts([rel]), [])
+            failures = check.lab_page_loads([rel])
+            self.assertEqual(len(failures), 2, failures)
+            self.assertTrue(failures[0].startswith(f"{rel}: index.html:5: Uncaught ReferenceError"), failures[0])
+            self.assertTrue(failures[1].endswith("gone.js, which is not there"), failures[1])
+            # A message with quotes in it, and a broken lab shown as a box rather than thrown; <noscript> is not shown.
+            page.write_text('<html>\n<noscript><p class="lab-error">Needs JavaScript.</p></noscript>\n<script>\n'
+                            'throw new Error(\'bad "q7" value\');\n</script>\n</html>\n')
+            failures = check.lab_page_loads([rel])
+            self.assertEqual(len(failures), 1, failures)
+            self.assertIn('Uncaught Error: bad "q7" value', failures[0])
+            page.write_text('<html>\n<body><script>\ndocument.body.insertAdjacentHTML("beforeend",'
+                            ' \'<pre class="lab-error">This lab\\\'s config has problems</pre>\');\n</script></body>\n</html>\n')
+            failures = check.lab_page_loads([rel])
+            self.assertEqual(failures, [f"{rel}: the page shows a lab error: This lab's config has problems"])
+
+    def test_pages_to_load(self) -> None:
+        pages = ["blockchain-course/assets/labs/make-change/index.html",
+                 "blockchain-course/assets/labs/two-of-three/index.html"]
+        self.assertEqual(check.pages_to_load(["blockchain-course/assets/labs/make-change/data.js"], pages), pages[:1])
+        self.assertEqual(check.pages_to_load(["blockchain-course/assets/labs/shared/look.css"], pages), pages)
+        self.assertEqual(check.pages_to_load(["docs/follow-ups.md"], pages), [])
+
     def test_lab_page_pattern(self) -> None:
         self.assertTrue(check.LAB_PAGE.search("blockchain-course/assets/labs/is-it-final-yet/index.html"))
         self.assertFalse(check.LAB_PAGE.search("blockchain-course/assets/labs/shared/shell.js"))
