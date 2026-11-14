@@ -16,96 +16,99 @@ aci-mermaid: true
 
 ## A token is a balance a contract keeps {.smaller}
 
-**Bottom line:** ETH lives in Ethereum's own ledger. A token is a different thing: a balance that a smart contract keeps for each address [@vogelsteller_eip20tokenstandard_2015]. The contract's code decides who can create, move or freeze that balance. So the analyst reads the token's contract as well as the transaction.
+::: {style="font-size: .82em;"}
 
-::: {style="font-size: .8em;"}
+**The case:** a victim tells the agent they paid a seller 5,000 USDT for goods that never came. The explorer page for the payment shows 0 ETH sent, to Tether's contract. The agent asks two things: did the victim pay anyone, and can that money still be stopped?
 
-| Question | The answer tells you | Slide |
-| --- | --- | --- |
-| Is it the chain's coin or a token? | Which record moved, and where to look for it | Coin or token |
-| What does a token transfer look like? | A call to the contract, plus a `Transfer` log | ERC-20, logs |
-| What is the holder trusting? | The issuer, the collateral, a bridge or the crowd | Different promise |
-| What makes an NFT different? | One token ID, one owner, a pointer to metadata | NFTs |
-| Who can stop a stablecoin moving? | The issuer, through code it controls | Stablecoins, Tether, USDC |
-| Is that a lead? | Freezable, which issuer, how fast | Freezable? |
+**The smart contracts lesson left off** with a contract's code deciding what each caller can do. A token is that idea at work: ETH lives in Ethereum's own ledger, but a token is a balance that a contract keeps for each address [@vogelsteller_eip20tokenstandard_2015].
+
+[]{#why-investigators-and-users-care}[]{#same-token-standard-different-promise}**Why it matters:** a wallet shows coins and tokens side by side, yet who can create, move or freeze each one is set by a different record. Four parts build the answer:
+
+1. **A** · A token is a contract's record. 2. **B** · An NFT is one numbered token. 3. **C** · Stablecoins: who stands behind them. 4. **D** · Tether's freeze.
+
+**By the end:** given a token balance, say whether it can be frozen, by whom, and how sure you are, pointing to the contract line or log that shows it.
+
+**The point to earn:** a token is a contract's record, so the contract's code says who can stop it.
 
 :::
-
-This afternoon's lab reads a token contract and mints an NFT on the course's own chain; then [spot the fake Course Pound](/assets/labs/spot-the-fake/index.html) (pairs game, about 25 minutes).
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the token lesson with its one idea. A token is a balance that a contract keeps, so the contract's code sets the rules, including who can freeze it. It matters here because stablecoins as a laundering rail depend on that point: the most-used laundering asset is a token whose issuer can stop it moving. Emphasize that the analyst reads the token contract as well as the transaction.
+This slide opens the token lesson with a case and the agent's two questions: did the victim pay anyone, and can the money still be stopped? It matters here because stablecoins are the most used rail for illicit funds, and the analyst who can say whether a balance can be frozen, and by whom, hands the agent a lead. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- ETH is the chain's own asset; a token is a balance record inside a contract.
-- The contract's code sets who can create, move or freeze the balance.
-- The table is the lesson's map: coin or token, what a transfer looks like, what the holder trusts, NFTs, issuer control, and whether a freeze is a lead.
-- The afternoon lab reads a token contract and mints an NFT on the course chain; the day ends with the spot the fake game.
+- The case is built for this lesson, and the five-minute lab Who got paid? uses it too: the explorer seems to say the victim paid nobody, because the transaction went to Tether's contract with 0 ETH. Part A answers the first question by reading the input data and the log.
+- The link back is the smart contracts lesson: code decides what each caller can do. A token is a contract that keeps a balance per address, so the same reading answers who can move or freeze it.
+- The "why it matters" line is the old investigators slide in one sentence. Wallets show ETH and tokens together, but a token's rules sit in its contract, so the analyst identifies which record moved before asking any risk question.
+- The four parts: A reads ERC-20 and the `Transfer` log; B reads an NFT and its mint; C sorts stablecoins by who stands behind the dollar, including TerraUSD's collapse; D reads Tether's blacklist and works a real freeze.
+- The point to earn is the lesson's bottom line: the code, not the token's name or its explorer label, says who can stop it.
+- Facts the lesson relies on from the morning: logs and receipts from the Ethereum lesson, and reading a contract, `require` and events from the smart contracts lesson.
 
 **Walkthrough**
-1. Read the bottom line: ETH lives in the base ledger; a token lives in a contract.
-2. Walk the table row by row, naming the slide that answers each question.
-3. Point at the last row: by the end, students can tell an agent whether stablecoin funds can be frozen, and by whom.
-4. Last on day 3, after the token worksheet: spot the fake (linked above), a pairs game of about 25 minutes on the course chain. Pairs tell a real token from two fakes with the same name by its contract creator and its code; the key is in `dynamic-labs/tokens/quizes/SPOT_THE_FAKE_ANSWERS.md`.
+1. Read the case and leave both questions open.
+2. Read the link back and the one line that separates ETH from a token.
+3. Name the four parts.
+4. Read the objective aloud: each part ends with a check, and the close asks the objective again.
+5. Time plan, 50 minutes: opening 3, part A 13 (with its check), part B 6, part C 10 (with its check), part D 10, practice 3, answers 2, review and next 3.
 
 **Sources**
 - @vogelsteller_eip20tokenstandard_2015
 
 :::
 
-## Coin or Token? Start With the Balance Record {.smaller}
+## Coin or token? Start with the balance record {.smaller}
 
 :::: {.columns}
 
 ::: {.column width="50%"}
-::: {style="font-size: .76em; line-height: 1.13;"}
+::: {style="font-size: .8em; line-height: 1.15;"}
 **Native coin**
 
-- Built into the chain's base ledger.
-- Pays network fees; may support staking or mining incentives.
-- Exists before any app-specific token contract.
-- Examples: `ETH` (Ethereum), `SOL` (Solana), `ADA` (Cardano), `TRX` (Tron).
+- Kept in the chain's own ledger, in each account's state [@wood_ethereumsecuredecentralised_2016].
+- Pays the network's fees [@wood_ethereumsecuredecentralised_2016].
+- Examples: `ETH` on Ethereum, `TRX` on Tron.
 :::
 :::
 
 ::: {.column width="50%"}
-::: {style="font-size: .76em; line-height: 1.13;"}
-**Token on a chain**
+::: {style="font-size: .8em; line-height: 1.15;"}
+**Token**
 
-- Balance is tracked by a smart contract or token program.
-- Uses the chain's native coin to pay transaction fees.
-- Token rules may include minting, freezing, upgrades, or governance.
-- Examples: `USDT`, `USDC`, `DAI`.
+- A balance a contract keeps for each address [@vogelsteller_eip20tokenstandard_2015].
+- Its fees are still paid in the native coin [@wood_ethereumsecuredecentralised_2016].
+- The contract's code sets who can mint, move or freeze it.
+- Examples: `USDT`, `USDC` [@etherscan_usdttoken_2026; @circle_fiattokenv1_2026].
 :::
 :::
 
 ::::
 
 ::: {.callout-note appearance="simple"}
-**First question:** is this the chain's own asset, or a token record maintained by code on top of the chain?
+**First question:** is this the chain's own coin, or a record kept by a contract? The answer says where the rules are.
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide replaces the vague "rails" abstraction with a concrete first question: where is the balance recorded? It matters here because students need a reliable way to distinguish native chain assets from contract- or program-issued tokens before later lessons discuss stablecoins, rug pulls, bridges, and forensic tracing. Emphasize that a wallet may display both categories side by side even though their enforcement models differ.
+This slide sets the lesson's first question: where is the balance recorded? It matters here because a wallet or exchange shows ETH and USDT side by side, yet ETH sits in Ethereum's own account state while USDT is an entry in Tether's contract. Emphasize that the rules for a token, including who can freeze it, are in its contract.
 
 **Key Points**
-- A native coin such as ETH, SOL, ADA, or TRX is part of a chain's base economic and fee model.
-- A token such as USDT, USDC, or DAI is normally a balance record maintained by a smart contract or token program on an existing chain.
-- Token transfers still require the native coin for fees on that chain.
-- The balance-record question should come before the risk question.
+- A native coin is part of the chain itself. On Ethereum, each account's ETH balance is in the account state the Yellow Paper defines, and fees are paid in ETH.
+- A token is a balance record inside a contract: EIP-20 defines `balanceOf` for exactly that. The token holder still pays fees in ETH, because every transaction does.
+- Because the token is the contract's record, the contract's code decides who may mint, move or freeze it. That is why the analyst reads the token's contract, not only the transaction.
+- USDT and USDC are tokens on Ethereum; TRX is Tron's native coin, which matters on day 5.
 
 **Walkthrough**
-Compare the two columns directly. Start with native coins as base-ledger assets, then contrast tokens as records managed by code running on top of a chain. Close with the callout question and tell students to use it whenever a wallet, exchange, or explorer shows an asset ticker.
+1. Compare the two columns line by line.
+2. Ask: a wallet shows 2 ETH and 500 USDT. Which one could a company freeze? (Expected answer: possibly the USDT, if its contract says so; never the ETH.)
+3. Read the callout.
 
 **Sources**
+- @wood_ethereumsecuredecentralised_2016
 - @vogelsteller_eip20tokenstandard_2015
-- @wang_soktokenizationblockchain_2021
-- Ethereum.org, "Token Standards": https://ethereum.org/developers/docs/standards/tokens/
-- EIP-20, "Token Standard": https://eips.ethereum.org/EIPS/eip-20
+- @etherscan_usdttoken_2026
+- @circle_fiattokenv1_2026
 
 :::
 
@@ -139,9 +142,9 @@ event Approval(address indexed _owner,
 
 ::::
 
-**Decimals:** balances are whole numbers of the token's smallest unit, and the optional `decimals()` says where the point goes. USDT uses 6, most ERC-20s 18: divide the raw amount by 10^decimals^ before reading it [@vogelsteller_eip20tokenstandard_2015; @openzeppelin_erc20docs_2026; @etherscan_usdttoken_2026].
+**Decimals, worked:** a USDT `Transfer` carries `_value` 1,500,000. USDT's `decimals()` is 6, so divide by 10^6^: **1.5 USDT**. Most ERC-20s use 18; read the token's own `decimals()` [@vogelsteller_eip20tokenstandard_2015; @openzeppelin_erc20docs_2026; @etherscan_usdttoken_2026].
 
-**For the analyst:** an approval is standing permission to spend. Wallet drainers abuse it on day 8.
+**For the analyst:** an approval is standing permission to spend. Day 8 shows it abused to empty wallets.
 
 ::: {.notes}
 
@@ -152,14 +155,14 @@ This slide shows the whole ERC-20 interface on one screen. It matters here becau
 - `balanceOf` and `totalSupply` read balances; `transfer` moves the caller's own tokens.
 - `approve` sets an allowance; `transferFrom` lets the approved spender move up to that amount.
 - Every move emits a `Transfer` event; the standard says new tokens SHOULD emit a `Transfer` from `0x0`.
-- `decimals()` is optional in EIP-20 and only tells software how to display a balance: the contract stores and moves whole units. USDT's contract reports 6, so a raw `_value` of 1,500,000 is 1.5 USDT; OpenZeppelin's ERC-20 defaults to 18, the value it says matches Ether and most ERC-20s (OpenZeppelin Contracts 5.x docs, read 4 Nov 2026). Read the token's own `decimals()` rather than assuming.
+- `decimals()` is optional in EIP-20 and only tells software how to display a balance: the contract stores and moves whole units. USDT's contract reports 6, so a raw `_value` of 1,500,000 is 1.5 USDT. OpenZeppelin's ERC-20 defaults to 18, the value it says matches Ether and most ERC-20s (OpenZeppelin Contracts 5.x docs, read 4 Nov 2026). Read the token's own `decimals()` rather than assuming.
 - Because the interface is standard, wallets and exchanges can support any token without custom code.
-- Approvals are standing permissions, which is why wallet drainers target them (day 8).
+- An approval is a standing permission; day 8 shows how attackers trick holders into granting one and then empty the wallet with `transferFrom`.
 
 **Walkthrough**
 1. Read the code top to bottom: three read functions (`totalSupply`, `balanceOf`, `allowance`), then the three that move value or permit it (`transfer`, `approve`, `transferFrom`).
 2. Contrast `transfer` (I move mine) with `approve` plus `transferFrom` (you may move mine, up to a limit).
-3. Read the `decimals()` bullet and ask: a USDT `Transfer` shows `_value` 1,500,000; how much moved? (Expected answer: 1.5 USDT, because USDT has 6 decimals.) The liquidity lesson needs this to read pool reserves.
+3. Work the decimals line aloud: 1,500,000 divided by a million is 1.5. Then ask: a token with 18 decimals shows 2,000,000,000,000,000,000; how many tokens? (Expected answer: 2.) The liquidity lesson on day 4 needs this to read pool balances.
 4. Point at the two events and say the next slide shows where they appear.
 
 **Sources**
@@ -173,6 +176,8 @@ This slide shows the whole ERC-20 interface on one screen. It matters here becau
 
 ::: {style="font-size: .85em;"}
 
+**The wrong idea:** the person paid is in the transaction's `to` field. For a token, `to` is the token's contract.
+
 | What you see in the explorer | Sending ETH | Calling the token's `transfer` |
 | --- | --- | --- |
 | Transaction `to` | The recipient | The **token contract** |
@@ -184,119 +189,130 @@ This slide shows the whole ERC-20 interface on one screen. It matters here becau
 
 :::
 
-- In a direct `transfer`, the token's recipient appears only in the input data and the log, never in the transaction's `to` field [@vogelsteller_eip20tokenstandard_2015].
-- When another contract moves the tokens (a DEX router, or a drainer calling `transferFrom`), `to` is that contract and the recipient may not be in the input at all. The `Transfer` log still names it [@vogelsteller_eip20tokenstandard_2015].
-- The contract's balances are the ledger; tools rebuild them from `Transfer` logs, so a move with no log can be missed (Tether slide).
+- In a direct `transfer`, the token's recipient appears only in the input data and the log, never in the transaction's `to` field [@vogelsteller_eip20tokenstandard_2015; @ethereumorg_transactions_2025].
+- When another contract the holder approved moves the tokens with `transferFrom`, `to` is that contract and the recipient may not be in the input at all. The `Transfer` log still names it [@vogelsteller_eip20tokenstandard_2015].
+- The contract's balances are the ledger; tools rebuild them from `Transfer` logs, so a move with no log can be missed (part D).
 - Fees are still paid in ETH by whoever sends the transaction [@wood_ethereumsecuredecentralised_2016].
-
-[Open the five-minute lab: Who got paid?](/assets/labs/who-got-paid/index.html)
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide teaches the most common reading mistake on Ethereum: looking for a token's recipient in the transaction's `to` field. It matters here because a stablecoin payment is a contract call, so the money's real destination is inside the input data and the `Transfer` log. Emphasize that this afternoon's lab and every later Ethereum trace read the logs.
+This slide teaches the most common reading mistake on Ethereum: looking for a token's recipient in the transaction's `to` field. It matters here because a stablecoin payment is a contract call, so the money's real destination is inside the input data and the `Transfer` log. Emphasize that the opening case, the afternoon lab and every later Ethereum trace read the logs.
 
 **Key Points**
+- The wrong idea comes first because it is the one the agent in the case already holds: the explorer says the victim sent nothing, to Tether.
 - An ETH payment names the recipient in `to` and carries a value.
 - A token payment sends the transaction to the token contract, usually with zero ETH; the recipient and amount are arguments to `transfer`.
-- The `Transfer` event in the logs records the token's from, to and amount.
-- When a router or drainer contract moves the tokens, the transaction goes to that contract; only the log reliably names the recipient.
-- The contract's balances are the record; logs are how tools rebuild it. A move without a log is invisible to a log-only tool, which the Tether slides show.
+- The `Transfer` event in the receipt's logs records the token's from, to and amount.
+- When an approved contract moves the tokens with `transferFrom`, the transaction goes to that contract; only the log reliably names the recipient.
+- The contract's balances are the record; logs are how tools rebuild it. A move without a log is invisible to a log-only tool, which part D shows with Tether.
 - Gas is still paid in the chain's coin.
 
 **Walkthrough**
-1. Read the table across, row by row, comparing an ETH send with a token send.
-2. Stop on the `to` row: the token contract, not the person paid.
-3. Close on the logs row and say students read these in Otterscan this afternoon.
-4. Open the five-minute lab "Who got paid?" from the link on the slide: students predict who got a victim's 5,000 USDT, open the transaction layer by layer, then meet a `transferFrom` drain where the recipient is only in the log. It runs offline.
+1. Read the wrong idea aloud and ask who holds it (the agent in the case).
+2. Read the table across, row by row, comparing an ETH send with a token send.
+3. Stop on the `to` row: the token contract, not the person paid.
+4. Close on the logs row: the next slide reads the case's payment that way.
 
 **Sources**
 - @vogelsteller_eip20tokenstandard_2015
+- @ethereumorg_transactions_2025
 - @wood_ethereumsecuredecentralised_2016
 
 :::
 
-## Same Token Standard, Different Promise {.smaller}
+## Worked: a USDT payment; the log names the payee {.smaller}
 
-::: {style="font-size: .70em; line-height: 1.12;"}
+::: {style="font-size: .8em;"}
 
-| Token type | What the holder depends on | Examples |
-|---|---|---|
-| Stablecoin token | Issuer reserves and redemption, or collateral and governance. | `USDT`, `USDC`, `DAI` |
-| Protocol or oracle token | Protocol demand, token permissions, admin design, and market expectations. | `LINK`, `UNI`-style tokens |
-| Community or meme token | Attention, liquidity, distribution, and project behavior. | `PEPE`-style tokens |
-| Wrapped or bridged token | Custody, bridge contracts, validators, or lock-and-mint accounting. | `WBTC`, bridged stablecoins |
+The victim's payment, opened one layer at a time. The people and the transaction are made up; USDT's address and decimals are real [@etherscan_usdttoken_2026].
+
+| Layer | What it shows | Who has been paid so far? |
+| --- | --- | --- |
+| 1. The top | From `0x7c21…1c52` (victim), To `0xdAC1…1ec7` (the USDT contract), Value 0 ETH | No one: `to` is the contract called |
+| 2. The input | Starts `0xa9059cbb`, `transfer(address,uint256)`: `_to` = `0x4b7e…a1f3`, `_value` = 5,000,000,000 | The seller, as the victim asked |
+| 3. The log | `Transfer` from the USDT contract: `_from` victim, `_to` `0x4b7e…a1f3`, `_value` 5,000,000,000 | The seller: the contract recorded it |
+
+: {tbl-colwidths="[13,57,30]"}
 
 :::
 
-::: {.callout-note appearance="simple"}
-**Key idea:** two tokens can move through the same wallet and transfer function while depending on completely different promises.
+- The first 4 bytes of the input name the function [@solidity_abispec_2026]; the receipt carries the logs [@ethereumorg_jsonrpcapi_2025].
+- 5,000,000,000 ÷ 10^6^ = **5,000 USDT**. **To the agent:** the victim paid `0x4b7e…a1f3` 5,000 USDT; the USDT contract's own log records it.
+
+[Open the five-minute lab: Who got paid?](/assets/labs/who-got-paid/index.html) It ends with a drained wallet, where only the log names the receiver.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works the opening case's payment end to end, the way the lab Who got paid? opens it. It matters here because it answers the agent's first question from the chain: yes, the victim paid someone, and the token contract's log says who. Emphasize the order: top, input, log, and the decimals step at the end.
+
+**Key Points**
+- Layer 1 is what the agent saw: a call to the USDT contract with 0 ETH. Nothing here says anyone was paid.
+- Layer 2 decodes the input. The selector `0xa9059cbb` is `transfer(address,uint256)`; the arguments are the seller's address and 5,000,000,000 in USDT's smallest unit.
+- Layer 3 is the `Transfer` log written by the USDT contract. It agrees with the input, and it is the record the contract keeps of the move.
+- Dividing by 10^6 gives 5,000 USDT, matching the victim's story.
+- The sentence to the agent states facts read from the chain, so it needs no confidence word. Who controls `0x4b7e…a1f3` is a judgment and would need one.
+- The five-minute lab repeats this read, then shows a second victim drained through `transferFrom`, where the input names only the victim and the log alone names the receiver.
+
+**Walkthrough**
+1. Read layer 1 and ask who has been paid. (Expected answer: no one yet.)
+2. Read layer 2: the selector names the function, the arguments name the seller and the amount.
+3. Read layer 3 and say that the log confirms the input.
+4. Do the division aloud, then read the sentence to the agent.
+5. Run the five-minute lab from the link, or leave it for the lab period.
+
+**Sources**
+- @etherscan_usdttoken_2026
+- @solidity_abispec_2026
+- @ethereumorg_jsonrpcapi_2025
+- @vogelsteller_eip20tokenstandard_2015
+
+:::
+
+## Check: two tokens named USDT. Which is real? {.smaller}
+
+::: {style="font-size: .86em;"}
+
+The victim's wallet history holds two tokens. Both contracts return the name `Tether USD`, the symbol `USDT` and 6 decimals.
+
+| | Token X | Token Y |
+| --- | --- | --- |
+| Contract address | `0xdAC1…1ec7` | `0x5f3e…08b2` |
+| Created | 2017 | last week, by an account with no other history |
+
+**Write one line:** which one is Tether's, and what tells you?
+
+::: {.fragment}
+**Answer:** Token X: its address is the USDT contract's [@etherscan_usdttoken_2026]. The name, symbol and decimals are optional fields any contract can return, so a copy matches them [@vogelsteller_eip20tokenstandard_2015]. Scammers already do this: one trick, address poisoning (day 8), uses "a counterfeit token created by the attacker" [@tsuchiya_addresspoisoning_2025].
+
+**Part A in one line:** a token is its contract. Read who created it and what its code does, not its name.
+:::
+
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide separates the token standard from the promise behind the token. It matters here because "token" is not one risk category: a stablecoin, governance token, meme token, and wrapped asset can all appear as ordinary token balances while relying on very different issuers, contracts, communities, or bridge systems. Emphasize that the visible transfer mechanics can look similar even when the failure modes are different.
+This slide closes part A with a check every student answers: two tokens with the same name and symbol, and only one is Tether's. It matters here because a token's label is the contract's own claim, and a copy can make the same claim. Emphasize that the contract address, its creator and its code identify a token; the name does not.
 
 **Key Points**
-- Stablecoins depend on issuer, reserve, collateral, redemption, freeze, and governance assumptions.
-- Protocol and oracle tokens depend on the service, network, permissions, governance, and market expectations around the token.
-- Meme and community tokens often depend heavily on attention, liquidity, distribution, and issuer or project behavior.
-- Wrapped or bridged tokens add bridge, custodian, validator, and lock-and-mint assumptions.
+- Expected answer: Token X, at USDT's published contract address. Token Y is a different contract that returns the same strings.
+- EIP-20 makes `name()`, `symbol()` and `decimals()` optional, and any contract can return the same strings, so they are not evidence of who issued it.
+- Token Y's address and its creation date are made up for this check; USDT's address is real.
+- A crude fake falls on its code (it has no blacklist, for instance). A careful copy can carry the issuer's own code; then the contract creator, the account that deployed it, is what a copier cannot borrow. The day 3 game Spot the fake practises both.
+- Address poisoning, from Tsuchiya and colleagues, sends victims counterfeit tokens so that a look-alike address appears in their history.
 
 **Walkthrough**
-Read the table by asking what promise the holder is actually relying on in each row. Do not treat the examples as endorsements or rankings. The point is that the token transfer may look technically similar, but the due-diligence question changes by token type.
+1. Read the two rows.
+2. Give every student thirty seconds to write one line.
+3. Take a show of hands on "both are real, they have the same name", then reveal the answer.
+4. Read the part A synthesis.
 
 **Sources**
+- @etherscan_usdttoken_2026
 - @vogelsteller_eip20tokenstandard_2015
-- @wang_soktokenizationblockchain_2021
-- @sharma_understandingrugpulls_2023
-- @labonte_keyissuesstablecoin_2025
-- @trm_t3fcu_2026
-- Ethereum.org, "Token Standards": https://ethereum.org/developers/docs/standards/tokens/
-- Tether, "How It Works"; Circle, "Introducing USD Coin"; MakerDAO/Sky documentation for DAI; Chainlink docs; Uniswap governance docs.
-
-:::
-
-## Why Investigators and Users Care {.smaller}
-
-::: {style="font-size: .76em; line-height: 1.14;"}
-
-- **User experience:** wallets and exchanges may show coins and tokens together, but a token transfer still needs the chain's native coin for fees.
-- **Rug pulls:** look for project-controlled token contracts, liquidity pools, admin keys, and misleading supply or ownership claims.
-- **Stablecoin risk:** ask who controls minting, reserves, redemption, freezes, blacklists, collateral, and governance.
-- **Forensic tracing:** distinguish native coin transfers, token-transfer events, bridge movements, and app-internal balances.
-- **Fake tokens:** `name` and `symbol` are optional fields the contract returns [@vogelsteller_eip20tokenstandard_2015], so a copy can return the same ones. Tell a token by its contract: who created it and what its code does. Address poisoning uses "a counterfeit token created by the attacker" [@tsuchiya_addresspoisoning_2025].
-
-:::
-
-::: {.callout-note appearance="simple"}
-**Practical takeaway:** before asking whether value is safe or traceable, identify what kind of record moved.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide connects the coin/token distinction to later course work. It matters here because the classification is not vocabulary for its own sake: it changes what a user pays, what can fail, and what evidence an analyst should follow. Emphasize that the correct first move is to identify the record type before choosing the risk or tracing model.
-
-**Key Points**
-- Wallet interfaces can hide the distinction between native coins and token balances.
-- Rug-pull analysis often centers on token contracts, liquidity pools, admin keys, and project claims.
-- Stablecoin analysis centers on issuer controls, reserves, redemption, freezes, collateral, and governance.
-- Forensics should separate native transfers, token events, bridge movements, and app-internal accounting.
-- A token's name and symbol are labels: EIP-20 makes `name()` and `symbol()` optional, and any contract can return the same strings. The code can expose a crude fake, but a copy can carry the issuer's own code; the contract creator (the account that deployed it) is what a copier cannot borrow. The day 3 game Spot the fake practises both: one fake falls on its code, the other only on its creator.
-
-**Walkthrough**
-Use the bullets as a transition slide. Start with the user's wallet experience, then move to the later investigative questions. Close by reinforcing the practical takeaway: identify the type of record first, then ask the relevant risk and evidence questions. On the fake-tokens bullet, ask: two tokens both called USDT sit in a victim's history; which one is real? (Expected answer: the one whose contract the issuer created, not the one whose name matches.)
-
-**Sources**
-- @vogelsteller_eip20tokenstandard_2015
-- @wang_soktokenizationblockchain_2021
-- @sharma_understandingrugpulls_2023
-- @labonte_keyissuesstablecoin_2025
-- @trm_t3fcu_2026
 - @tsuchiya_addresspoisoning_2025
-- Ethereum.org, "Token Standards": https://ethereum.org/developers/docs/standards/tokens/
 
 :::
 
@@ -352,6 +368,55 @@ This slide sets the NFT beside the ERC-20 token: same idea of a contract keeping
 
 :::
 
+## Worked: a mint is a Transfer from zero {.smaller}
+
+::: {style="font-size: .82em;"}
+
+One mint on the course chain, from the afternoon lab's recorded run (seat 39, 31 Oct 2026):
+
+| Part | What it shows |
+| --- | --- |
+| From | `0x3530…1207`, the seat's account, which signed it |
+| To | `0x0116…86Ef`, the CourseBadge contract; Value 0 ETH |
+| Input | `mint(address to, string uri)`: `to` = `0x3530…1207`, `uri` = a short JSON text with the badge's name and picture |
+| Log | `Transfer` from `0x0000…0000` to `0x3530…1207`, token ID **3** |
+
+: {tbl-colwidths="[16,84]"}
+
+:::
+
+- The log has four topics: the event, `_from`, `_to` and `_tokenId`, all indexed, and no data. An ERC-20 `Transfer` puts the amount in the data instead [@entriken_eip721nonfungibletoken_2018; @vogelsteller_eip20tokenstandard_2015].
+- `from` zero means badge 3 was created here [@entriken_eip721nonfungibletoken_2018].
+
+**Check:** what does this prove about who made badge 3?
+
+::: {.fragment}
+**Answer:** which account sent the mint and what text it stored; not who holds that key, and not that the name is true. **Part B in one line:** an NFT's origin is its `Transfer` from zero; its name is the minter's claim.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads one real mint on the course chain before students mint their own this afternoon. It matters here because the analyst finds an NFT's origin the same way: a `Transfer` log from address zero, naming the token ID. Emphasize that the minter writes the metadata, so the name in it is a claim.
+
+**Key Points**
+- The recorded run is one use of the lab's mint page, saved for when the chain is down. Each student's own mint has the same shape with their seat's address and the next badge number.
+- The transaction goes to the badge contract and calls `mint` with the receiver and the metadata text.
+- The receipt's log is an ERC-721 `Transfer` from the zero address, so this transaction created the badge.
+- ERC-721 indexes the token ID, so the log has four topics and no data; an ERC-20 `Transfer` indexes only from and to and carries the amount in the data. That difference tells an NFT log from a token log.
+- The signature proves which account sent the mint. It does not prove who held that key, and anyone can put any name in the metadata.
+
+**Walkthrough**
+1. Read the table top to bottom: who signed, which contract, what the call asked, what the log recorded.
+2. Point at `from` zero and the token ID: this is badge 3's birth.
+3. Ask the check on the slide: what does this prove about who made badge 3? Give every student thirty seconds, then reveal the answer and the part B synthesis.
+
+**Sources**
+- @entriken_eip721nonfungibletoken_2018
+- @vogelsteller_eip20tokenstandard_2015
+
+:::
+
 ## Three ways a stablecoin holds its peg {.smaller}
 
 ::: {style="font-size: .78em;"}
@@ -360,41 +425,219 @@ This slide sets the NFT beside the ERC-20 token: same idea of a contract keeping
 | --- | --- | --- | --- |
 | **Fiat-backed** | An issuer holds reserves, such as dollars, behind the tokens [@ethereumorg_stablecoins_2026; @labonte_keyissuesstablecoin_2025] | USDT, USDC [@tether_howitworks_2025; @l34_circle_usdc_2018] | The issuer, in the contract's code |
 | **Crypto-backed** | Other crypto, such as ETH, worth more than the coins issued [@ethereumorg_stablecoins_2026] | DAI, USDS [@ethereumorg_stablecoins_2026] | Only if its contract has a freeze function |
-| **Algorithmic** | No backing asset; an algorithm trades tokens to hold the price [@ethereumorg_stablecoins_2026] | TerraUSD, from Terraform Labs, which had its own blockchain; it collapsed in May 2022 [@sec_chargesterraform_2023; @sec_terraformpays_2024] | Only if its contract has a freeze function |
+| **Algorithmic** | No backing asset: a rule ties it to another token [@ethereumorg_stablecoins_2026] | TerraUSD (next slide) | Only if its contract has a freeze function |
 
 : {tbl-colwidths="[18,38,22,22]"}
 
-- A stablecoin "aims to maintain a stable price" against a reference asset such as the dollar [@labonte_keyissuesstablecoin_2025]. The type decides **who stands behind that dollar**: a company's reserves, collateral in code, or a market's belief.
-- In MIT's review, only verified customers of the issuer could redeem with it, after KYC checks and above a minimum; everyone else sold on the market [@mitdigitalcurrencyinitiative_stablecoinredemptionsnot_2022] [2022]{.asof}.
-- The rest of this lesson is about the first row, because a fiat-backed issuer controls its contract.
-
 :::
+
+- A stablecoin "aims to maintain a stable price" against a reference asset such as the dollar [@labonte_keyissuesstablecoin_2025]. The type decides **who stands behind that dollar**: a company's reserves, collateral in code, or a market's belief.
+- In MIT's review, only verified customers of the issuer could redeem with it, after identity checks and above a minimum; everyone else sold on the market [@mitdigitalcurrencyinitiative_stablecoinredemptionsnot_2022] [2022]{.asof}.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide sorts stablecoins by what holds the peg. It matters here because the type tells the analyst who stands behind the dollar and who, if anyone, can stop the token moving. Emphasize that the fiat-backed row, USDT and USDC, is the one with an issuer who can freeze addresses.
+This slide sorts stablecoins by what holds the peg. It matters here because the type tells the analyst who stands behind the dollar and who, if anyone, can stop the token moving. Emphasize that the fiat-backed row, USDT and USDC, is built around an issuer who can freeze addresses, and that for the other rows the answer is in the code.
 
 **Key Points**
 - Fiat-backed coins are backed by an issuer's reserves and redeemed by that issuer.
 - Crypto-backed coins are backed by other crypto, overcollateralized because that crypto's price moves.
-- Algorithmic coins have no backing asset and rely on supply rules; TerraUSD's collapse in May 2022 shows the failure mode. Terraform Labs had its own blockchain (the SEC calls it "the Terraform blockchain"); TerraUSD is on this slide as the algorithmic example, not as one of the Ethereum coins.
-- Only the issuer's verified customers can redeem directly, after KYC and above a minimum; everyone else sells on the market.
-- A fiat-backed issuer controls its token contract, which is what makes a freeze possible.
+- Algorithmic coins have no backing asset and rely on a rule; the next slide reads TerraUSD, the one that failed.
+- MIT's review found that only the issuer's verified customers can redeem directly, after identity checks and above a minimum; everyone else sells on the market. So the dollar behind a coin is reached through the issuer.
+- A fiat-backed issuer controls its token contract, which is what makes a freeze possible. For the other types, the last column says to read the contract.
 
 **Walkthrough**
 1. Read the table row by row, naming what keeps each type near a dollar.
 2. Point at the last column: only the first row is built around an issuer who can freeze; the others can freeze only if their code has that function.
-3. Use TerraUSD as the one-line warning that "stable" is a claim, not a guarantee. Say that Terraform Labs had its own blockchain, so TerraUSD is not one of the Ethereum coins on this slide.
+3. Read the redemption line: the issuer stands behind the dollar for its own customers.
 
 **Sources**
 - @ethereumorg_stablecoins_2026
 - @labonte_keyissuesstablecoin_2025
 - @tether_howitworks_2025
 - @l34_circle_usdc_2018
+- @mitdigitalcurrencyinitiative_stablecoinredemptionsnot_2022
+
+:::
+
+## TerraUSD: a peg held up by a sister token {.smaller}
+
+::: {style="font-size: .86em;"}
+
+- **What it was:** UST, which the SEC calls an "algorithmic stablecoin", "supposedly maintained its peg to the U.S. dollar by being interchangeable" for another Terraform token, LUNA [@sec_chargesterraform_2023]. Terraform had its own blockchain, which the SEC calls the Terraform blockchain [@sec_terraformpays_2024]; UST is here as the algorithmic example, not as an Ethereum token.
+- **Why people held it:** Terraform marketed UST as "yield-bearing", "paying as much as 20 percent interest through the Anchor Protocol" [@sec_chargesterraform_2023].
+- **The collapse:** "In May 2022, UST depegged from the U.S. dollar", and its price and its sister tokens' "plummeted to close to zero" [@sec_chargesterraform_2023]. The SEC says this "wiped out \$40 billion in market value nearly overnight" [@sec_terraformpays_2024].
+- **Afterwards:** in June 2024 Terraform and its CEO Do Kwon agreed to pay more than \$4.5 billion after a jury found them liable for fraud [@sec_chargesterraform_2023; @sec_terraformpays_2024].
+
+:::
+
+::: {.callout-note appearance="simple"}
+**For the analyst:** UST was algorithmic: no backing asset, only a rule tying it to LUNA [@ethereumorg_stablecoins_2026; @sec_chargesterraform_2023]. "Stable" was a claim; read who, or what, stands behind the dollar.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the algorithmic row of the previous table its one real case, TerraUSD. It matters here because UST was a large, widely held stablecoin whose dollar rested on a rule and a sister token, not on dollar reserves held by an issuer, and it fell to near zero in days. Emphasize the analyst's question from the previous slide: who stands behind the dollar?
+
+**Key Points**
+- The SEC's 2023 complaint release calls UST an "algorithmic stablecoin" that was supposed to hold its peg by being interchangeable with LUNA, another Terraform token, not on dollar reserves held by an issuer.
+- Terraform had its own blockchain, which the SEC's 2024 release calls the Terraform blockchain; UST is in this lesson as the algorithmic example, not as an Ethereum token.
+- Anchor, a Terraform protocol, paid up to 20 percent interest on UST deposits, which is why so many people held it.
+- In May 2022 UST lost its peg, and UST and LUNA fell close to zero. The SEC's 2024 release says the collapse wiped out $40 billion in market value nearly overnight.
+- In June 2024 Terraform and Kwon, its CEO, agreed to pay more than $4.5 billion after a unanimous jury found them liable for securities fraud.
+- This slide does not say who could freeze UST: the sources here do not cover its contract. The question for any algorithmic coin is the same as the table's last column: read its code.
+
+**Walkthrough**
+1. Read "what it was" and ask: what stands behind one UST? (Expected answer: the promise that it can be exchanged for a dollar's worth of LUNA, and so the market's belief in LUNA.)
+2. Read the 20 percent line and ask why that drew deposits.
+3. Read the collapse and the $40 billion figure, naming the SEC as the source.
+4. Read the callout.
+
+**Sources**
 - @sec_chargesterraform_2023
 - @sec_terraformpays_2024
-- @mitdigitalcurrencyinitiative_stablecoinredemptionsnot_2022
+
+:::
+
+## Stablecoins carry most illicit volume {.smaller}
+
+::: {.callout-note appearance="simple"}
+Illicit addresses "received at least \$154 billion in 2025", and stablecoins "now account for 84% of all illicit transaction volume" [@chainalysis_2026cryptocrimereport_2026] [Jan 2026]{.asof}.
+:::
+
+- The illicit share of all attributed crypto volume still "remains below 1%" [@chainalysis_2026cryptocrimereport_2026]. Most stablecoin activity is lawful, so a stablecoin payment is not a red flag on its own.
+- The figures are one firm's estimates from the addresses it has attributed. Name the source and its date when you use them.
+- **Why it matters for the analyst:** the asset most often used to move illicit funds is a token whose issuer can freeze it. That makes a stablecoin balance a possible lead (part D).
+- USDT on Tron is day 5; this lesson stays on Ethereum.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches that stablecoins are the main rail for illicit funds. It matters here because the analyst meets USDT and USDC in most cases, and part D explains why that can help. Emphasize the base rate as well as the share: most stablecoin use is lawful.
+
+**Key Points**
+- Chainalysis's 2026 report (8 January 2026) puts illicit receipts at no less than $154 billion in 2025.
+- In the same report, stablecoins are 84% of illicit transaction volume.
+- Illicit activity remains under 1% of all attributed crypto volume, so a stablecoin payment is not suspicious by itself.
+- These are one firm's estimates from its own attributions; cite them with the firm and the date.
+- Issuer control makes stablecoin funds a possible lead, which is why this slide comes just before Tether's freeze; USDT on Tron is day 5.
+
+**Walkthrough**
+1. Read the callout and say the date aloud.
+2. Give the base rate: under 1% of attributed volume is illicit.
+3. Turn to the analyst point: the favourite rail has an issuer who can freeze it.
+
+**Sources**
+- @chainalysis_2026cryptocrimereport_2026
+
+:::
+
+## Check: which stablecoin can its issuer freeze? {.smaller}
+
+::: {style="font-size: .86em;"}
+
+Two dollar stablecoins on Ethereum. You have each one's verified source.
+
+- **Coin P** is fiat-backed. Its code has `addBlackList(address)` marked `onlyOwner`, and `transfer` starts with `require(!isBlackListed[msg.sender])`.
+- **Coin Q** is crypto-backed. Its code has no blacklist, no pause and no owner-only function that moves balances.
+
+**Write one line for each:** can anyone freeze a holder's balance, and who?
+
+::: {.fragment}
+**Answer:** Coin P: yes, its owner, the issuer, by listing the address; the listed address can no longer send. Coin Q: no one, because no line lets anyone stop a holder's transfer [@solidity_introsmartcontracts_2026; @ethereumorg_stablecoins_2026].
+
+**Part C in one line:** the type tells you who stands behind the dollar; the code tells you who can stop it.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part C with a check every student answers: two made-up stablecoins, one with a blacklist and one without. It matters here because the analyst's answer to "can it be frozen?" comes from the code, and the type only tells you where to expect a freeze. Emphasize that students read the lines, as the smart contracts lesson taught.
+
+**Key Points**
+- Coin P and Coin Q are made up for this check, so that the answer rests on the code shown and nothing else.
+- Expected answer, Coin P: the owner can list any address with `addBlackList`; once listed, the `require` in `transfer` stops that address sending.
+- Expected answer, Coin Q: no function lets anyone stop a holder's transfer, so no one can freeze it.
+- The part's synthesis: the peg type says who stands behind the dollar; the code says who can stop the token. Part D reads Tether's real code.
+
+**Walkthrough**
+1. Read the two descriptions.
+2. Give every student thirty seconds to write one line for each coin.
+3. Take a show of hands on "Coin Q can be frozen by whoever deployed it", then reveal the answer.
+4. Read the part C synthesis.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @ethereumorg_stablecoins_2026
+
+:::
+
+## Tether's blacklist: three owner-only functions {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+```solidity
+// TetherToken (USDT), Ethereum, verified source
+mapping (address => bool) public isBlackListed;
+
+function addBlackList (address _evilUser)
+        public onlyOwner {
+    isBlackListed[_evilUser] = true;
+    AddedBlackList(_evilUser);
+}
+function removeBlackList (address _clearedUser)
+        public onlyOwner {
+    isBlackListed[_clearedUser] = false;
+    RemovedBlackList(_clearedUser);
+}
+function destroyBlackFunds (address _blackListedUser)
+        public onlyOwner {
+    require(isBlackListed[_blackListedUser]);
+    uint dirtyFunds = balanceOf(_blackListedUser);
+    balances[_blackListedUser] = 0;
+    _totalSupply -= dirtyFunds;
+    DestroyedBlackFunds(_blackListedUser, dirtyFunds);
+}
+function transfer(address _to, uint _value)
+        public whenNotPaused {
+    require(!isBlackListed[msg.sender]);
+    ...
+```
+:::
+::: {.column width="42%"}
+Read it the way the smart contracts lesson read Coin:
+
+- **`onlyOwner`**: only the contract's owner key can call these three [@tether_tethertokensource_2017].
+- **`isBlackListed`**: a public list, one true or false per address. Anyone can query it [@tether_tethertokensource_2017].
+- **`transfer`** refuses a sender on the list. **`transferFrom`** does the same for `_from` [@tether_tethertokensource_2017].
+- **`destroyBlackFunds`** zeroes a listed address's balance and cuts total supply [@tether_tethertokensource_2017].
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads the real USDT contract on Ethereum: the blacklist functions, verbatim from the verified source. It matters here because students who can read these lines can tell an agent exactly what Tether can do to an address and what it leaves on chain. Emphasize that this is the morning's contract-reading skill applied to the most used stablecoin, and the real version of Coin P from the check.
+
+**Key Points**
+- `addBlackList` and `removeBlackList` set one address's entry in the public `isBlackListed` mapping, and each emits an event.
+- All three functions are `onlyOwner`: one key, held by the issuer, controls them.
+- `transfer` checks only the sender; `transferFrom` checks only `_from`. A listed address cannot send, but nothing here stops it from receiving.
+- `destroyBlackFunds` works only on a listed address: it sets the balance to zero, lowers the total supply and emits `DestroyedBlackFunds`.
+- The `...` hides the fee and upgrade logic, which do not change the point.
+
+**Walkthrough**
+1. Read `onlyOwner` first and ask who holds that key: Tether.
+2. Read `addBlackList`: one line flips the address to true, one line emits the event.
+3. Read the `require` in `transfer` and ask what it does not check (the receiver).
+4. Read `destroyBlackFunds` line by line: check listed, read balance, zero it, cut supply, emit.
+
+**Sources**
+- @tether_tethertokensource_2017
 
 :::
 
@@ -435,14 +678,14 @@ digraph stablecoin {
 
 :::
 
-- **Network layer:** any address can receive, hold and send the token. Tether's `transfer` checks only the blacklist and the pause; it asks no one's identity [@tether_tethertokensource_2017].
-- **Issuer layer:** the issuer's key can call functions no one else can, such as Tether's `addBlackList` and `pause` [@tether_tethertokensource_2017] or Circle's `blacklist` [@circle_blacklistable_2026].
+- **Network layer:** any address can receive, hold and send the token. Tether's `transfer` checks only the blacklist and whether the issuer has paused all transfers; it asks no one's identity [@tether_tethertokensource_2017].
+- **Issuer layer:** the issuer's key can call functions no one else can, such as Tether's `addBlackList`, or `pause`, which stops all transfers [@tether_tethertokensource_2017] or Circle's `blacklist` [@circle_blacklistable_2026].
 - **The gap:** an issuer can freeze an address once someone names it. It cannot stop new addresses from being made and used.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows the two layers of a fiat-backed stablecoin. One company controls the token contract's admin functions, while the token itself moves over an open network. It matters here because the analyst's lead depends on that split: the issuer can act on a named address, but nobody gates who uses the token. Emphasize that the freeze is reactive.
+This slide shows the two layers of a fiat-backed stablecoin that the code on the previous slide creates. One company controls the token contract's admin functions, while the token itself moves over an open network. It matters here because the analyst's lead depends on that split: the issuer can act on a named address, but nobody gates who uses the token. Emphasize that the freeze is reactive.
 
 **Key Points**
 - On the network layer, any address can hold and transfer the token; Tether's `transfer` checks only the blacklist and the pause.
@@ -461,121 +704,22 @@ This slide shows the two layers of a fiat-backed stablecoin. One company control
 
 :::
 
-## Stablecoins carry most illicit volume {.smaller}
-
-::: {.callout-note appearance="simple"}
-Illicit addresses "received at least \$154 billion in 2025", and stablecoins "now account for 84% of all illicit transaction volume" [@chainalysis_2026cryptocrimereport_2026] [Jan 2026]{.asof}.
-:::
-
-- The illicit share of all attributed crypto volume still "remains below 1%" [@chainalysis_2026cryptocrimereport_2026]. Most stablecoin activity is lawful, so a stablecoin payment is not a red flag on its own.
-- The figures are one firm's estimates from the addresses it has attributed. Name the source and its date when you use them.
-- **Why it matters for the analyst:** the asset most often used to move illicit funds is a token whose issuer can freeze it. That makes a stablecoin balance a possible lead (next three slides).
-- USDT on Tron is day 5; this lesson stays on Ethereum.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide teaches that stablecoins are the main rail for illicit funds. It matters here because the analyst meets USDT and USDC in most cases, and the freeze slides that follow explain why that can help. Emphasize the base rate as well as the share: most stablecoin use is lawful.
-
-**Key Points**
-- Chainalysis's 2026 report (8 January 2026) puts illicit receipts at no less than $154 billion in 2025.
-- In the same report, stablecoins are 84% of illicit transaction volume.
-- Illicit activity remains under 1% of all attributed crypto volume, so a stablecoin payment is not suspicious by itself.
-- These are one firm's estimates from its own attributions; cite them with the firm and the date.
-- Issuer control makes stablecoin funds a possible lead; USDT on Tron is day 5.
-
-**Walkthrough**
-1. Read the callout and say the date aloud.
-2. Give the base rate: under 1% of attributed volume is illicit.
-3. Turn to the analyst point: the favourite rail has an issuer who can freeze it.
-
-**Sources**
-- @chainalysis_2026cryptocrimereport_2026
-
-:::
-
-## Tether's blacklist: three owner-only functions {.smaller}
-
-:::: {.columns}
-::: {.column width="58%"}
-```solidity
-// TetherToken (USDT), Ethereum, verified source
-mapping (address => bool) public isBlackListed;
-
-function addBlackList (address _evilUser)
-        public onlyOwner {
-    isBlackListed[_evilUser] = true;
-    AddedBlackList(_evilUser);
-}
-function removeBlackList (address _clearedUser)
-        public onlyOwner {
-    isBlackListed[_clearedUser] = false;
-    RemovedBlackList(_clearedUser);
-}
-function destroyBlackFunds (address _blackListedUser)
-        public onlyOwner {
-    require(isBlackListed[_blackListedUser]);
-    uint dirtyFunds = balanceOf(_blackListedUser);
-    balances[_blackListedUser] = 0;
-    _totalSupply -= dirtyFunds;
-    DestroyedBlackFunds(_blackListedUser, dirtyFunds);
-}
-function transfer(address _to, uint _value)
-        public whenNotPaused {
-    require(!isBlackListed[msg.sender]);
-    ...
-```
-:::
-::: {.column width="42%"}
-Read it the way you read any contract (D3 ②):
-
-- **`onlyOwner`**: only the contract's owner key can call these three [@tether_tethertokensource_2017].
-- **`isBlackListed`**: a public list, one true or false per address. Anyone can query it [@tether_tethertokensource_2017].
-- **`transfer`** refuses a sender on the list. **`transferFrom`** does the same for `_from` [@tether_tethertokensource_2017].
-- **`destroyBlackFunds`** zeroes a listed address's balance and cuts total supply [@tether_tethertokensource_2017].
-:::
-
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide reads the real USDT contract on Ethereum: the blacklist functions, verbatim from the verified source. It matters here because students who can read these lines can tell an agent exactly what Tether can do to an address and what it leaves on chain. Emphasize that this is the morning's contract-reading skill applied to the most used stablecoin.
-
-**Key Points**
-- `addBlackList` and `removeBlackList` set one address's entry in the public `isBlackListed` mapping, and each emits an event.
-- All three functions are `onlyOwner`: one key, held by the issuer, controls them.
-- `transfer` checks only the sender; `transferFrom` checks only `_from`. A listed address cannot send, but nothing here stops it from receiving.
-- `destroyBlackFunds` works only on a listed address: it sets the balance to zero, lowers the total supply and emits `DestroyedBlackFunds`.
-- The `...` hides the fee and upgrade logic, which do not change the point.
-
-**Walkthrough**
-1. Read `onlyOwner` first and ask who holds that key: Tether.
-2. Read `addBlackList`: one line flips the address to true, one line emits the event.
-3. Read the `require` in `transfer` and ask what it does not check (the receiver).
-4. Read `destroyBlackFunds` line by line: check listed, read balance, zero it, cut supply, emit.
-
-**Sources**
-- @tether_tethertokensource_2017
-
-:::
-
 ## What a USDT freeze leaves on chain {.smaller}
 
-::: {style="font-size: .88em;"}
+::: {style="font-size: .86em;"}
 
 | Issuer action | What the chain records | What it means for a trace |
 | --- | --- | --- |
 | `addBlackList(addr)` | An `AddedBlackList(addr)` event from the USDT contract; `isBlackListed(addr)` reads true | The freeze is public and dated by its block |
 | The listed address tries to send | The transaction reverts; the balance stays | The funds sit still |
-| Someone sends USDT **to** it | **?** | **?** |
-| `destroyBlackFunds(addr)` | **?** | **?** |
+| Someone sends USDT **to** it | [The send succeeds, with a normal `Transfer` log: `transfer` checks only the sender]{.fragment} | [A frozen address still collects funds]{.fragment} |
+| `destroyBlackFunds(addr)` | [`DestroyedBlackFunds(addr, amount)`; balance 0; supply cut; **no `Transfer` log**]{.fragment} | [A tool that sums `Transfer` logs still shows the old balance]{.fragment} |
 
 : {tbl-colwidths="[22,42,36]"}
 
 :::
 
-**Your turn:** fill in the last two rows from the code on the previous slide. Does the send succeed? Which logs appear?
+**Your turn first:** from the code two slides back, does the send in row 3 succeed? Which logs does row 4 leave? [@tether_tethertokensource_2017]
 
 **USDC is built differently:** its `transfer` refuses a blacklisted sender **or** receiver, and a separate blacklister role, not the owner, keeps the list. Each listing emits `Blacklisted(addr)` [@circle_fiattokenv1_2026; @circle_blacklistable_2026].
 
@@ -590,12 +734,13 @@ This slide turns the code into what an analyst sees after a freeze. It matters h
 - USDT checks only the sender, so new funds can still arrive at a frozen address.
 - `destroyBlackFunds` writes `DestroyedBlackFunds` and no `Transfer` event; a balance rebuilt from `Transfer` logs alone overstates what the address holds.
 - USDC's `transfer` checks both sides, and a separate blacklister role keeps its list, emitting `Blacklisted`.
+- The afternoon lab shows all four rows on the course chain's dollar token, which copies Tether's design.
 
 **Walkthrough**
 1. Read rows one and two as the start of a timeline: listed, then stuck.
-2. Give students two minutes with the previous slide's code to fill in rows three and four, then take answers.
-3. Expected answer, row three: the send succeeds, because `transfer` checks only the sender; a frozen address can still receive.
-4. Expected answer, row four: a `DestroyedBlackFunds(addr, amount)` event, the balance set to 0 and the total supply lowered, but **no `Transfer` log**; a tool that sums `Transfer` logs still shows the old balance. Ask what such a tool would report.
+2. Give students a minute with the Tether code to answer rows three and four, then take answers.
+3. Reveal row three: the send succeeds, because `transfer` checks only the sender; a frozen address can still receive.
+4. Reveal row four: a `DestroyedBlackFunds(addr, amount)` event, the balance set to 0 and the total supply lowered, but no `Transfer` log. Ask what a tool that sums `Transfer` logs would report. (Expected answer: the old balance.)
 5. Contrast USDC in one sentence: both sides blocked, a separate role, its own event.
 
 **Sources**
@@ -607,69 +752,219 @@ This slide turns the code into what an analyst sees after a freeze. It matters h
 
 ## Freezable? Which issuer, and how fast? {.smaller}
 
-- **Freezable?** If the funds sit in an issuer's token with a blacklist (USDT, USDC), they can be frozen in place. If they are already ETH, or swapped into a token with no issuer, they cannot: the blacklist lives in one token's contract [@tether_tethertokensource_2017; @circle_blacklistable_2026].
-- **Which issuer?** The token contract the funds sit in tells you: its verified source and its owner or blacklister role show who holds the key (Tether for USDT, Circle for USDC).
-- **How fast?** The funds are freezable only while they stay in that token. Swapped into ETH or a token with no issuer, they are out of reach; swapped into USDC, or bridged into a stablecoin on another chain (day 4), ask the question again of that issuer. The window is the time before the next move.
+::: {style="font-size: .84em;"}
+
+**Worked on a real freeze:** Tether says it "supported the U.S. Government in freezing \$344 million USD₮ across two addresses" [@tether_freeze344m_2026] [23 Apr 2026]{.asof}.
+
+- **Freezable?** Yes, because the funds sat in USDT, whose contract has a blacklist. Already in ETH, or traded into a token with no issuer, they could not be frozen: the blacklist lives in one token's contract [@tether_tethertokensource_2017; @circle_blacklistable_2026].
+- **Which issuer?** The token contract says: USDT's owner key is Tether's. For USDC it would be Circle's blacklister role.
+- **How fast?** Only while the funds stay in that token. The two addresses still held the USDT when Tether listed them; one move into ETH first and the window closes. Moved to another chain (day 4), ask the question again of that token's issuer.
 - **Has the issuer done it before?** Tether says it has frozen "more than \$4.4 billion in assets" across "more than 2,300 cases", working with "more than 340 law enforcement agencies across 65 countries" [@tether_freeze344m_2026] [23 Apr 2026]{.asof}.
 
+:::
+
 ::: {.callout-note appearance="simple"}
-**The analyst flags; the agent acts.** State what the address holds, in which token and since which block: these are read off the chain, so they take no confidence word. A judgment, such as whose address it is, does. Asking the issuer to freeze is the agent's decision.
+**The analyst flags; the agent acts.** State what the address holds, in which token and since which block: these are read off the chain, so they take no confidence word. A judgment does: "Freezable by Tether while it stays in USDT (High: the contract and its blacklist are verified); a move out of USDT would change that." Asking the issuer to freeze is the agent's decision.
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the freeze into a lead the analyst can hand an agent, in three questions: freezable, which issuer, and how fast. It matters here because a stablecoin balance in a known address may be the one asset in a case that can still be stopped, and day 9's exposure summary asks these same questions. Emphasize that the analyst describes the balance and the window; the agent decides whether to ask the issuer to act.
+This slide turns the freeze into a lead the analyst can hand an agent, in three questions: freezable, which issuer, and how fast. It works them on a real case, Tether's April 2026 freeze of $344 million in USDT across two addresses. It matters here because a stablecoin balance in a known address may be the one asset in a case that can still be stopped, and day 9's exposure summary asks these same questions. Emphasize that the analyst describes the balance and the window; the agent decides whether to ask the issuer to act.
 
 **Key Points**
+- Tether's statement of 23 April 2026 says it supported the U.S. Government in freezing $344 million in USDT across two addresses. The freeze worked because the funds were still USDT when the issuer acted.
 - A blacklist is part of one token's contract, so only funds still in that token can be frozen.
-- The token contract's verified source and its admin role show which issuer holds the key.
-- Speed is about the funds, not the issuer: once they leave the token for one with no issuer, the window closes. A swap from USDT to USDC moves the question to Circle.
+- The token contract's verified source and its admin role show which issuer holds the key: Tether's owner key for USDT, Circle's blacklister role for USDC.
+- Speed is about the funds, not the issuer: once they leave the token for one with no issuer, the window closes. Funds moved to another chain need the question asked again; day 4 shows how.
 - Tether's April 2026 statement claims more than $4.4 billion frozen across more than 2,300 cases with more than 340 agencies in 65 countries. That is the issuer's own figure; cite it with its date.
 - Legal process is out of scope: the analyst states the facts and confidence; the agent acts.
+- Back to the opening case: the victim's 5,000 USDT went to the seller's address. If it is still there as USDT, it is freezable, by Tether, for as long as it stays.
 
 **Walkthrough**
-1. Ask the three questions in order against a made-up balance: 50,000 USDT in one address since a given block.
-2. Read Tether's figures as the issuer's claim, with its date.
-3. Close on the callout: the analyst writes what is there and how sure they are, nothing more.
+1. Read Tether's statement and its date.
+2. Ask the three questions of it in order, with the answers on the slide.
+3. Read Tether's track-record figures as the issuer's claim, with its date.
+4. Return to the opening case and answer the agent's second question aloud.
+5. Close on the callout: the analyst writes what is there and how sure they are, nothing more.
 
 **Sources**
+- @tether_freeze344m_2026
 - @tether_tethertokensource_2017
 - @circle_blacklistable_2026
-- @tether_freeze344m_2026
 
 :::
 
-## This afternoon you read a token and mint one {.smaller}
+## Practice: three balances. Freezable, by whom? {.smaller}
+
+::: {style="font-size: .84em;"}
+
+The agent sends three balances from one case. For each: **freezable, by whom, and how sure?**
+
+| # | What the address holds |
+| --- | --- |
+| 1 | 20,000 of the token at contract `0xdAC1…1ec7` (USDT); `isBlackListed` reads false; last moved three blocks ago |
+| 2 | 15 ETH |
+| 3 | 50,000 of a token that returns the name `Tether USD`, at contract `0x9b2c…4e71`, created last week by an unknown account; you have not read its code |
+
+: {tbl-colwidths="[6,94]"}
+
+Use **High**, **Moderate** or **Low** for each judgment, and name what would change it. Pairs, three minutes.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This practice slide asks the lesson's objective whole: three balances, and for each whether it can be frozen, by whom, and how sure. It matters here because this is the sentence an analyst gives the agent at the end of a stablecoin trace. Emphasize that every answer points to a contract line, a contract address or a log.
+
+**Key Points**
+- Every question was shown done earlier: row 1 in the Tether code and the freeze worked example, row 2 in the coin-or-token slide, row 3 in part A's check.
+- The addresses and balances are made up for practice; USDT's address is real.
+- Students answer from the slides' reading rules, not from the token's name.
+- The answers are on the next slide.
+
+**Walkthrough**
+1. Read the three rows.
+2. Give pairs three minutes; walk the room and ask each pair which line or address backs one answer.
+3. Move to the answers slide.
+
+**Sources**
+- @etherscan_usdttoken_2026
+- @tether_tethertokensource_2017
+
+:::
+
+## Answers: three balances, and how sure {.smaller}
+
+::: {style="font-size: .76em;"}
+
+| # | Freezable, by whom | How sure, and why | What would change it |
+| --- | --- | --- | --- |
+| 1 | Yes, by Tether, with `addBlackList` | **High**: USDT's contract is at that address, and its code gives the owner the blacklist [@etherscan_usdttoken_2026; @tether_tethertokensource_2017] | The funds leave USDT before the issuer acts |
+| 2 | No issuer can: ETH is in Ethereum's own ledger, not a contract | **High**: no contract keeps the balance [@wood_ethereumsecuredecentralised_2016] | Nothing on chain; only the holder can move it |
+| 3 | Not by Tether: it is not Tether's contract. By its creator only if its code allows | **High** that it is not USDT (wrong address); **Low** on who can freeze it until you read the code [@vogelsteller_eip20tokenstandard_2015] | Reading its verified source |
+
+: {tbl-colwidths="[5,30,40,25]"}
+
+**To the agent:** "The 20,000 USDT can be frozen by Tether while it stays in USDT (High). The 15 ETH cannot be frozen by any issuer (High). The 'Tether USD' token is a copy; whether anyone can freeze it is unknown until we read its code (Low)."
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the practice answers, each with its confidence word and what would change it, and the sentence to the agent. It matters here because it closes the opening case's second question in the form an analyst actually delivers. Emphasize that facts read off the chain need no confidence word; each judgment gets one.
+
+**Key Points**
+- Answer 1: the token is real USDT, because it sits at USDT's contract address; the code lets the owner list the address. The only thing that changes the answer is the funds leaving USDT first, so speed matters.
+- Answer 2: ETH is the chain's own coin, held in the account state, so there is no issuer and no contract to freeze it.
+- Answer 3: the name is the contract's own claim. The address is not USDT's, so Tether cannot freeze it. Who can is unknown until the code is read, so that judgment is Low.
+- The confidence words follow the course's scale: High, Moderate and Low.
+
+**Walkthrough**
+1. Take row 1 and have a pair name the address and the line behind their answer.
+2. Take row 2 and ask why no issuer is involved.
+3. Take row 3 and ask for its two confidence words.
+4. Read the sentence to the agent.
+
+**Sources**
+- @etherscan_usdttoken_2026
+- @tether_tethertokensource_2017
+- @wood_ethereumsecuredecentralised_2016
+- @vogelsteller_eip20tokenstandard_2015
+
+:::
+
+## Review: the code says who can stop a token {.smaller}
+
+::: {style="font-size: .84em;"}
+
+**Objective:** given a token balance, say whether it can be frozen, by whom, and how sure, pointing to the contract line or log that shows it.
+
+1. A USDT payment shows To: the USDT contract, Value: 0 ETH. Where is the person paid?
+
+::: {.fragment}
+In the input's `_to` argument and in the contract's `Transfer` log.
+:::
+
+2. Two tokens both return the name `Tether USD`. How do you tell Tether's?
+
+::: {.fragment}
+By its contract address and creator, not its name: anyone can return the same name.
+:::
+
+3. A USDT address is blacklisted. Can it still receive, and what does `destroyBlackFunds` leave?
+
+::: {.fragment}
+Yes, it can receive. Destroying leaves a `DestroyedBlackFunds` log and no `Transfer` log.
+:::
+
+4. The funds were traded from USDT into ETH. Can Tether still freeze them?
+
+::: {.fragment}
+No: the blacklist lives in the USDT contract, and ETH is in no issuer's contract.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide asks the lesson's objective back as four recall questions, one of them the opening misconception. It matters here because students should leave able to answer the agent's two questions without the slides. Emphasize question 1: it is the wrong idea from the opening, asked again.
+
+**Key Points**
+- Question 1 recalls part A: the token's recipient is in the input and the log, not in `to`.
+- Question 2 recalls part A's check: a token is its contract, not its name.
+- Question 3 recalls part D: USDT checks only the sender, and destroyed funds leave no `Transfer` log.
+- Question 4 recalls the freeze questions: only funds still in the token can be frozen.
+
+**Walkthrough**
+1. Read the objective.
+2. Ask each question, wait for answers from the room, then reveal.
+3. Compare question 1 with the agent's reading in the opening case.
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @tether_tethertokensource_2017
+
+:::
+
+## Next: read a token and mint one this afternoon {.smaller}
+
+::: {style="font-size: .86em;"}
 
 | Where | What you do with today's token reading |
 | --- | --- |
-| **Lab, this afternoon** | Read a token contract and its `Transfer` logs in Otterscan, then mint an NFT and find its mint: a `Transfer` from address zero |
-| Earlier today | Accounts and transactions (D3 ①, 01-EF); reading a contract (D3 ②, 04-EF) |
-| Day 4 | A token swapped on a DEX and bridged: where a freezable balance stops being one |
+| []{#this-afternoon-you-read-a-token-and-mint-one}**Lab, this afternoon** | Read a dollar token, its freeze and its `Transfer` logs in Otterscan; then mint a badge and find its `Transfer` from address zero |
+| **End of day 3** | [Spot the fake Course Pound](/assets/labs/spot-the-fake/index.html): tell the real Course Pound from two copies (pairs, about 25 minutes) |
+| Day 4 | A token traded on an exchange contract and moved to another chain: where a freezable balance stops being one |
 | Day 5 | USDT on Tron |
-| Day 8 | Approvals abused by wallet drainers; NFT wash trading (11-FO) |
+| Day 8 | Approvals abused to empty wallets; NFT wash trading |
 | Day 9 | The exposure summary asks "Freezable? Which issuer, and how fast?" |
 
 : {tbl-colwidths="[24,76]"}
 
-**Bottom line:** a token is a contract's record. Read its logs for the trail, and its code for who can change it.
+**Bottom line:** a token is a contract's record, so the contract's code says who can stop it. Read its logs for the trail, and its code for who holds the key.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide closes the lesson by sending students to the afternoon lab and showing where each idea returns. It matters here because the token reading taught today carries every later Ethereum trace in the course. Emphasize the lab's two tasks: read a token's `Transfer` logs, and find an NFT's mint as a transfer from address zero.
+This slide closes the lesson by sending students to the afternoon lab and showing where each idea returns. It matters here because the token reading taught today carries every later Ethereum trace in the course. Emphasize the lab's two tasks: read a token's `Transfer` logs and freeze, and find an NFT's mint as a transfer from address zero.
 
 **Key Points**
-- The lab reads a token contract and its `Transfer` logs in Otterscan, then mints an NFT and reads the mint.
-- This lesson builds on the morning's account and contract reading (01-EF, 04-EF).
-- Day 4 swaps and bridges tokens, which is where a freezable balance can leave the issuer's reach.
+- The lab reads the course chain's dollar token, built like USDT with an owner-only blacklist, and its `Transfer` logs in Otterscan, then each student mints a badge and reads the mint.
+- Spot the fake ends day 3: pairs tell a real token from two fakes with the same name by its contract creator and its code. The key is in `dynamic-labs/tokens/quizes/SPOT_THE_FAKE_ANSWERS.md`.
+- Day 4 trades and bridges tokens, which is where a freezable balance can leave the issuer's reach.
 - Day 5 covers USDT on Tron; day 8 covers approval abuse and NFT wash trading; day 9's exposure summary asks the freeze questions.
+- The bottom line restates the point to earn from the opening.
 
 **Walkthrough**
-1. Read the lab row and say what students will look for: the `Transfer` log and the transfer from zero.
+1. Read the lab row and say what students will look for: the `Transfer` log, the freeze and the transfer from zero.
 2. Run down the later days in one sentence each.
-3. Close on the bottom line.
+3. Read the bottom line aloud and end the lesson.
 
 **Sources**
 - @vogelsteller_eip20tokenstandard_2015

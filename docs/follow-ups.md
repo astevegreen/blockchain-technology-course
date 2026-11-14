@@ -57,8 +57,10 @@ slide index), which is never listed here.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
-  trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 680); the rebuilt slides (lines 17-676)
-  have few questions. [11 Nov 2026, writing the Spot the fake questions]
+  trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 971); the slides rebuilt on 13 Nov 2026
+  (lines 17-970: the two checks, the Terra slide, the practice and review) have few questions, and two questions'
+  `lesson_block` still names "Why Investigators and Users Care", now folded into the opening slide.
+  [11 Nov 2026, writing the Spot the fake questions; updated 13 Nov 2026, 05-EF rebuild]
 - `blockchain-course/lessons/conclusion/05-AS-future_trajectories_and_synthesis.qmd:368`: the Cambridge figure for
   Bitcoin's electricity use (138 TWh, 0.54% of global use) cites no `Blockchain.bib` key.
   [12 Nov 2026, second look on the "as of" conversion]
