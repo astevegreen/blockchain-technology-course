@@ -28,6 +28,8 @@ FULL_EXPORT_TABLES = (
     "audit_events",
     "pretest_results",
     "lab_point_marks",
+    "pretest_written_marks",
+    "attendance",
     "app_settings",
 )
 
@@ -55,6 +57,8 @@ IMPORT_ORDER = (
     "audit_events",
     "pretest_results",
     "lab_point_marks",
+    "pretest_written_marks",
+    "attendance",
     "app_settings",
 )
 
@@ -293,6 +297,7 @@ def _validate_export_references(tables):
     )
     _references(tables, "attempt_grants", "quiz_version_id", ids["quiz_versions"])
     _references(tables, "attempt_grants", "student_id", ids["students"])
+    _references(tables, "attendance", "student_id", ids["students"])
     _references(tables, "attempts", "quiz_version_id", ids["quiz_versions"])
     _references(tables, "attempts", "student_id", ids["students"])
     _references(tables, "attempt_answers", "attempt_id", ids["attempts"])

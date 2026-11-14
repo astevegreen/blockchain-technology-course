@@ -181,6 +181,11 @@ class RoundTrip(unittest.TestCase):
         self.assertEqual(ana["items"]["q6"], "unmarked")
         self.assertEqual(bo["items"]["q45"], "wrong")
         self.assertEqual(set(ana["days"]), {str(d) for d in range(1, 10)})
+        # Written answers travel with the marks so the engine's page can show them beside the model answer.
+        written = {q for q, i in self.bank.items.items() if i["question_type"] != "multiple_choice"}
+        self.assertEqual(set(ana["written"]), written)
+        self.assertEqual(ana["written"]["q6"], "First line of my answer.\nSecond line:\n  indented, with q7: in it")
+        self.assertFalse(set(ana["written"]) & {"q45", "q1"})
 
 
 @unittest.skipUnless(NODE, "node not found")

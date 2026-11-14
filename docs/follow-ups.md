@@ -179,10 +179,11 @@ slide index), which is never listed here.
   [14 Nov 2026, wave 5a]
 
 ## Quizzes and instructor tools
-- **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
-  `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
-- **Marking page has no attendance.** `/instructor/marking` does not track attendance (the certificate's third
-  condition). Its first use in a class is step 4a of `docs/before-first-class.md`. [12 Nov 2026, marking build]
+- **The pretest page hides three things from the marker.** `/instructor/pretest`
+  (`dynamic-labs/quiz-engine-v2/app/blueprints/pretest.py`) does not say when a judgement made on the page differs from
+  the uploaded mark for the same answer, nor when the bank's `lab_gates` changed since marking (every day is worked
+  out again from today's bank), nor which bank file failed to load (its items then show no model answer).
+  [14 Nov 2026, reviewer on the marking aid]
 
 ## Tooling and rules
 - **The parenthesis date format reaches the lessons only.** `tools/asof.py` reads `blockchain-course/lessons/`;

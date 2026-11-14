@@ -135,9 +135,9 @@ could not finish. If the class shows something the scripted run did not, fix it,
 
 ### 4a. The marking page
 
-`/instructor/marking` passes its tests, but no instructor has marked a real post-test or lab point with it. A pass:
-the instructor marks every student's post-test and lab points in the page and the totals match a hand count for
-three students. A fail: a mark that does not save, or a total that differs.
+`/instructor/marking` passes its tests, but no instructor has marked a real post-test, lab point or day's
+attendance with it. A pass: the instructor marks every student's post-test, lab points and attendance in the page and
+the totals match a hand count for three students. A fail: a mark that does not save, or a total that differs.
 
 Where to write it: the Result line below, with the class size and anything the instructor had to do outside the page.
 

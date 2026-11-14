@@ -180,7 +180,7 @@ def test_fresh_database_has_all_core_tables_and_migrations(app):
         ]
 
     assert CORE_TABLES <= tables
-    assert versions == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    assert versions == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 
 def test_invalid_enum_values_are_rejected(app):

@@ -7,7 +7,8 @@ Rules (docs/build-spec.md, "Marking and assessment"; quizes/posttest/README.md, 
   multiple choice alone passes, and one who cannot reach it even with every written item right cannot pass.
 - Each graded lab point (days 6 to 9) is Meets or Not yet against the rubric in that lab's answer file, with one
   retry after the instructor says what was missing.
-- The certificate needs the post-test passed and Meets on all four points; attendance is not tracked here.
+- Attendance is one tick per student per course day (1 to 10), set here by the instructor.
+- The certificate needs the post-test passed, Meets on all four points and attendance on all ten days.
 
 Every route is @instructor_required, and the engine's CSRF hook covers the POSTs.
 """
@@ -45,6 +46,7 @@ LAB_POINTS = (
 POINT_NUMBERS = frozenset(p[0] for p in LAB_POINTS)
 RESULTS = {"meets": "Meets", "not_yet": "Not yet"}
 TRIES = {1: "First try", 2: "Retry"}
+COURSE_DAYS = tuple(range(1, 11))
 
 
 class MarkingError(ValueError):
@@ -312,17 +314,80 @@ def _point_cell(tries):
     return {"text": label, "meets": latest["result"] == "meets", "note": note}
 
 
+# --- Attendance ------------------------------------------------------------------------------------------
+
+
+def record_attendance(present_by_student, *, actor_sub, conn=None):
+    """Store the grid: {student_id: set of days present}. A student left out of the grid keeps their rows.
+
+    Only changed cells are written and audited, so saving the same grid again records nothing.
+    """
+    conn = conn or get_db()
+    changed = 0
+    with conn:
+        now = utc_now_iso()
+        for student_id, days in present_by_student.items():
+            student = conn.execute("SELECT id FROM students WHERE id = ?", (int(student_id),)).fetchone()
+            if student is None:
+                raise MarkingError("That student is not in the quiz engine.")
+            if not set(days) <= set(COURSE_DAYS):
+                raise MarkingError("Course days run from 1 to 10.")
+            stored = {
+                row["day"]: row["present"]
+                for row in conn.execute("SELECT day, present FROM attendance WHERE student_id = ?", (student["id"],))
+            }
+            for day in COURSE_DAYS:
+                present = 1 if day in days else 0
+                if stored.get(day, 0) == present:
+                    continue
+                conn.execute(
+                    """
+                    INSERT INTO attendance (student_id, day, present, marked_at, marked_by)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT (student_id, day) DO UPDATE SET
+                        present = excluded.present,
+                        marked_at = excluded.marked_at,
+                        marked_by = excluded.marked_by
+                    """,
+                    (student["id"], day, present, now, actor_sub),
+                )
+                record_audit_event(
+                    "attendance.marked",
+                    actor_sub=actor_sub,
+                    object_type="student",
+                    object_id=student["id"],
+                    details={"schema_version": 1, "details": {"day": day, "present": bool(present)}},
+                    db=conn,
+                )
+                changed += 1
+    return changed
+
+
+def attendance_days(conn=None):
+    """{student_id: set of days marked present}."""
+    conn = conn or get_db()
+    days = {}
+    for row in conn.execute("SELECT student_id, day FROM attendance WHERE present = 1"):
+        days.setdefault(row["student_id"], set()).add(row["day"])
+    return days
+
+
 def certificate_rows(conn=None, quizes_dir=None):
     conn = conn or get_db()
     tests = {}
     for entry in posttest_overview(conn, quizes_dir):
         tests[entry["student_id"]] = entry["result"]
+    present = attendance_days(conn)
     rows = []
     for student in lab_point_table(conn):
         test = tests.get(student["id"], "not taken")
         all_meets = all(cell["meets"] for cell in student["points"])
+        days = present.get(student["id"], set())
+        all_days = days >= set(COURSE_DAYS)
         student["posttest"] = test
-        student["certificate"] = "yes" if test == "passed" and all_meets else "not yet"
+        student["present"] = days
+        student["attended"] = len(days)
+        student["certificate"] = "yes" if test == "passed" and all_meets and all_days else "not yet"
         rows.append(student)
     return rows
 
@@ -367,6 +432,23 @@ def mark_lab_point_route():
     return redirect(url_for("marking.marking_page", message="Lab point saved.") + "#lab-points")
 
 
+@bp.post("/attendance")
+@instructor_required
+def mark_attendance_route():
+    grid = {int(v): set() for v in request.form.getlist("student") if v.isdigit()}
+    for value in request.form.getlist("present"):
+        student, _, day = value.partition(":")
+        if not (student.isdigit() and day.isdigit()) or int(student) not in grid:
+            return _render(error="That attendance grid was not in the expected form."), 400
+        grid[int(student)].add(int(day))
+    try:
+        changed = record_attendance(grid, actor_sub=current_instructor().subject)
+    except MarkingError as exc:
+        return _render(error=str(exc)), 400
+    message = f"Attendance saved ({changed} changed)." if changed else "Attendance saved (no changes)."
+    return redirect(url_for("marking.marking_page", message=message) + "#attendance")
+
+
 def _render(message=None, error=None):
     quizes_dir = _quizes_dir()
     overview = posttest_overview(quizes_dir=quizes_dir)
@@ -381,6 +463,7 @@ def _render(message=None, error=None):
         lab_points=LAB_POINTS,
         results=RESULTS,
         tries=TRIES,
+        course_days=COURSE_DAYS,
         rows=certificate_rows(quizes_dir=quizes_dir),
     )
 
@@ -390,7 +473,8 @@ MARKING_TEMPLATE = """
 <title>Marking</title>
 <main>
   <h1>Marking</h1>
-  <p>The post-test's written items and the four graded lab points, and who has earned the certificate.</p>
+  <p>The post-test's written items, the four graded lab points, attendance, and who has earned the
+  certificate.</p>
   {% if message %}<p role="status">{{ message }}</p>{% endif %}
   {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 
@@ -470,17 +554,52 @@ MARKING_TEMPLATE = """
         <label>What was missing (needed for Not yet)<br><textarea name="note" rows="2" cols="60"></textarea></label>
         <button type="submit">Save</button>
       </form>
-      <h3 id="certificate">Points and certificate</h3>
+    {% else %}
+      <p>No students in the quiz engine yet.</p>
+    {% endif %}
+  </section>
+
+  <section id="attendance" aria-labelledby="attendance-title">
+    <h2 id="attendance-title">Attendance</h2>
+    <p>Tick each day a student attended, then save. The certificate needs all ten days.</p>
+    {% if rows %}
+      <form method="post" action="{{ url_for('marking.mark_attendance_route') }}">
+        <table id="attendance-grid">
+          <thead><tr><th>Student</th>{% for d in course_days %}<th>Day {{ d }}</th>{% endfor %}<th>Days</th></tr></thead>
+          <tbody>
+          {% for r in rows %}
+            <tr>
+              <td><code>{{ r.identifier }}</code><input type="hidden" name="student" value="{{ r.id }}"></td>
+              {% for d in course_days %}
+                <td><input type="checkbox" name="present" value="{{ r.id }}:{{ d }}"
+                  aria-label="{{ r.identifier }}, day {{ d }}"{% if d in r.present %} checked{% endif %}></td>
+              {% endfor %}
+              <td>{{ r.attended }} of {{ course_days|length }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <button type="submit">Save attendance</button>
+      </form>
+    {% else %}
+      <p>No students in the quiz engine yet.</p>
+    {% endif %}
+  </section>
+
+  <section id="certificate-section" aria-labelledby="certificate">
+    {% if rows %}
+      <h2 id="certificate">Points and certificate</h2>
       <p>The certificate needs the post-test passed and Meets on all four points by the end of day 10's review
-      session, and attendance on all ten days, which this page does not track.</p>
+      session, and attendance on all ten days.</p>
       <table>
-        <thead><tr><th>Student</th>{% for number, day, name, rubric in lab_points %}<th>Point {{ number }}</th>{% endfor %}<th>Post-test</th><th>Certificate</th></tr></thead>
+        <thead><tr><th>Student</th>{% for number, day, name, rubric in lab_points %}<th>Point {{ number }}</th>{% endfor %}<th>Post-test</th><th>Attendance</th><th>Certificate</th></tr></thead>
         <tbody>
         {% for r in rows %}
           <tr>
             <td><code>{{ r.identifier }}</code></td>
             {% for cell in r.points %}<td>{{ cell.text }}{% if cell.note %}<br><small>{{ cell.note }}</small>{% endif %}</td>{% endfor %}
             <td>{{ r.posttest }}</td>
+            <td>{{ r.attended }} of {{ course_days|length }}</td>
             <td>{{ r.certificate }}</td>
           </tr>
         {% endfor %}

@@ -668,6 +668,40 @@ LAB_POINT_MARKS_SCHEMA_STATEMENTS = [
     """,
 ]
 
+# The pretest's written answers travel with the marker's results so the instructor can judge them on the page;
+# a judgement is keyed to the answer's text, so a re-upload of the same answer keeps it. Attendance is one row per
+# student and course day: the certificate's third condition.
+PRETEST_MARKING_ATTENDANCE_SCHEMA_STATEMENTS = [
+    """
+    ALTER TABLE pretest_results
+    ADD COLUMN written_json TEXT NOT NULL DEFAULT '{}'
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pretest_written_marks (
+        id INTEGER PRIMARY KEY,
+        student_key TEXT NOT NULL CHECK (length(student_key) > 0),
+        item_id TEXT NOT NULL,
+        answer_digest TEXT NOT NULL,
+        result TEXT NOT NULL CHECK (result IN ('right', 'wrong')),
+        marked_at TEXT NOT NULL,
+        marked_by TEXT,
+        UNIQUE (student_key, item_id, answer_digest)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS attendance (
+        id INTEGER PRIMARY KEY,
+        student_id INTEGER NOT NULL,
+        day INTEGER NOT NULL CHECK (day BETWEEN 1 AND 10),
+        present INTEGER NOT NULL CHECK (present IN (0, 1)),
+        marked_at TEXT NOT NULL,
+        marked_by TEXT,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        UNIQUE (student_id, day)
+    )
+    """,
+]
+
 DEFAULT_APP_SETTINGS = (
     ("registration_mode", "open"),
     ("open_registration_cap", "40"),
@@ -686,6 +720,7 @@ SCHEMA_MIGRATIONS = (
     (8, "quiz_template_order_modes", QUIZ_TEMPLATE_ORDER_MODE_SCHEMA_STATEMENTS),
     (9, "pretest_results", PRETEST_RESULTS_SCHEMA_STATEMENTS),
     (10, "lab_point_marks", LAB_POINT_MARKS_SCHEMA_STATEMENTS),
+    (11, "pretest_marking_attendance", PRETEST_MARKING_ATTENDANCE_SCHEMA_STATEMENTS),
 )
 
 

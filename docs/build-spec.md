@@ -252,7 +252,8 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
 - **Extras:** pretest marking and each student's lab entry point per day, set from that day's gate items
   (`quizes/pretest/README.md`): built 12 Nov 2026 at `/instructor/pretest`. Marking the four graded lab points and
   the post-test's written items (owner, 12 Nov 2026: "Yes, add marking"): built 12 Nov 2026 at `/instructor/marking`,
-  which also shows who has the certificate except for attendance, which it does not track.
+  which also tracks attendance (one tick per student per day, built 14 Nov 2026) and shows who has the
+  certificate.
 - **Decided (owner, 12 Nov 2026):** part of the existing quiz engine, not a separate app.
 - **Pretest is the exception to "load from the dashboard":** the owner does not want students' access to the pretest
   to depend on the instructor hosting the labs (the engine runs only on the lab host). Built 12 Nov 2026 instead of

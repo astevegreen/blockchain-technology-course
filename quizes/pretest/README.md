@@ -28,6 +28,10 @@ site is next published) and works offline once open.
    themselves; for each written item the script shows the answer beside its `answer_key` and asks whether it states
    every point. Decisions are kept in `pretest-marks.json` in that folder, so a rerun for a late reply asks only
    what is new. The table says, for each student and day, **problem** or **worked example**.
+   To judge the written items on the page instead, mark with `--no-ask` and upload: `/instructor/pretest` shows each
+   written answer beside its model answer (the item's key points and explanation) and you tick the points it states.
+   It is right only when every point is ticked; you still judge. Each judgement is kept against the answer's text, so a
+   re-upload keeps it, and the page works out each day's start again with the same rule.
 
 Option ids on the page are hashes of the option text, and the options are listed in id order, so the page gives
 nothing away. If a bank changes after students answered, the marker flags their reply as an older form and leaves

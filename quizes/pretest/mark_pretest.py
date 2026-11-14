@@ -270,11 +270,14 @@ def table(results: dict[str, dict[str, bool | None]], bank: Bank) -> str:
 DAY_LABELS = {"?": "unmarked", "-": "not taken"}
 
 
-def results_json(results: dict[str, dict[str, bool | None]], bank: Bank) -> dict:
+def results_json(results: dict[str, dict[str, bool | None]], bank: Bank,
+                 answers: dict[str, dict[str, str]] | None = None) -> dict:
     """The marks as the quiz engine imports them: per student, each day's start point and each item's mark.
 
     A day is "problem", "worked example", "unmarked" (a gate item still to judge) or "not taken"; an item is
-    "right", "wrong" or "unmarked". `form` is the bank form the replies were marked against.
+    "right", "wrong" or "unmarked". `written` holds the student's text for each written item answered, so the
+    instructor can judge it on the engine's pretest page beside the model answer. `form` is the bank form the
+    replies were marked against.
     """
     days = sorted(d for d in bank.days if any(any(q in m for q in bank.days[d]) for m in results.values()))
     students = []
@@ -285,7 +288,10 @@ def results_json(results: dict[str, dict[str, bool | None]], bank: Bank) -> dict
             got = entry(m, bank.gates[d])
             cells[str(d)] = DAY_LABELS.get(got, got)
         items = {q: {True: "right", False: "wrong", None: "unmarked"}[v] for q, v in m.items()}
-        students.append({"name": name, "days": cells, "items": items})
+        given = (answers or {}).get(name, {})
+        written = {q: given[q] for q in m
+                   if bank.items[q]["question_type"] != "multiple_choice" and given.get(q, "").strip()}
+        students.append({"name": name, "days": cells, "items": items, "written": written})
     return {"format": "pretest-results-v1", "form": bank.form, "students": students}
 
 
@@ -319,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
         args.out.write_text(report, encoding="utf-8")
         print(f"wrote {args.out}")
     if args.json_out:
-        args.json_out.write_text(json.dumps(results_json(results, bank), indent=1), encoding="utf-8")
+        args.json_out.write_text(json.dumps(results_json(results, bank, {r.name: r.answers for r in replies}), indent=1), encoding="utf-8")
         print(f"wrote {args.json_out}")
     return 0
 

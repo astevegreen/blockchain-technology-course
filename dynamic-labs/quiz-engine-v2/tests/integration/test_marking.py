@@ -165,6 +165,14 @@ def _mark(client, student_id, point, try_number, result, note=""):
     )
 
 
+def _attend(client, student_id, days):
+    return client.post(
+        "/instructor/marking/attendance",
+        data={"student": [str(student_id)], "present": [f"{student_id}:{d}" for d in days]},
+        headers=HEADERS,
+    )
+
+
 def test_lab_points_retry_and_certificate(marking):
     from app.blueprints.marking import certificate_rows
 
@@ -183,6 +191,14 @@ def test_lab_points_retry_and_certificate(marking):
     assert row["posttest"] == "passed" and row["certificate"] == "not yet"
     assert row["points"][0]["text"] == "Not yet, then Meets on the retry"
     assert _mark(client, sid, 4, 1, "meets").status_code == 302
+    with marking.app_context():
+        row = next(r for r in certificate_rows() if r["id"] == sid)
+    assert row["certificate"] == "not yet"  # every point Meets and the post-test passed, but no attendance yet
+    assert _attend(client, sid, range(1, 10)).status_code == 302
+    with marking.app_context():
+        row = next(r for r in certificate_rows() if r["id"] == sid)
+    assert row["attended"] == 9 and row["certificate"] == "not yet"
+    assert _attend(client, sid, range(1, 11)).status_code == 302
     with marking.app_context():
         row = next(r for r in certificate_rows() if r["id"] == sid)
     assert row["certificate"] == "yes"
@@ -204,3 +220,35 @@ def test_lab_point_marks_are_in_the_full_export(marking):
     from app.migrate import FULL_EXPORT_TABLES
 
     assert "lab_point_marks" in FULL_EXPORT_TABLES
+    assert "attendance" in FULL_EXPORT_TABLES
+
+
+def test_attendance_grid_saves_only_changes_and_audits_them(marking):
+    marking.test_client().post("/student/enroll")
+    sid = _student_id(marking)
+    client = marking.test_client()
+    response = _attend(client, sid, [1, 2, 3])
+    assert response.status_code == 302 and "3+changed" in response.headers["Location"]
+    response = _attend(client, sid, [1, 2, 3])
+    assert "no+changes" in response.headers["Location"]
+    _attend(client, sid, [1, 3])  # day 2 unticked
+    with marking.app_context():
+        db = get_db()
+        present = [r["day"] for r in db.execute(
+            "SELECT day FROM attendance WHERE student_id = ? AND present = 1 ORDER BY day", (sid,))]
+        events = db.execute("SELECT COUNT(*) AS n FROM audit_events WHERE event_type = 'attendance.marked'").fetchone()
+    assert present == [1, 3]
+    assert events["n"] == 4
+    page = client.get("/instructor/marking", headers=HEADERS).get_data(as_text=True)
+    assert 'id="attendance-grid"' in page and "2 of 10" in page
+
+
+def test_attendance_refuses_a_bad_grid(marking):
+    marking.test_client().post("/student/enroll")
+    sid = _student_id(marking)
+    client = marking.test_client()
+    assert _attend(client, sid, [11]).status_code == 400
+    bad = client.post("/instructor/marking/attendance", data={"present": [f"{sid}:1"]}, headers=HEADERS)
+    assert bad.status_code == 400  # a tick for a student not in the grid
+    assert client.post("/instructor/marking/attendance", data={"student": ["9999"]}, headers=HEADERS).status_code == 400
+    assert marking.test_client().post("/instructor/marking/attendance", data={}).status_code in (302, 401, 403)
