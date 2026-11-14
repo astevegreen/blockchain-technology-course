@@ -16,42 +16,43 @@ aci-mermaid: true
 
 ## A DEX trade is visible before it lands {.smaller}
 
-**Bottom line:** A trade on a decentralized exchange (DEX) is a public call to a contract. Until a block includes it, it waits in the mempool, where anyone can read it [@ethereum.org_transactionsdeveloperdocs_2025], including bots that profit from where it lands in the block [@ethereumorg_mev_2026]. Once included, it leaves token transfers and a `Swap` event in the receipt. Many addresses in that path are services, not the person behind the trade.
+::: {style="font-size: .85em;"}
 
-::: {style="font-size: .68em;"}
+**The case:** on today's lab chain, Account 3 trades 5,000 cUSD, the chain's dollar token, for WETH (ether in token form) on a **decentralized exchange (DEX)**, an exchange run by contracts rather than a company. The agent asks two things: who did Account 3 trade with, and were the addresses next to its trade working with it?
 
-| Question | The answer tells you | Slide |
-| --- | --- | --- |
-| What does a pending transaction show? | Sender, target, nonce, fees and the trade itself, before inclusion | Pending transaction, mempool |
-| What decides the order in the block? | The fees, then whoever builds the block | Fees, builders |
-| Who is on the other side of a swap? | A pool contract, not a person | DEX swap |
-| How do I read a swap? | Two `Transfer` logs and a `Swap` event | Reading a swap |
-| What is MEV, and what is a sandwich? | Profit from ordering; three transactions around one victim | MEV, sandwich |
-| Is this address the real party? | Routers, aggregators, bots, paymasters and relayers sit in the path | Look-alikes |
+**Day 3 left off** at tokens: an ERC-20 `Transfer` log says who sent which token to whom. Day 1 showed that a sent transaction waits in a **mempool** until a block includes it. Today joins the two, in four parts:
+
+1. **Reading a swap:** what a DEX trade calls, and the logs it leaves.
+2. **Seen before it lands:** who can read the trade while it waits, and what sets its place in the block.
+3. **Who chooses the order:** the bots and firms that profit from where a trade lands.
+4. **In the path, not the party:** services whose addresses appear in a trade but did not make it.
+
+**By the end:** given a DEX trade in an explorer, say who traded what, which addresses around it are services or bots, and how sure you are (High, Moderate or Low).
+
+**The point to earn:** the other side of a DEX trade is a contract, not a person, and most addresses beside the trade are services that are not the party an agent is asking about [@uniswaplabs_uniswapdocs_2025; @ethereumorg_mev_2026].
 
 :::
-
-This afternoon's lab makes a swap on the course's own chain and reads the pool's price before and after it.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the lesson with its one idea: a DEX trade is a contract call that anyone can watch before it lands and read after it lands. It matters here because reading a DEX trade is a working skill for the role: analysts must read a swap and say who traded what. Mempool dynamics (first met on day 1) are the familiarity half: the trade is visible before inclusion, and that visibility is what MEV bots feed on. Emphasize the last row: most of the addresses in a swap's path are services, not the person an agent is asking about.
+This slide opens day 4 with a case and two questions: Account 3's swap on today's lab chain, and the agent asking who it traded with and whether the addresses beside it were working with it. It matters here because DEX trades sit on most Ethereum traces in week 2, and the role asks analysts to say who traded what and which addresses are services. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- A DEX trade is a public contract call that waits in the mempool before a block includes it.
-- Bots watch pending trades and profit from their position in the block.
-- Once included, a swap leaves token `Transfer` logs and a `Swap` event in the receipt.
-- The table is the lesson's map; the last row is the look-alikes segment, about 15 minutes.
-- The afternoon lab makes a swap on the course chain and reads the pool's price before and after.
+- Students already know two things this lesson joins. Day 1 (Blocks and Chains) showed that a sent transaction waits in a node's mempool until a block includes it. Day 3 showed an Ethereum transaction's fields and fee, and the ERC-20 `Transfer` log.
+- The running case is a real transaction on the course's own L1 chain: block 9, Account 3 selling 5,000 cUSD for WETH through the course exchange. It is the worked example on the afternoon lab's worksheet, so students meet it twice. The lab's questions use block 11; do not work block 11 in class.
+- A decentralized exchange (DEX) is an exchange run by contracts: no company takes the order. Uniswap is the best-known one, and the course exchange is built the way Uniswap version 2 is.
+- The point is a claim the lesson earns: part 1 shows the contract on the other side, part 3 shows the bots beside the trade, and part 4 names the services in its path.
+- The second case, a sandwich, comes in part 3 from the Find the sandwich lab's block.
 
 **Walkthrough**
-1. Read the bottom line: visible before, readable after, and crowded with services in between.
-2. Walk the table row by row, naming the slide that answers each question.
-3. Point at the last row: by the end, students can tell an agent which address in a swap is the real party.
+1. Read the case and leave the agent's two questions open; the lesson answers both.
+2. Read the link back to day 3 and day 1, then name the four parts.
+3. Read the objective aloud. Each part ends with a check every student answers, and the close asks the objective again.
+4. Time plan, 50 minutes: opening 2; part 1, reading a swap, 10 (check 2); part 2, seen before it lands, 7 (check 2); part 3, who chooses the order, 10 (check 2); part 4, in the path, 13 (check 3); practice 3, answers 2, review 2, next 1. The optional five-minute Find the sandwich lab in part 3 is outside the plan: run it only with time in hand.
 
 **Sources**
-- @ethereum.org_transactionsdeveloperdocs_2025
+- @uniswaplabs_uniswapdocs_2025
 - @ethereumorg_mev_2026
 
 :::
@@ -109,39 +110,206 @@ This review slide establishes the common transaction lifecycle that the rest of 
 
 ::::
 
-## A pending transaction already shows the trade {.smaller}
+## A DEX swaps against a pool, not a person {.smaller}
 
-Review from day 3: a transaction is a signed instruction from an account [@ethereum.org_transactionsdeveloperdocs_2025]. Before any block includes it, anyone watching the network can read its fields.
+:::: {.columns}
+::: {.column width="58%"}
+::: {style="font-size: .85em;"}
 
-- `from` and `nonce`: who signed, and where it sits in that account's sequence.
-  - An account's transactions run in nonce order; a gap holds the later ones back, whatever they pay.
-- `maxFeePerGas` and `maxPriorityFeePerGas`: what the sender will pay to be included.
-- `to`: for a DEX trade, usually the exchange's router contract, not the other trader.
-- `value` and `data`: the function called and its arguments.
-  - A Uniswap V2 router call such as `swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline)` names what is sold, what is bought (`path`), the least the sender will accept and who receives the output [@uniswaplabs_uniswapv2router02_2020].
-- After inclusion, the receipt adds the status, the gas used and the logs.
+- On Uniswap and DEXs built like it, a **pool** contract (a "pair") holds reserves of two tokens. A trader swaps with the pool's reserves, and the contract's formula sets the price [@uniswaplabs_uniswapdocs_2025]. A DEX built this way is an **automated market maker (AMM)**: reserves and a formula, not a list of buy and sell offers, set the price [@adams_uniswapv2core_2020]. The next lesson covers how.
+- One swap through the Uniswap V2 **router**, the contract a trader calls [@uniswaplabs_uniswapv2router02_2020]:
+  1. The trader calls the router.
+  2. The router moves the trader's input tokens straight to the pool.
+  3. The router calls the pool's `swap`; the pool sends the output tokens to the recipient.
+- Ether trades as **WETH**: the router wraps ETH into this ERC-20 token before a pool can take it [@uniswaplabs_uniswapv2router02_2020].
 
-**For the analyst:** the trade is spelled out before it happens. That is why other people can act on it first.
+:::
+:::
+::: {.column width="42%"}
+
+```{dot}
+//| echo: false
+//| fig-height: 3.2
+digraph Swap {
+  graph [rankdir=TB, bgcolor="transparent", nodesep=0.4, ranksep=0.45,
+         fontname="Helvetica", fontsize=10, margin=0];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+         width=1.6, height=0.45];
+  edge  [fontname="Helvetica", fontsize=9];
+
+  T [label="Account 3\n(signs the transaction)", fillcolor="#dbeafe"];
+  R [label="Router\n(holds nothing)", fillcolor="#fef3c7"];
+  P [label="Pool\n(cUSD + WETH)", fillcolor="#dcfce7"];
+
+  T -> R [label=" call"];
+  T -> P [label=" 5,000 cUSD in", style=dashed];
+  R -> P [label=" swap()"];
+  P -> T [label=" WETH out", style=dashed];
+}
+```
+
+:::
+::::
+
+**For the analyst:** the counterparty is code. Nobody on the other side of the price agreed to this trade.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide reviews the transaction fields from day 3 and points them at a DEX trade. It matters here because the rest of the lesson depends on one fact: a pending trade is readable, including the size and the worst price the trader will accept. Emphasize that the `to` field of a swap is usually a router, which sets up the look-alikes segment at the end.
+This slide opens part 1 by answering the agent's first question: Account 3 traded with a pool contract, through a router, not with a person. It matters here because the role asks analysts to characterize DEX activity, and the first thing to get right is that there is no human counterparty. Emphasize that the next lesson, on liquidity, explains how the pool sets its price; this lesson only needs the path.
 
 **Key Points**
-- A transaction carries its sender, nonce, fee caps, target, value and call data.
-- One account's transactions execute in nonce order, so a gap holds later transactions back even if they pay more.
-- A router call's arguments name the input amount, the minimum output, the token path, the recipient and a deadline.
-- The receipt, after inclusion, adds status, gas used and logs.
-- Define nonce as the per-account sequence number that keeps an account's transactions in order and prevents replay.
+- A pool, which Uniswap's code calls a pair, holds reserves of two tokens. In the case, the course pool holds cUSD and WETH.
+- An automated market maker (AMM) is a DEX where a contract's reserves and formula set the price. The other design, an order book, is a list of buy and sell offers from people, the kind an exchange like Coinbase runs; day 5 returns to it.
+- The router is the contract a trader calls. It moves the input tokens straight from the trader to the pool, then calls the pool's `swap`, and ends the call holding nothing.
+- Pools trade ERC-20 tokens, so ether trades as WETH, wrapped ether: the router's ETH functions wrap the ETH into WETH before the pool sees it.
+- The arrows are the case: Account 3's 5,000 cUSD goes to the pool, and WETH comes back. The next two slides read the call and its logs.
 
 **Walkthrough**
-1. Read the fields top to bottom, as a node sees them before inclusion.
-2. Stop on `to` and `data`: for a swap, the router and the trade's terms.
-3. Close with the analyst line: a readable trade can be acted on by someone else first.
+1. Follow the solid arrows: Account 3 calls the router, and the router calls the pool.
+2. Follow the dashed arrows: cUSD moves from Account 3 to the pool, and WETH from the pool to Account 3.
+3. Ask: who agreed to sell Account 3 its WETH? (Expected answer: nobody; the pool's code set the price.)
+4. Read the analyst line.
+
+**Sources**
+- @uniswaplabs_uniswapdocs_2025
+- @adams_uniswapv2core_2020
+- @uniswaplabs_uniswapv2router02_2020
+
+:::
+
+## A router call names the path and the minimum out {.smaller}
+
+[]{#a-pending-transaction-already-shows-the-trade}A transaction is a signed instruction from an account (day 3) [@ethereum.org_transactionsdeveloperdocs_2025]. Account 3's swap, block 9 of today's lab chain, as anyone could read it before a block included it:
+
+::: {style="font-size: .72em;"}
+
+| Field | Block 9 | What it says |
+| --- | --- | --- |
+| `from`, `nonce` | Account 3 (`0x90F7…b906`), nonce 1 | Who signed; an account's transactions run in nonce order, so a gap holds later ones back |
+| `to` | the router, `0xCf7E…0Fc9` | A DEX trade goes to the router, not to the other trader |
+| `value` | 0 ETH | No ether sent; the trade sells a token |
+| `data` | `swapExactTokensForTokens(amountIn, amountOutMin, path, to, deadline)` | The function called, and its arguments below |
+| `amountIn` | 5,000,000,000 (5,000 cUSD: cUSD has 6 decimals) | Exactly what is sold |
+| `amountOutMin` | 0 | The least the trader will accept |
+| `path` | cUSD, then WETH | What is sold, then what is bought |
+| `to` (argument) | Account 3 | Who receives the WETH |
+
+:::
+
+- The router refuses the trade if the output would fall below `amountOutMin` (`INSUFFICIENT_OUTPUT_AMOUNT`) or the `deadline` has passed (`EXPIRED`) [@uniswaplabs_uniswapv2router02_2020].
+- The fee caps, `maxFeePerGas` and `maxPriorityFeePerGas`, are readable too (part 2). After inclusion, the receipt adds the status, the gas used and the logs (next slide) [@ethereum.org_transactionsdeveloperdocs_2025].
+
+**For the analyst:** the trade, its size and the worst price the trader will take are spelled out before it happens. Account 3 would take any price.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads the case's transaction field by field: the router call that names what is sold, what is bought, and the least the trader will accept. It matters here because the rest of the lesson depends on one fact: a pending trade is readable, including its size and its worst acceptable price. Emphasize `amountOutMin`: Account 3 set it to 0.
+
+**Key Points**
+- The fields are day 3's: `from`, `nonce`, `to`, `value` and `data`. One account's transactions execute in nonce order, so a gap holds later ones back whatever they pay.
+- For a DEX trade, `to` is the router, and `data` is the router call. The function `swapExactTokensForTokens` sells an exact amount of one token; its arguments are the amount in, the minimum out, the token path, the recipient and a deadline.
+- The amount is in cUSD's smallest unit. cUSD has 6 decimals, so 5,000,000,000 is 5,000 cUSD, the same division day 3 did for USDT.
+- `amountOutMin` is the trader's floor. The router reverts with `INSUFFICIENT_OUTPUT_AMOUNT` below it, and with `EXPIRED` after the deadline. Account 3's floor is 0, so it accepted any price; part 3 shows who profits from a loose floor.
+- The `to` inside the call (who receives) is not the transaction's `to` (the router). Students mix the two up.
+- The values are read from the course chain's block 9, the lab worksheet's worked example; the explorer page shows them.
+
+**Walkthrough**
+1. Read the table top to bottom, as a node sees the transaction before inclusion.
+2. Stop on `to`: the router, not the other trader.
+3. Work the decimals aloud: 5,000,000,000 divided by a million is 5,000 cUSD.
+4. Stop on `amountOutMin`: 0. Ask what price Account 3 would accept. (Expected answer: any price.)
+5. Read the analyst line: a readable trade can be acted on by someone else first.
 
 **Sources**
 - @ethereum.org_transactionsdeveloperdocs_2025
+- @uniswaplabs_uniswapv2router02_2020
+
+:::
+
+## Reading a swap: two Transfers and a Swap {.smaller}
+
+Block 9's receipt holds four logs. cUSD has 6 decimals and WETH 18 [@vogelsteller_eip20tokenstandard_2015]; in this pool cUSD is token 0, as the pool's `token0()` returns [@uniswaplabs_iuniswapv2pair_2020].
+
+::: {style="font-size: .7em;"}
+
+| Log | Emitted by | Block 9 |
+| --- | --- | --- |
+| `Transfer(from, to, value)` | cUSD | 5,000 cUSD, Account 3 → the pool |
+| `Transfer(from, to, value)` | WETH | 2.374148687907796351 WETH, the pool → Account 3 |
+| `Sync(reserve0, reserve1)` | The pool | Reserves after: 105,000 cUSD and 47.6259 WETH |
+| `Swap(sender, amount0In, amount1In, amount0Out, amount1Out, to)` | The pool | sender = the router; amount0In = 5,000 cUSD; amount1Out = 2.3741 WETH; to = Account 3 |
+
+:::
+
+- `Swap`'s `sender` is whoever called the pool: the router, not the trader [@uniswaplabs_iuniswapv2pair_2020; @uniswaplabs_uniswapv2router02_2020]. The cUSD `Transfer`'s `from` shows whose tokens were sold: usually, not always, the transaction's `from`.
+- Before the trade the pool held 100,000 cUSD and 50 WETH: 2,000 cUSD per WETH. After it, about 2,205 [@adams_uniswapv2core_2020].
+
+**What to say:** "[Who] sold [amount, token] for [amount, token] in [pool], through [router]."
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works the lesson's core skill on the case: reading one swap from its four logs. It matters here because the lab, and every later trace through a DEX, depends on turning these logs into one plain sentence. Emphasize that `Swap`'s `sender` is the router, so the trader is found in the input token's `Transfer` `from` and in the transaction's `from`.
+
+**Key Points**
+- One swap leaves two token `Transfer` logs, one into the pool and one out of it, written by the two token contracts. Then the pool writes `Sync`, its reserves after the trade, and `Swap`, what came in, what went out and who received.
+- `amount0` and `amount1` follow the pool's own `token0()` and `token1()`. In a Uniswap V2 pair, token 0 is the token with the lower address; here that is cUSD (`0x5FbD…` is lower than `0xe7f1…`). Read `token0()` from the pool before naming which token was sold.
+- Scale each amount by its token's decimals: cUSD 6, WETH 18. The raw WETH value is 2,374,148,687,907,796,351; divided by 10^18^ it is about 2.3741 WETH.
+- Price is the ratio of the reserves. Before: 100,000 cUSD over 50 WETH is 2,000 cUSD per WETH. After, from `Sync`: 105,000 over 47.6259 is about 2,204.69. Account 3 paid 5,000 for 2.3741, about 2,106 per WETH. The next lesson explains why a large trade moves the price.
+- A swap to native ETH, rather than WETH, ends differently: the pool sends WETH to the router, which unwraps it and sends ETH, so the last leg leaves no `Transfer` log and `Swap`'s `to` is the router. Follow the call trace for the ETH.
+- The sentence at the bottom is a template; the check that follows asks students to fill it in.
+
+**Walkthrough**
+1. Read the two `Transfer` rows: 5,000 cUSD in, 2.3741 WETH out.
+2. Read `Swap`: `sender` is the router; `amount0In` is cUSD because cUSD is token 0.
+3. Work the two prices from the reserves: 2,000 before, about 2,205 after.
+4. Point at the template; the next slide asks students to fill it.
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @uniswaplabs_iuniswapv2pair_2020
+- @uniswaplabs_uniswapv2router02_2020
+- @adams_uniswapv2core_2020
+
+:::
+
+## Check: say the sentence for this swap {.smaller}
+
+::: {style="font-size: .85em;"}
+
+Block 9: the transaction is from Account 3 to the router. The cUSD `Transfer` runs from Account 3 to the pool, the WETH `Transfer` from the pool to Account 3, and `Swap`'s `sender` is the router.
+
+**Write one line:** fill in the template for block 9. Who traded, and who was on the other side?
+
+::: {.fragment}
+**Answer:** "Account 3 sold 5,000 cUSD for 2.3741 WETH in the course pool (`0x9fE4…a6e0`), through the router (`0xCf7E…0Fc9`)." The other side was the pool: code, not a person [@uniswaplabs_iuniswapv2pair_2020]. The router is the `Swap` `sender`, not the trader.
+
+**Part 1 in one line:** a DEX trade is a router call against a pool; read the two `Transfer` logs for who sold what, and `Swap` for the amounts and the recipient [@uniswaplabs_uniswapv2router02_2020; @uniswaplabs_iuniswapv2pair_2020].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 1 with a check every student answers: the case's swap turned into one sentence. It matters here because naming the router or the pool as the trader is the mistake part 1 is built to stop. Emphasize that the sentence names the trader, both amounts, the pool and the router, each in its place.
+
+**Key Points**
+- Expected answer: Account 3 sold 5,000 cUSD for 2.3741 WETH in the course pool, through the router.
+- Two wrong answers to listen for: "the router traded" (it is `Swap`'s `sender` because it called the pool) and "Account 3 traded with the router" (the router holds nothing; the pool is the other side).
+- Rounding WETH to four places is fine in a sentence; the exact amount is in the log.
+- The part's synthesis, on the slide: a DEX trade is a router call against a pool; the two `Transfer` logs say who sold what, and `Swap` the amounts and recipient.
+
+**Walkthrough**
+1. Read the case.
+2. Give every student thirty seconds to write the sentence.
+3. Ask two or three students to read theirs; listen for the router named as the trader.
+4. Reveal the answer, then read the part 1 synthesis.
+
+**Sources**
+- @uniswaplabs_iuniswapv2pair_2020
 - @uniswaplabs_uniswapv2router02_2020
 
 :::
@@ -280,11 +448,11 @@ This slide establishes how Ethereum proves a transaction came from the claimed s
 
 ## The mempool is public, so pending trades show {.smaller}
 
-- A submitted transaction enters a node's **mempool**, its local pool of unconfirmed transactions, as on Bitcoin (day 2).
+- A submitted transaction enters a node's **mempool**, its local pool of unconfirmed transactions, as on day 1.
 - Nodes gossip new transactions to their peers. Within seconds most nodes hold a similar view, but there is no single official queue: each node keeps its own.
 - The mempool is **public by default**: anyone running a node can watch pending transactions as they arrive [@ethereum.org_transactionsdeveloperdocs_2025].
-  - Searchers watch it for arbitrage, liquidation and sandwich chances [@ethereumorg_mev_2026].
-- **Private submission:** Flashbots Protect sends transactions to a private Flashbots mempool, where they are hidden from front-running and sandwich bots [@flashbots_protectoverview_2026]. A block builder still decides the order.
+  - **Searchers** (part 3) watch it for trades they can profit from [@ethereumorg_mev_2026].
+- **Private submission:** Flashbots Protect sends transactions to a private Flashbots mempool, hidden from bots that would trade around them [@flashbots_protectoverview_2026]. A block builder still decides the order.
 - **Replacement:** resending with the same nonce and a higher fee replaces a stuck transaction [@ethereum.org_transactionsdeveloperdocs_2025].
 
 **For the analyst:** the chain keeps only what was included. A pending transaction that was replaced or dropped leaves no on-chain record.
@@ -292,19 +460,20 @@ This slide establishes how Ethereum proves a transaction came from the claimed s
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the mempool as the public waiting room where pending trades can be seen and competed over. It matters here because mempool dynamics are the reason front-running and sandwiches exist at all. Emphasize that there is no single global mempool, only many local views that usually converge, and that private submission changes who sees a trade, not who orders the block.
+This slide opens part 2: Account 3's swap, readable field by field, waits in a public mempool before any block includes it. It matters here because that public wait is why other people's bots can act on a trade before it lands. Emphasize that there is no single global mempool, only many local views that usually agree, and that private submission changes who sees a trade, not who orders the block.
 
 **Key Points**
-- Each node keeps its own pool of pending transactions and gossips new ones to peers.
-- Public visibility lets searchers act on pending trades before they are included.
-- Private submission hides a trade from public bots, but a builder still sets the order.
-- A same-nonce, higher-fee resend replaces a stuck transaction.
-- The chain records only included transactions; a replaced or dropped one leaves no on-chain trace.
+- Day 1 showed a Bitcoin transaction waiting in a node's mempool. Ethereum works the same way: each node keeps its own pool of pending transactions and gossips new ones to its peers.
+- Because the pool is public, anyone running a node can read a pending trade, including every field from the router-call slide: the size, the path and the minimum out.
+- The people watching most closely are searchers, who look for trades they can profit from. Part 3 names them and shows what they do.
+- Private submission, such as Flashbots Protect, keeps a trade out of the public pool, so bots cannot see it in advance. A block builder still chooses where it lands.
+- A transaction resent with the same nonce and a higher fee replaces the stuck one.
+- The chain records only included transactions. A replaced or dropped one leaves no on-chain trace, so an analyst cannot later prove what sat in the mempool from the chain alone.
 
 **Walkthrough**
-1. Link back to day 2's Bitcoin mempool: same idea, local pools joined by gossip.
-2. Point at "public by default" and name who is watching: searchers.
-3. Contrast private submission and close with what the chain does and does not keep.
+1. Link back to day 1's mempool: same idea, local pools joined by gossip.
+2. Point at "public by default" and ask who could read Account 3's swap. (Expected answer: anyone running a node.)
+3. Contrast private submission, then close with what the chain does and does not keep.
 
 **Sources**
 - @ethereum.org_transactionsdeveloperdocs_2025
@@ -315,36 +484,77 @@ This slide establishes the mempool as the public waiting room where pending trad
 
 ## Fees set the queue: base fee burned, tip paid {.smaller}
 
-- EIP-1559 sets a **base fee** for every block. It rises when blocks run above the target, half the block gas limit, and falls when they run below it, by at most one eighth per block [@buterin_eip1559feemarket_2019].
-- The base fee is **burned**. The **priority fee** (tip) goes to the block's fee recipient. That is the proposer's address, or, in a block built by an outside builder (covered later), the builder's, who pays the proposer in a last transaction [@buterin_eip1559feemarket_2019; @flashbots_builderpayments_2026] [Oct 2026]{.asof}.
-- The sender caps both: `maxFeePerGas` and `maxPriorityFeePerGas`.
-- Effective gas price = `min(maxFeePerGas, baseFee + maxPriorityFeePerGas)`; the unused headroom under the cap is not charged.
-- Builders favor the transactions that pay them most, keeping each account's transactions in nonce order.
-- When several bots race for the same opportunity, they bid fees against each other for position; Daian and colleagues called this a **priority gas auction** [@daian_flashboys20_2019].
+- Recall day 3: every block has a **base fee**, which is burned, and the sender adds a **priority fee** (tip) for the block's fee recipient [@buterin_eip1559feemarket_2019].
+- The base fee rises when blocks run above the target, half the block gas limit, and falls when they run below it, by at most one eighth per block [@buterin_eip1559feemarket_2019].
+- The sender caps both: `maxFeePerGas` and `maxPriorityFeePerGas`. Effective gas price = `min(maxFeePerGas, baseFee + maxPriorityFeePerGas)`; headroom under the cap is not charged.
+- A block built by an outside builder pays the tips to the builder, who pays the proposer in a last transaction [@flashbots_builderpayments_2026] [31 Oct 2026]{.asof}. Builders favor the transactions that pay them most, keeping each account's transactions in nonce order.
+- When several bots race for one chance, they bid fees against each other for position: a **priority gas auction** [@daian_flashboys20_2019].
 
-**For the analyst:** an unusually high tip on a transaction placed right before or after a large trade is a sign of a bot buying position.
+**For the analyst:** a tip far above its neighbours', on a transaction right before or after a large trade, is a sign of a bot buying position.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes EIP-1559 as the fee rule that orders the public queue. It matters here because ordering is what MEV is about: whoever pays the builder most gets the position they want. Emphasize the split between the burned base fee and the tip that pays for inclusion.
+This slide gives part 2's one message: the fee a transaction offers decides where it lands among the pending trades. It matters here because ordering is what part 3 is about: whoever pays the block's builder most gets the position they want. Emphasize the split students met on day 3: the base fee is burned, the tip pays for position.
 
 **Key Points**
-- The base fee tracks demand against a target of half the block gas limit and moves at most one eighth per block.
-- The base fee is burned; the priority fee goes to the block's fee recipient. Flashbots' MEV-Boost payment note says a builder may set the proposer's address as fee recipient, or set its own and add a last transaction paying the proposer's fee recipient. The note is a work in progress, so name it as Flashbots' proposal.
-- Effective gas price is the lower of the sender's cap and the base fee plus tip; the rest of the cap is not charged.
-- Bots competing for one opportunity bid up fees against each other: a priority gas auction.
-- Define effective gas price as the per-gas price actually paid after the cap and the current base fee are applied.
+- Day 3 taught the base fee and the tip. This slide adds only what ordering needs.
+- The base fee tracks demand against a target of half the block gas limit and moves at most one eighth per block, so it cannot be outbid; only the tip buys position.
+- The effective gas price is the lower of the sender's cap and the base fee plus tip; the rest of the cap is not charged.
+- Day 3 defined a builder as a firm that assembles blocks and pays the proposer. Flashbots' payment note says a builder may set its own address as fee recipient and add a last transaction paying the proposer. The note is a work in progress, so name it as Flashbots' proposal.
+- Builders order by what pays them, within each account's nonce order.
+- Bots competing for one chance bid up fees against each other. Daian and colleagues called this a priority gas auction.
 
 **Walkthrough**
-1. Work one example: cap 50 gwei, tip 2 gwei, base fee 30 gwei gives an effective price of 32 gwei; 30 is burned, 2 goes to the block's fee recipient (the proposer, or an outside builder that pays the proposer in a last transaction), 18 is never charged.
-2. Show why a bot would raise its tip: position in the block is worth more than the fee.
-3. Close with the analyst sign: a high tip beside a large trade.
+1. Work one example: cap 50 gwei, tip 2 gwei, base fee 30 gwei gives an effective price of 32 gwei; 30 is burned, 2 goes to the fee recipient, 18 is never charged.
+2. Ask why a bot would pay a much higher tip. (Expected answer: its place in the block is worth more than the fee.)
+3. Read the analyst line.
 
 **Sources**
 - @buterin_eip1559feemarket_2019
-- @daian_flashboys20_2019
 - @flashbots_builderpayments_2026
+- @daian_flashboys20_2019
+
+:::
+
+## Check: who sees the swap before it lands? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+Account 3 sent its swap to the public mempool with `amountOutMin` 0 and an ordinary tip.
+
+**Write one line:** who could read the trade before a block included it, and what does its `amountOutMin` tell them?
+
+::: {.fragment}
+**Answer:** anyone running a node, searchers' bots among them [@ethereum.org_transactionsdeveloperdocs_2025; @ethereumorg_mev_2026]. An `amountOutMin` of 0 says Account 3 would accept any price, so a bot that moves the price first cannot make the trade fail [@uniswaplabs_uniswapv2router02_2020].
+
+**Part 2 in one line:** a pending trade is public, and what it pays the builder, set against everyone else's bids, decides where it lands [@buterin_eip1559feemarket_2019].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with a check every student answers about the case: who could see Account 3's trade before it landed, and what its settings gave away. It matters here because part 3 rests on both answers. Emphasize that an `amountOutMin` of 0 leaves no floor at all.
+
+**Key Points**
+- Expected answer: anyone running a node, including searchers' bots, because the mempool is public by default.
+- The `amountOutMin` of 0 tells a watcher that the trade will go through at any price. The router refuses only output below the minimum, and nothing is below 0.
+- Listen for "only the miner" or "only the exchange": both are wrong; there is no miner on Ethereum today and no exchange operator.
+- The part's synthesis, on the slide: a pending trade is public, and what it pays the builder, against everyone else's bids, decides where it lands.
+
+**Walkthrough**
+1. Read the case.
+2. Give every student thirty seconds to write their line.
+3. Show of hands: who wrote "anyone"? Who mentioned `amountOutMin`?
+4. Reveal the answer, then read the part 2 synthesis.
+
+**Sources**
+- @ethereum.org_transactionsdeveloperdocs_2025
+- @ethereumorg_mev_2026
+- @uniswaplabs_uniswapv2router02_2020
+- @buterin_eip1559feemarket_2019
 
 :::
 
@@ -683,141 +893,27 @@ None
 
 ::::
 
-## A DEX swaps against a pool, not a person {.smaller}
-
-:::: {.columns}
-::: {.column width="58%"}
-::: {style="font-size: .85em;"}
-
-- On Uniswap and DEXs built like it, a **pool** contract (a "pair") holds reserves of two tokens. A trader swaps with the pool's reserves, and the contract's formula sets the price [@uniswaplabs_uniswapdocs_2025]. The next lesson covers how.
-- One swap through the Uniswap V2 router [@uniswaplabs_uniswapv2router02_2020]:
-  1. The trader calls the **router**.
-  2. The router moves the trader's input tokens straight to the pool.
-  3. The router calls the pool's `swap`; the pool sends the output tokens to the recipient.
-- The router refuses the trade if the output would fall below `amountOutMin` (`INSUFFICIENT_OUTPUT_AMOUNT`) or the `deadline` has passed (`EXPIRED`).
-
-:::
-:::
-::: {.column width="42%"}
-
-```{dot}
-//| echo: false
-//| fig-height: 3.2
-digraph Swap {
-  graph [rankdir=TB, bgcolor="transparent", nodesep=0.4, ranksep=0.45,
-         fontname="Helvetica", fontsize=10, margin=0];
-  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
-         width=1.6, height=0.45];
-  edge  [fontname="Helvetica", fontsize=9];
-
-  T [label="Trader\n(signs the transaction)", fillcolor="#dbeafe"];
-  R [label="Router\n(holds nothing)", fillcolor="#fef3c7"];
-  P [label="Pool\n(token A + token B)", fillcolor="#dcfce7"];
-
-  T -> R [label=" call"];
-  T -> P [label=" token A in", style=dashed];
-  R -> P [label=" swap()"];
-  P -> T [label=" token B out", style=dashed];
-}
-```
-
-:::
-::::
-
-**For the analyst:** the counterparty is code. Nobody on the other side of the price agreed to this trade.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes how a DEX trade works: the trader swaps against a pool contract's reserves, through a router. It matters here because the role asks analysts to characterize DEX activity, and the first thing to get right is that there is no human counterparty. Emphasize that the next lesson, on liquidity, explains how the pool sets its price; this lesson only needs the path.
-
-**Key Points**
-- A pool (pair) holds reserves of two tokens and prices trades by formula.
-- A router takes the trader's call, moves the input tokens straight to the pool and calls the pool's `swap`.
-- The router reverts the trade if the output is below the trader's minimum or the deadline has passed.
-- Define automated market maker (AMM) as a DEX design where a contract's reserves and formula, not an order book, set the price.
-
-**Walkthrough**
-1. Follow the solid arrows: the trader calls the router, and the router calls the pool.
-2. Follow the dashed arrows: tokens move from the trader to the pool and from the pool to the recipient.
-3. Point out that the router appears in the transaction but ends holding nothing.
-
-**Sources**
-- @uniswaplabs_uniswapdocs_2025
-- @uniswaplabs_uniswapv2router02_2020
-
-:::
-
-## Reading a swap: two Transfers and a Swap {.smaller}
-
-A Uniswap V2 swap of token A for token B leaves these logs (order can vary):
-
-::: {style="font-size: .7em;"}
-
-| Log | Emitted by | What it says |
-| --- | --- | --- |
-| `Transfer(from, to, value)` | Token A's contract | The trader's token A went into the pool |
-| `Transfer(from, to, value)` | Token B's contract | The pool's token B went to the recipient |
-| `Sync(reserve0, reserve1)` | The pool | The pool's two reserves after the trade |
-| `Swap(sender, amount0In, amount1In, amount0Out, amount1Out, to)` | The pool | How much of each token came in and went out, and who received the output |
-
-:::
-
-- `Swap`'s `sender` is whoever called the pool: usually the router, not the trader [@uniswaplabs_iuniswapv2pair_2020; @uniswaplabs_uniswapv2router02_2020]. Token A's `Transfer` `from` shows whose tokens were sold: usually, not always, the transaction's `from`.
-- `amount0` and `amount1` follow the pool's own `token0()` and `token1()`: read those from the pool before saying which token was sold [@uniswaplabs_iuniswapv2pair_2020].
-- `Transfer` is the ERC-20 event from day 3 [@vogelsteller_eip20tokenstandard_2015].
-
-**What to say:** "Address X sold this much token A for this much token B in pool P, through the router."
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide teaches the working skill for DEX trades: reading one swap from its receipt. It matters here because the lab, and every later trace through a DEX, depends on turning four logs into one plain sentence. Emphasize that the `Swap` event's `sender` is usually the router, so the trader is found in token A's `Transfer` `from` (usually the transaction's `from`, but not when a bundler, relay or multi-sig sent it), and the token amounts must be matched to `token0` and `token1`.
-
-**Key Points**
-- One swap leaves two token `Transfer` logs, one in and one out of the pool, plus the pool's `Sync` and `Swap` events.
-- `Sync` records the pool's reserves after the trade; the next lesson and the lab use them to read the price.
-- `Swap` records the amounts in and out and the recipient; its `sender` is the caller of the pool, usually the router.
-- Match amounts to `token0()` and `token1()` before naming which token was sold.
-- A swap to native ETH goes through WETH: the pool sends WETH to the router, which unwraps it and sends ETH to the recipient, so that last leg leaves no `Transfer` log and `Swap`'s `to` is the router. Follow the call trace for the ETH.
-- The analyst's sentence names the trader, both amounts, the pool and the router.
-
-**Walkthrough**
-1. Read the two `Transfer` rows: token A in, token B out.
-2. Read `Swap` and match `amount0In` or `amount1In` to the pool's `token0` and `token1`.
-3. Say the sentence at the bottom out loud, filling in the blanks from the table.
-
-**Sources**
-- @uniswaplabs_iuniswapv2pair_2020
-- @uniswaplabs_uniswapv2router02_2020
-- @vogelsteller_eip20tokenstandard_2015
-
-:::
-
 ## MEV is profit from choosing the order {.smaller}
 
 - **Maximal extractable value (MEV)** is the value that can be extracted from block production, beyond the block reward and gas fees, by including, leaving out or reordering transactions [@ethereumorg_mev_2026].
 - Daian and colleagues named it in 2019, as "miner extractable value", after watching bots front-run ordinary users' DEX trades [@daian_flashboys20_2019].
 - **Searchers** run algorithms over chain data to find these chances and use bots to submit the profitable transactions [@ethereumorg_mev_2026]. The common ones:
   - **Arbitrage:** a token priced differently on two DEXs is bought on the cheaper one and sold on the dearer one.
-  - **Liquidation:** a lending protocol pays whoever closes an under-collateralized loan.
+  - **Liquidation:** a lending protocol, a contract that lends against deposited collateral, pays whoever closes an under-collateralized loan.
   - **Sandwich:** trade just before and just after a large swap (next slide).
 
-::: {.callout-note appearance="simple"}
-**DeFi terms:** **DEX** = decentralized exchange (e.g. Uniswap). **Lending protocol** = a contract that lends against deposited collateral (e.g. Aave).
-:::
+**For the analyst:** most of the bot trades in a busy pool are searchers taking these chances, not anyone's partner.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes MEV as the profit available to whoever controls or buys transaction order. It matters here because MEV activity fills DEX pools with bot trades, and an analyst must tell those bots apart from the subject of an investigation. Emphasize that MEV is a family of strategies, not one attack, and that searchers are the people running the bots.
+This slide opens part 3 by naming what the watchers in the mempool are after: maximal extractable value (MEV), the profit from choosing which transactions go in a block and in what order. It matters here because MEV activity fills DEX pools with bot trades, and an analyst must tell those bots apart from the subject. Emphasize that MEV is a family of strategies, not one attack, and that searchers are the people running the bots.
 
 **Key Points**
-- MEV is value extracted from block production by including, excluding or reordering transactions.
-- The term began as "miner extractable value" in research on bots front-running DEX trades.
-- Searchers find opportunities and run bots that submit the profitable transactions.
-- Arbitrage, liquidation and sandwiches are the common types.
-- Spell out DEX as decentralized exchange and define liquidation as closing an unsafe loan for a reward.
+- MEV is value taken from block production by including, leaving out or reordering transactions.
+- The term began as "miner extractable value" in 2019 research on bots front-running DEX trades, when miners still made Ethereum's blocks.
+- Searchers find the chances and run bots that send the profitable transactions; part 2's mempool is where they look.
+- Arbitrage buys where a token is cheap and sells where it is dear. Liquidation closes an unsafe loan on a lending protocol, such as Aave, for a reward. A sandwich is the next slide.
 
 **Walkthrough**
 1. Read the definition and stress "reordering".
@@ -833,28 +929,34 @@ This slide establishes MEV as the profit available to whoever controls or buys t
 ## A sandwich: three transactions, one victim {.smaller}
 
 :::: {.columns}
-::: {.column width="55%"}
+::: {.column width="48%"}
 
-1. A searcher's bot sees a large pending buy of token X in the mempool.
-2. **Front-run:** the bot buys X immediately before it, cheaply.
+1. A searcher's bot sees a large pending buy in the mempool.
+2. **Front-run:** the bot buys the same token just before it.
 3. The victim's buy runs next, at a worse price.
-4. **Back-run:** the bot sells X immediately after, at the higher price [@ethereumorg_mev_2026].
+4. **Back-run:** the bot sells just after, at the higher price [@ethereumorg_mev_2026].
 
 - The victim's `amountOutMin` caps the damage: below it, the router refuses the trade [@uniswaplabs_uniswapv2router02_2020].
 
 [Try it: Find the sandwich (five-minute lab)](/assets/labs/find-the-sandwich/index.html)
 
 :::
-::: {.column width="45%"}
+::: {.column width="52%"}
 
-::: {style="font-size: .8em;"}
+::: {.fragment}
+::: {style="font-size: .7em;"}
 
-| Position in block | Who | Trade in pool P |
-| --- | --- | --- |
-| *n* | Bot | Buys X |
-| *n + 1* | Victim | Buys X |
-| *n + 2* | Bot | Sells X |
+Lab block A (made-up data), pool X/USDC: 1,000,000 X and 200,000 USDC (0.2000 USDC per X).
 
+| Pos. | Who | Trade | Price after |
+| --- | --- | --- | --- |
+| 3 | Bot `0xB07…e2` | Pays 3,149 USDC, gets 15,455 X | 0.2063 |
+| 4 | Subject `0x5c1…a9` | Pays 10,000 USDC, gets 46,058 X | 0.2271 |
+| 5 | Bot `0xB07…e2` | Sells 15,455 X, gets 3,443 USDC | 0.2198 |
+
+The subject's minimum was 46,058 X: it got exactly that. The bot kept about 294 USDC before its costs [@adams_uniswapv2core_2020].
+
+:::
 :::
 
 :::
@@ -865,56 +967,100 @@ This slide establishes MEV as the profit available to whoever controls or buys t
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows the MEV pattern analysts meet most often in DEX activity: a sandwich. It matters here because a subject's swap may sit between two bot trades, and the bot's address is not part of the subject's activity. Emphasize the on-chain shape: same block, same pool, the bot's buy and sell bracketing the victim.
+This slide works the MEV pattern analysts meet most often in DEX activity, a sandwich, on the Find the sandwich lab's block A. It matters here because a subject's swap may sit between two bot trades, and the bot's address is not part of the subject's activity. Emphasize the on-chain shape: same block, same pool, the same address buying just before and selling just after.
 
 **Key Points**
-- The bot spots a large pending buy, buys first, and sells straight after.
-- The victim pays a worse price; the bot keeps the difference.
-- The victim's minimum-output setting limits how far the price can be pushed.
-- On chain, a sandwich is three swaps in one pool in consecutive block positions, the outer two by the same bot.
+- The bot spots a large pending buy, buys first, and sells straight after. The victim pays a worse price, and the bot keeps the difference.
+- Block A's numbers are made up for the lab, but they follow the pool's formula. The bot's 3,149 USDC buy pushes the price from 0.2000 to 0.2063; the subject's 10,000 USDC buy pushes it to 0.2271; the bot's sale brings it back to 0.2198.
+- The subject would have got 47,483 X with no bot in front. It had set a 3% tolerance, so its `amountOutMin` was 46,058 X, and the bot pushed the price exactly to that floor. A tighter tolerance would have left the bot less to take.
+- The bot paid 3,149 USDC and got back 3,443: about 294 USDC gross. The lab puts its gas and builder payment at about 60 USDC, also made up.
+- Compare part 2's check: Account 3's `amountOutMin` of 0 had no floor at all.
+- The lab's block B is a look-alike: two different addresses sit either side of the subject, so it is not a sandwich.
 
 **Walkthrough**
 1. Walk the numbered steps from the mempool sighting to the back-run.
-2. Point at the table: the bot's two trades bracket the victim's in pool P.
-3. Read the sentence at the bottom as the analyst's characterization.
-4. Optional, five minutes: open the Find the sandwich lab from the link on the slide. Students predict whether the address on both sides of a swap is the subject's partner, step through a block's swaps in position order, mark the sandwich, rule out a look-alike block, meet slippage tolerance, and see that a tighter tolerance leaves the bot too little to take.
+2. Optional, five minutes: if time allows, open the Find the sandwich lab from the link and let students step through block A before revealing the table.
+3. Reveal the table: the same bot address in positions 3 and 5, the subject in 4, one pool.
+4. Ask why the subject got exactly its minimum. (Expected answer: the bot bought just enough to push the price to the subject's floor.)
+5. Read the sentence at the bottom as the analyst's characterization.
 
 **Sources**
 - @ethereumorg_mev_2026
 - @uniswaplabs_uniswapv2router02_2020
+- @adams_uniswapv2core_2020
 
 :::
 
 ## Searchers, builders and relays set the order {.smaller}
 
-- **Goal:** split *proposing* a block (the validator's duty) from *building* it (searching for the most profitable order) [@flashbotsltd_flashbots_2025].
-
 1. **Searchers** find MEV chances in the mempool and send **bundles** of transactions, with a bid, to builders.
 2. **Builders** combine ordinary transactions and bundles into full blocks.
 3. **Relays** check the blocks and pass validators only the header and the bid, keeping the body hidden.
-4. **Validators** running **MEV-Boost** pick the best bid and sign the header; the relay then releases the full block.
+4. **Validators** running **MEV-Boost** pick the best bid and sign the header; the relay then releases the full block [@flashbotsltd_flashbots_2025].
 
+Proposing a block stays the validator's duty; choosing its order has moved to builders [@flashbotsltd_flashbots_2025].
 
 **For the analyst:** the order of transactions in a block was chosen by a builder, often to pay a searcher. Position next to a trade is not evidence of a link to it.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes proposer-builder separation as how blocks are ordered on Ethereum today. It matters here because analysts sometimes read meaning into transactions that sit next to each other in a block; the builder chose that order for profit. Emphasize that validators still propose, but specialists choose the order.
+This slide shows who actually set the order the sandwich needed: searchers bid, builders assemble, relays pass the bids on, and validators sign. It matters here because analysts sometimes read meaning into transactions that sit next to each other in a block; a builder chose that order for profit. Emphasize that validators still propose, but specialists choose the order.
 
 **Key Points**
-- Searchers, builders, relays and validators each play a separate role in building a block.
-- Relays forward blinded bids, so the proposer chooses a block without seeing its contents first.
-- Not to be confused with the gas relay (relayer) later in this lesson, which pays a user's gas; and later today (08-EF) a bridge relayer pays out on the far chain. An MEV-Boost relay only passes blocks from builders to validators.
-- Block position next to a trade reflects a builder's profit, not a relationship between the parties.
-- Spell out PBS as proposer-builder separation; MEV-Boost is the common software for it.
+- A searcher sends a bundle, such as the bot's buy, the victim's swap and the bot's sell, with a bid to a builder.
+- A builder packs bundles and ordinary transactions into the block that pays it most.
+- A relay passes the validator a blinded bid, the header without the transactions, so the validator chooses without seeing the contents first.
+- The validator, running MEV-Boost, signs the best header; the relay then releases the block.
+- This split is called proposer-builder separation (PBS); MEV-Boost is the common software for it.
+- Not to be confused with the gas relayer in part 4, which pays a user's gas, or with a bridge relayer in today's Layer 2s and bridges lesson, which pays out on the far chain. An MEV-Boost relay only passes blocks from builders to validators.
 
 **Walkthrough**
-1. Start with searchers finding chances and bundling transactions.
-2. Move to builders assembling blocks and relays forwarding blinded bids. Say that this relay is not the gas relay students meet later today: same word, different job.
-3. End with the validator signing the winning header.
+1. Start with searchers sending bundles; tie back to the sandwich bot.
+2. Move to builders assembling blocks and relays forwarding blinded bids. Say this relay is not part 4's gas relayer: same word, different job.
+3. End with the validator signing the winning header, then read the analyst line.
 
 **Sources**
+- @flashbotsltd_flashbots_2025
+
+:::
+
+## Check: the address on both sides. A partner? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+In one block, address `0xB07…e2` buys token X in pool P at position 3, the subject buys X in pool P at position 4, and `0xB07…e2` sells X in pool P at position 5. The same address appears in many other pools that day.
+
+**Write one line:** is `0xB07…e2` working with the subject? Say how sure you are (High, Moderate or Low).
+
+::: {.fragment}
+**Answer:** no. This is a sandwich: an MEV bot took value from the subject's trade, and a builder set the order for profit [@ethereumorg_mev_2026; @flashbotsltd_flashbots_2025]. High confidence it is a sandwich bot, a third party; the pattern and its many unrelated pools are the evidence.
+
+**Part 3 in one line:** order is bought, so an address right beside a trade is usually a bot paid by that order, not a partner [@ethereumorg_mev_2026].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 3 with the agent's second question, asked of a sandwich: is the address on both sides of the trade working with the subject? It matters here because a wrong yes would add a bot to the subject's network. Emphasize that the answer carries a confidence word, as the objective asks.
+
+**Key Points**
+- Expected answer: no; it is a sandwich bot, a third party.
+- The evidence: the same address buys just before and sells just after in one pool, and it trades in many unrelated pools.
+- High confidence fits: the pattern is the one the sandwich slide showed, and the bot's spread across pools has no link to the subject. Moderate is a fair answer if a student wants to see the bot's other trades first.
+- Listen for "partner" or "the subject's second wallet": the pattern that looks like coordination is the builder's ordering.
+- The part's synthesis, on the slide: order is bought, so position beside a trade is not a link.
+
+**Walkthrough**
+1. Read the case.
+2. Give every student thirty seconds to write their line and a confidence word.
+3. Show of hands: partner, or not? Then: High, Moderate or Low?
+4. Reveal the answer, then read the part 3 synthesis.
+
+**Sources**
+- @ethereumorg_mev_2026
 - @flashbotsltd_flashbots_2025
 
 :::
@@ -923,7 +1069,7 @@ This slide establishes proposer-builder separation as how blocks are ordered on 
 
 - A **router** takes the trader's call and moves the tokens between the trader and the pool, all within one transaction [@uniswaplabs_uniswapv2router02_2020]. It holds nothing afterward.
   - Any trader can call the same router: it takes the tokens from whoever called it (`msg.sender`) [@uniswaplabs_uniswapv2router02_2020].
-- An **aggregator** searches many liquidity sources for the cheapest route and may send one trade through several pools [@oneinch_aggregationprotocol_2026].
+- An **aggregator**, such as 1inch, searches many liquidity sources for the cheapest route and may send one trade through several pools [@oneinch_aggregationprotocol_2026].
 
 **How it shows up:** the trader's transaction goes `to` the router or aggregator; the `Transfer` logs run from the trader, through one or more pools, back to the recipient.
 
@@ -932,18 +1078,20 @@ This slide establishes proposer-builder separation as how blocks are ordered on 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the look-alikes segment, about 15 minutes over four slides, with two services easily mistaken for a counterparty. It matters here because any trader can send to the same router or aggregator address, so linking two wallets only because both sent to it is a mistake. Emphasize that these contracts move tokens through and keep nothing.
+This slide opens part 4 with the first of the services whose addresses sit in a trade's path: routers and aggregators. It matters here because any trader can send to the same router or aggregator address, so linking two wallets only because both sent to it is a mistake. Emphasize that these contracts move tokens through and keep nothing.
 
 **Key Points**
-- A router moves tokens between the trader and the pool inside one transaction and keeps none.
-- An aggregator finds a route across several liquidity sources and may split one trade across pools.
+- Part 1 showed the router in block 9: Account 3's transaction went `to` it, and `Swap` named it as `sender`, yet it ended holding nothing.
+- The router takes tokens from whoever called it, so every trader using the exchange shares the one address.
+- An aggregator finds a route across several liquidity sources and may split one trade across pools, so one call can leave `Swap` logs in several pools.
 - Both addresses are shared by everyone who uses the service, so they are neither the subject's addresses nor counterparties.
 - Read the `Transfer` logs through the router to find the pool and the real recipient.
 
 **Walkthrough**
-1. Point at the router's address in a swap's `to` field.
+1. Point back at block 9's router in the transaction's `to` field.
 2. Follow the `Transfer` logs past it to the pool and back to the recipient.
-3. Contrast the two sentences at the bottom: swapped through versus paid.
+3. Ask: two wallets both sent to the 1inch router. Are they linked? (Expected answer: not by that; thousands of traders use it.)
+4. Contrast the two sentences at the bottom: swapped through versus paid.
 
 **Sources**
 - @uniswaplabs_uniswapv2router02_2020
@@ -954,9 +1102,9 @@ This slide opens the look-alikes segment, about 15 minutes over four slides, wit
 ## An MEV bot trades beside you, not with you {.smaller}
 
 - Searchers run **bots** that submit their profitable transactions to the network automatically [@ethereumorg_mev_2026].
-- Its trades land just before, just after or around other people's trades, in the same pools, chosen for profit rather than for any link to those people.
+- A bot's trades land just before, just after or around other people's trades, in the same pools, chosen for profit rather than for any link to those people.
   - **Arbitrage bot:** buys a token on the DEX where it is cheaper and sells it on the one where it is dearer [@ethereumorg_mev_2026].
-  - **Sandwich bot:** trades on both sides of a large swap.
+  - **Sandwich bot:** trades on both sides of a large swap, as in block A.
 - A bot's addresses touch a great many unrelated traders and pools.
 
 **How it shows up:** swaps by the same address or contract in many blocks and pools, often placed right beside large trades, sometimes with high tips.
@@ -966,16 +1114,16 @@ This slide opens the look-alikes segment, about 15 minutes over four slides, wit
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide treats MEV bots as look-alikes: addresses that appear right beside a subject's trade but have no relationship with the subject. It matters here because a bot's trade can look like a coordinated partner or a second wallet of the subject. Emphasize that bots trade around everyone, so their position next to a trade carries no link.
+This slide turns part 3's bots into a look-alike rule: an address right beside a subject's trade that has no relationship with the subject. It matters here because a bot's trade can look like a coordinated partner or a second wallet of the subject. Emphasize that bots trade around everyone, so their position next to a trade carries no link.
 
 **Key Points**
 - Searchers run bots that submit their profitable transactions automatically.
-- Bots place trades beside large swaps for profit, in the same pools.
+- Bots place trades beside large swaps for profit, in the same pools; block A's bot is one.
 - A bot's address touches many unrelated traders, so treating it as one of the subject's addresses is an error.
-- Signs of a bot: the same address in many pools and blocks, beside large trades, sometimes with high tips.
+- Signs of a bot: the same address in many pools and blocks, beside large trades, sometimes with a tip far above its neighbours', the sign part 2 named.
 
 **Walkthrough**
-1. Recall the sandwich table: the outer two rows were the bot.
+1. Recall block A's table: the outer two rows were the bot.
 2. Name the signs that mark an address as a bot.
 3. Read the sentence at the bottom as the characterization.
 
@@ -985,6 +1133,8 @@ This slide treats MEV bots as look-alikes: addresses that appear right beside a 
 :::
 
 ## Paymasters and relayers pay gas, not the bill {.smaller}
+
+**The tempting idea:** a transaction's `from` is the actor. For a smart account, it is not.
 
 ```{dot}
 //| echo: false
@@ -1022,29 +1172,31 @@ digraph AA {
 }
 ```
 
-- On the smart-account path the user's key never sends a transaction: the bundler's address is the `from`, and the smart account acts inside the call [@buterin_erc4337accountabstraction_2021].
+- A **smart account** is a contract that serves as a user's wallet. Its owner signs a **UserOperation**; a **bundler** sends it in a transaction to the shared **EntryPoint** contract, which calls the smart account [@buterin_erc4337accountabstraction_2021]. A **paymaster** contract may cover the cost.
 - A **gas relay** (relayer) does the same for a plain signed request: it pays the gas, and the receiving contract reads the signer from the call data [@sandford_erc2771securenative_2020]. Not the MEV-Boost relay, which passes blocks to validators.
 
-**What to say:** "The gas was paid by a bundler, paymaster or relay; the actor is the smart account or the signer." The account that paid the gas is a service, not the actor.
+**What to say:** "The gas was paid by a bundler, paymaster or relay; the actor is the smart account or the signer."
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide sets two paths side by side: a normal transaction, where the `from` is the actor, and a smart-account action, where a service sends the transaction and pays the gas. It matters here because the transaction's `from` is normally the actor, and in these patterns it is not. Emphasize that the real actor is the smart account, or the signer of a relayed request.
+This slide breaks the rule students have used since day 3, that a transaction's `from` is the actor. It sets two paths side by side: a normal transaction, and a smart-account action, where a service sends the transaction and pays the gas. It matters here because a subject using a smart account never appears in the `from` field. Emphasize that the real actor is the smart account, or the signer of a relayed request.
 
 **Key Points**
-- Define account abstraction as letting a smart contract account act as the user's wallet, with its own rules for signing and paying.
-- The smart-account path is ERC-4337. The user signs a UserOperation; a bundler packs many UserOperations into one transaction calling `handleOps` on the EntryPoint contract, so the bundler is the transaction's `from`. The EntryPoint then calls each smart account.
-- A paymaster is a helper contract that agrees to pay for a UserOperation instead of its sender.
+- Start with the tempting idea: every transaction students have read so far was sent by the account that acted. That holds for an ordinary account, an externally owned account (EOA), whose key signs the transaction.
+- A smart account is a contract that serves as the user's wallet, with its own rules for signing and paying; the idea is called account abstraction.
+- The smart-account path is ERC-4337. The owner signs a UserOperation, which is not a transaction. A bundler packs many UserOperations into one transaction calling `handleOps` on the EntryPoint contract, so the bundler is the transaction's `from`. The EntryPoint then calls each smart account, which makes the trade.
+- A paymaster is a helper contract that agrees to pay for a UserOperation instead of its sender. The EntryPoint repays the bundler from the smart account's or the paymaster's deposit.
 - The relay pattern is ERC-2771 (meta-transactions). The user signs a request; a gas relay pays the gas and sends it through a **trusted forwarder**, which appends the signer's address to the end of the call data. The receiving contract treats that appended address, not `msg.sender`, as the caller.
-- Students need the picture, not the ERC numbers; the numbers are here for the stand-in instructor and for questions.
+- Students need the picture, not the ERC numbers; the numbers are here for the instructor and for questions.
 
 **Walkthrough**
-1. Normal path: the user's key signs, the transaction goes to the contract, the `from` is the user. This is every transaction students have read so far.
-2. Smart-account path: the user's key signs a UserOperation (not a transaction), the bundler sends the real transaction to the EntryPoint, which calls the smart account. Ask which address is the actor. (Expected answer: the smart account, not the bundler in the `from` field.)
-3. Point at the paymaster: sometimes neither the user nor the smart account pays.
-4. Read the relay bullet: same lesson, different mechanism. Ask the same question. (Expected answer: the signer appended to the call data.)
-5. Read the sentence at the bottom.
+1. Read the tempting idea aloud and ask whether it has held so far. (Expected answer: yes, for every transaction read since day 3.)
+2. Normal path: the user's key signs, the transaction goes to the contract, the `from` is the user.
+3. Smart-account path: the owner signs a UserOperation, the bundler sends the real transaction to the EntryPoint, which calls the smart account. Ask which address is the actor. (Expected answer: the smart account, not the bundler in the `from` field.)
+4. Point at the paymaster: sometimes neither the user nor the smart account pays.
+5. Read the relay bullet: same lesson, different mechanism. Ask the same question. (Expected answer: the signer appended to the call data.)
+6. Read the sentence at the bottom.
 
 **Sources**
 - @buterin_erc4337accountabstraction_2021
@@ -1056,34 +1208,45 @@ This slide sets two paths side by side: a normal transaction, where the `from` i
 
 ::: {style="font-size: .72em;"}
 
-| In the path | What it does | How it shows up | The real party |
-| --- | --- | --- | --- |
-| Router | Moves the trader's tokens to the pool | The trader's transaction goes `to` it; it ends holding nothing | Whoever's tokens went in (usually `from`) and the recipient |
-| Aggregator | Routes one trade across pools | One call, `Swap` events in several pools | Whoever's tokens went in and the recipient |
-| Pool | Holds reserves and prices the trade | Tokens in and out; `Sync` and `Swap` events | No person: the counterparty is code |
-| MEV bot | Trades beside others for profit | Swaps around large trades, in many pools | A third party, not a partner |
-| Bundler | Submits users' operations | `from` of one transaction that carries many users' operations | The smart account in the operation |
-| Paymaster | Pays for the operation | A contract named in the operation | A service, not the actor |
-| Relayer | Pays gas and forwards a signed request | `from` is the relayer | The signer appended to the call data |
+**Write one line:** for each row, who is the real party?
+
+| In the path | What it does | How it shows up |
+| --- | --- | --- |
+| Router | Moves the trader's tokens to the pool | The trader's transaction goes `to` it; it ends holding nothing |
+| Aggregator | Routes one trade across pools | One call, `Swap` events in several pools |
+| Pool | Holds reserves and prices the trade | Tokens in and out; `Sync` and `Swap` events |
+| MEV bot | Trades beside others for profit | Swaps around large trades, in many pools |
+| Bundler | Submits users' operations | `from` of one transaction that carries many users' operations |
+| Paymaster | Pays for the operation | A contract named in the operation |
+| Relayer | Pays gas and forwards a signed request | `from` is the relayer |
+
+::: {.fragment}
+**Answer:** router and aggregator: whoever's tokens went in (usually `from`) and the recipient. Pool: no person; the counterparty is code. MEV bot: a third party, not a partner. Bundler: the smart account in the operation. Paymaster: a service, not the actor. Relayer: the signer appended to the call data [@uniswaplabs_uniswapv2router02_2020; @uniswaplabs_iuniswapv2pair_2020; @buterin_erc4337accountabstraction_2021; @sandford_erc2771securenative_2020].
+
+**Part 4 in one line:** read past every service in the path, to the account whose tokens moved and the account that received them [@uniswaplabs_uniswapv2router02_2020; @ethereumorg_mev_2026].
+:::
 
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide closes the look-alikes segment with one table students can use in the lab and in week 2's traces. It matters here because each row is a service an analyst could mistake for the subject or the counterparty. Emphasize the last column: the real party is found by reading past the service.
+This slide closes part 4 with a check every student answers: seven services an analyst could mistake for the subject or the counterparty, with the real party held back. It matters here because the table is the one students use in the afternoon lab and in week 2's traces. Emphasize the answer: the real party is found by reading past the service.
 
 **Key Points**
-- Routers and aggregators move tokens through; the real parties are the signer and the recipient.
+- Routers and aggregators move tokens through; the real parties are whoever's tokens went in and the recipient.
 - A pool is code, so a swap has no human counterparty.
 - MEV bots are third parties beside the trade.
 - Bundlers, paymasters and relayers pay or submit for someone else; the actor is the smart account or the appended signer.
+- Four of the seven rows put a service in the transaction's `from` or `to`.
 - For questions: the bundler and paymaster rows are ERC-4337 (the bundler's transaction calls `handleOps` on the EntryPoint contract); the relayer row is ERC-2771, whose call goes through a trusted forwarder. Students need the roles, not the numbers.
+- The part's synthesis, on the slide: read past every service to the accounts whose tokens moved.
 
 **Walkthrough**
-1. Read down the first column and ask, for each, who the real party is before revealing the last column. (Expected answer: the last column; for a router, whoever's tokens went in and the recipient.)
-2. Point out that four of the seven rows send the transaction's `from` or `to` to a service.
-3. Tie back to the lab: name the real party in the swap students make this afternoon.
+1. Read the prompt and give every student a minute to note the real party for each row.
+2. Go down the rows and take a show of hands on two: the pool (is there a person?) and the bundler (is it the actor?).
+3. Reveal the answer, then read the part 4 synthesis.
+4. Tie back to the lab: students name the real party in the swap they make this afternoon.
 
 **Sources**
 - @uniswaplabs_uniswapv2router02_2020
@@ -1095,35 +1258,160 @@ This slide closes the look-alikes segment with one table students can use in the
 
 :::
 
-## Conclusion: what to say about a DEX trade
+## Practice: a bundler sent this swap. Who traded? {.smaller}
 
-- A DEX trade waits in a public mempool, and fees and a block builder decide where it lands.
-- On chain, it reads as tokens in and out of a pool plus a `Swap` event; the counterparty is the pool.
-- MEV bots trade around large swaps; a sandwich is three transactions around one victim.
-- Routers, aggregators, bots, bundlers, paymasters and relayers sit in the path: name the real party behind them.
+::: {style="font-size: .8em;"}
 
-**Next:** liquidity: how a pool sets its price, why thin markets move, and where funds can and can't exit.
+A made-up case. The agent's subject uses a smart account.
+
+| Read from the explorer | Value |
+| --- | --- |
+| Transaction `from` | Bundler `0x4c3e…71a0` (pays the gas) |
+| Transaction `to` | The EntryPoint contract (the call runs the bundled operations) |
+| UserOperation from (its `sender` field) | Smart account `0x8a2f…d415` |
+| `Transfer` (cUSD) | 2,000 cUSD, smart account → the pool |
+| `Transfer` (WETH) | 0.98 WETH, the pool → smart account |
+| `Swap` | sender = the router; to = smart account |
+
+**Write one line:** who traded, what, and how sure are you (High, Moderate or Low)? Who is the bundler?
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This conclusion gathers the lesson into the four things an analyst says about a DEX trade. It matters here because the afternoon lab asks students to make and read a swap, then name who traded. Emphasize that the next lesson explains the price movement students will see in the lab.
+This practice slide gives students a made-up trade that joins parts 1 and 4: a swap read from its logs, sent by a bundler for a smart account. It matters here because a smart-account trade puts a service in the `from` field, and the objective asks students to say who traded, what the addresses around it are, and how sure they are. Emphasize that the logs, not the `from`, name the trader.
 
 **Key Points**
-- Pending trades are public, and fees and builders set their order.
-- A swap reads as pool transfers and a `Swap` event, against a pool rather than a person.
-- MEV bots, including sandwich bots, trade around large swaps.
-- Services in the path are not the real party.
+- The case is made up for practice; the addresses are not real.
+- The transaction's `from` is a bundler and its `to` is the EntryPoint, the smart-account path from part 4.
+- The two `Transfer` logs say who sold what, exactly as in part 1: cUSD from the smart account to the pool, WETH back.
+- `Swap` names the router as `sender` and the smart account as `to`.
+- Students write one line: the trader, the trade, a confidence word, and what the bundler is.
 
 **Walkthrough**
-1. Read the four bullets as the four sentences an analyst says about a DEX trade.
-2. Ask: a swap's transaction was sent by a bundler; who traded? (Expected answer: the smart account in the operation, not the bundler in the `from` field.)
-3. Point to the next lesson and the afternoon lab, where students make a swap and name who traded.
+1. Read the case and the table.
+2. Give students three minutes to write their line.
+3. Move to the answers slide.
 
 **Sources**
-- @ethereum.org_transactionsdeveloperdocs_2025
+- @buterin_erc4337accountabstraction_2021
 - @uniswaplabs_iuniswapv2pair_2020
+
+:::
+
+## Answers: the smart account, and how sure {.smaller}
+
+- **Who traded:** the smart account `0x8a2f…d415` sold 2,000 cUSD for 0.98 WETH in the pool, through the router. Both `Transfer` logs and `Swap`'s `to` name it [@uniswaplabs_iuniswapv2pair_2020].
+- **How sure:** High that the smart account made the trade: the two `Transfer` logs and the `Swap` log each name it, and this is a direct read of the logs, not a guess from a pattern.
+- **The bundler** only sent the transaction and paid the gas. The EntryPoint repays it from the smart account's or a paymaster's deposit [@buterin_erc4337accountabstraction_2021]. It is a service, not the subject's partner.
+- **What the chain cannot say:** who holds the key that signed the UserOperation. That is a question for other sources.
+
+**What to say:** "The smart account `0x8a2f…d415` sold 2,000 cUSD for 0.98 WETH through the router; the transaction was sent by a bundler, a service that paid the gas (High)."
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the practice answers and models the sentence the objective asks for, with its confidence word. It matters here because students should leave able to say who traded even when a service sent the transaction. Emphasize the line between what the chain proves (the smart account traded) and what it cannot (who controls the smart account).
+
+**Key Points**
+- The trader is the smart account: the cUSD left it and the WETH came back to it.
+- High confidence fits because it is a direct read, not a heuristic: the token moves and the pool's own `Swap` record name the smart account, so no known false positive applies.
+- The bundler sent the transaction and paid the gas. Under ERC-4337 the EntryPoint repays the bundler from a deposit held for the smart account or its paymaster, so the bundler is paid for a service.
+- Who holds the smart account's key is not on the chain. Day 9's lesson on fusing sources returns to how other sources answer that.
+- Students who named the bundler as the trader took the `from` as the actor: part 4's tempting idea.
+
+**Walkthrough**
+1. Ask two or three students to read their lines.
+2. Reveal the answers one bullet at a time.
+3. Read the model sentence aloud, confidence word included.
+
+**Sources**
+- @uniswaplabs_iuniswapv2pair_2020
+- @buterin_erc4337accountabstraction_2021
+
+:::
+
+## Review: what to say about a DEX trade {.smaller}
+
+[]{#conclusion-what-to-say-about-a-dex-trade}**The objective:** given a DEX trade in an explorer, say who traded what, which addresses around it are services or bots, and how sure you are.
+
+1. Who was on the other side of Account 3's swap?
+
+   [The pool: code, not a person [@uniswaplabs_uniswapdocs_2025].]{.fragment}
+
+2. Which log names whose tokens were sold, and why not `Swap`'s `sender`?
+
+   [The input token's `Transfer` `from`; `Swap`'s `sender` is the router, which called the pool [@uniswaplabs_iuniswapv2pair_2020].]{.fragment}
+
+3. Why could bots see the trade before it landed?
+
+   [The mempool is public by default; anyone running a node reads pending transactions [@ethereum.org_transactionsdeveloperdocs_2025].]{.fragment}
+
+4. An address buys just before and sells just after the subject in one pool. Partner?
+
+   [No: a sandwich bot, a third party; a builder set the order for profit [@ethereumorg_mev_2026].]{.fragment}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes the lesson by stating the objective and asking one question from each part. It matters here because the afternoon lab asks students to make and read a swap, then name who traded. Emphasize that each answer is a sentence an analyst could say to the agent.
+
+**Key Points**
+- Question 1 is part 1's point: the counterparty is a pool.
+- Question 2 is part 1's log reading: the `Transfer` logs name the trader, and `Swap`'s `sender` is the router.
+- Question 3 is part 2: the public mempool.
+- Question 4 is part 3, answered with part 4's rule: an address beside a trade is usually a bot.
+
+**Walkthrough**
+1. Read the objective.
+2. Ask each question; take an answer from the room before revealing.
+3. Reveal each answer in turn.
+
+**Sources**
+- @uniswaplabs_uniswapdocs_2025
+- @uniswaplabs_iuniswapv2pair_2020
+- @ethereum.org_transactionsdeveloperdocs_2025
 - @ethereumorg_mev_2026
+
+:::
+
+## Next: can these funds exit here? {.smaller}
+
+Account 3's 5,000 cUSD moved a 100,000 cUSD pool's price by about 10%, from 2,000 to about 2,205 cUSD per WETH [@adams_uniswapv2core_2020]. How big a trade a pool can take is the next lesson's question.
+
+::: {style="font-size: .8em;"}
+
+| Where | What today's reading is used for |
+| --- | --- |
+| Liquidity: pools, thin markets and exits (next lesson) | Why the price moved, and whether a pool can take a large exit |
+| Layer 2s and bridges by type (later today) | The same swap logs on Layer 2s, and bridges in the path |
+| Day 4 lab | Make a swap, read its logs, name who traded |
+| Day 8, flash loans and oracle manipulation | Attacks built from swaps against pools |
+
+:::
+
+**Bottom line:** a DEX trade is a router call against a pool; read past every service and bot in its path to the accounts whose tokens moved.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide bridges to the next lesson with one fact from the case: a 5,000 cUSD trade moved a 100,000 cUSD pool's price by about 10%. It matters here because day 4's next lesson asks how big a trade a pool can take, and whether funds can leave through it. Emphasize where each skill from today is used next.
+
+**Key Points**
+- Part 1 worked the two prices from the reserves: 2,000 before, about 2,205 after. The next lesson explains why a large trade moves a pool's price so far.
+- The Layer 2s and bridges lesson, later today, reads the same swap logs on Layer 2s and adds bridges as another service in the path.
+- This afternoon's lab has students make a swap and read it back.
+- Day 8 returns to swaps as the building blocks of flash-loan and oracle attacks.
+- The bottom line is the lesson in one sentence.
+
+**Walkthrough**
+1. Read the bridge fact and ask: would a 50,000 cUSD trade move the price more or less than 10%? (Expected answer: more; the next lesson shows why.)
+2. Read the table.
+3. Read the bottom line.
+
+**Sources**
+- @adams_uniswapv2core_2020
 
 :::
 
