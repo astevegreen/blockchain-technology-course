@@ -1,34 +1,32 @@
 {
   "lesson_id": "ethereum_03_ef_ethereum_network",
   "lesson_title": "Mempool, MEV and DEX Trades",
-  "date_generated": "2026-10-31",
+  "date_generated": "2026-11-14",
   "topic": "ethereum",
   "tags": [
     "ethereum",
     "03-ef-ethereum-network",
     "dex",
+    "swap-logs",
     "mempool",
     "eip-1559",
-    "gas-fees",
     "mev",
-    "proposer-builder-separation",
+    "sandwich",
+    "mev-boost",
+    "smart-account",
+    "confidence-levels",
     "quiz-bank"
   ],
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "03-EF-ethereum_network",
-    "reading_status": "acquired",
-    "question_count": 10,
+    "reading_status": "partial",
     "source_mix": {
-      "lesson_questions": 7,
-      "reading_questions": 3
+      "lesson_questions": 12,
+      "reading_questions": 4
     },
-    "reading_scope_note": "The assigned reading primarily supports node architecture, access models, sync, JSON-RPC, and client diversity; transaction-fee, mempool, and MEV questions are grounded in the lesson slides. Reading items q11-q13 are disabled from 31 Oct 2026: the lesson now hides its node, client and sync slides.",
-    "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd",
-    "reading_sources": [
-      "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt",
-      "/tmp/blockchain-course-readings/mastering_ethereum_ch3.html"
-    ]
+    "question_count": 16,
+    "notes": "No assigned reading slide; reading questions test lesson claims that the cited readings support, and every answer is stated on a visible lesson slide. Hidden slides (nodes, clients, sync, networking) are not tested."
   },
   "hierarchy": {
     "sections": [
@@ -38,27 +36,33 @@
         "enabled": true,
         "lectures": [
           {
-            "id": "lec_ethereum_network_lesson_slides",
-            "title": "Mempool, MEV and DEX Trades - lesson slides",
+            "id": "lec_ethereum_network_lesson_synthesis",
+            "title": "Mempool, MEV and DEX Trades - lesson synthesis",
             "enabled": true,
             "question_ids": [
+              "q1",
+              "q2",
               "q3",
-              "q4",
               "q6",
+              "q7",
+              "q8",
               "q10",
+              "q11",
+              "q13",
               "q14",
               "q15",
               "q16"
             ]
           },
           {
-            "id": "lec_ethereum_network_assigned_reading",
-            "title": "Mempool, MEV and DEX Trades - assigned reading",
-            "enabled": false,
+            "id": "lec_ethereum_network_reading_synthesis",
+            "title": "Mempool, MEV and DEX Trades - reading synthesis",
+            "enabled": true,
             "question_ids": [
-              "q11",
-              "q12",
-              "q13"
+              "q4",
+              "q5",
+              "q9",
+              "q12"
             ]
           }
         ]
@@ -67,294 +71,448 @@
   },
   "questions": [
     {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "Block 9: the transaction runs from Account 3 to the router, a cUSD Transfer runs from Account 3 to the pool, a WETH Transfer from the pool to Account 3, and Swap's sender is the router. Which sentence should the analyst give the agent?",
+      "correct_answer": "Account 3 sold 5,000 cUSD for WETH in the course pool, through the router; the other side was the pool, code and not a person.",
+      "incorrect_answers": [
+        "The router sold 5,000 cUSD for WETH in the course pool, because it is the Swap sender and it called the pool for the trade.",
+        "Account 3 traded 5,000 cUSD with the router, which paid out the WETH from the reserves that it holds for the course pool.",
+        "Account 3 sold 5,000 cUSD to the pool's operator, who agreed to the price and then sent back the WETH from the pool."
+      ],
+      "explanation": "The input token's Transfer shows Account 3 sending cUSD, and the pool sends back the WETH, so Account 3 traded with a pool. Swap's sender is the router only because it called the pool; the router holds nothing and is not the seller.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "swap-logs",
+        "router",
+        "dex",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: say the sentence for this swap",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Check: say the sentence for this swap"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "In block 9's Swap log, amount0In is 5,000 and amount1Out is 2.3741. How does the analyst know that cUSD was the token sold?",
+      "correct_answer": "amount0 follows the pool's token0(), which returns cUSD here, so amount0In is the cUSD that went in.",
+      "incorrect_answers": [
+        "amount1 is always the volatile token, so amount1Out is the WETH and amount0In is the cUSD.",
+        "The In amounts count what the trader receives, so the 5,000 is paid out by the pool and cUSD was bought.",
+        "Swap's amounts are the router's and name no token, so only the Transfer logs can say which was sold."
+      ],
+      "explanation": "In a Uniswap V2 pair, amount0 and amount1 follow the pool's token0() and token1(). Here token0() returns cUSD, so amount0In is the cUSD that went in, and amount1Out is the WETH paid out.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "swap-logs",
+        "token0",
+        "swap-event",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Reading a swap: two Transfers and a Swap",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Reading a swap: two Transfers and a Swap"
+      }
+    },
+    {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "Alice has pending transactions with nonces 7 and 9, but nonce 8 is missing. The nonce 9 transaction offers a much higher effective gas price. What can a builder validly do with Alice's transactions?",
-      "correct_answer": "Hold or ignore the nonce 9 transaction until nonce 8 is available and executable, because Alice's transactions must execute in nonce order.",
+      "question_stem": "Account 3's swap, nonce 1, is stuck in the mempool. Its next transaction, nonce 2, offers a far higher tip. What happens?",
+      "correct_answer": "Nonce 2 cannot run first, whatever it pays: an account's transactions run in nonce order.",
       "incorrect_answers": [
-        "Include nonce 9 before nonce 8 when its fee is high enough, because builders can reorder one sender's pending transactions for block profit.",
-        "Include nonce 7 and nonce 9 in the same block while leaving nonce 8 pending, because the missing sequence number matters only across separate blocks.",
-        "Treat nonce 9 as a replacement for nonce 7 because the later transaction pays more, even though replacement only works for the same account nonce."
+        "Nonce 2 runs first, because builders order all pending transactions by what each one pays them.",
+        "Nonce 2 replaces the stuck swap, because a higher fee cancels an earlier pending transaction.",
+        "Nonce 2 is dropped from the mempool, because a node holds one pending transaction per account."
       ],
-      "explanation": "Builders may prioritize profitable transactions across the mempool, but transactions from the same account must respect the account's nonce sequence. Nonce gaps can leave later transactions pending even when their fees are attractive.",
+      "explanation": "An account's transactions run in nonce order, so nonce 2 waits for nonce 1 whatever it pays. Only a transaction with the same nonce and a higher fee replaces a pending one.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "03-ef-ethereum-network",
-        "nonces",
-        "mempool",
+        "nonce",
         "transaction-ordering",
-        "lesson",
-        "slides",
-        "scenario"
+        "mempool",
+        "scenario",
+        "lesson-synthesis"
       ],
-      "lesson_block": "The mempool is public, so pending trades show",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Nonce ordering and replacement / Common Misconceptions And Confusions"
+      "lesson_block": "A router call names the path and the minimum out",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "A router call names the path and the minimum out"
+      }
     },
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. If the current base fee is 30 gwei, which outcome best reflects EIP-1559 fee mechanics?",
-      "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee goes to the fee recipient, and unused max fee headroom is not paid.",
+      "question_stem": "Account 3 sends its swap to the public mempool. Who can read it before a block includes it?",
+      "correct_answer": "Anyone running a node, searchers' bots among them, because the mempool is public by default.",
       "incorrect_answers": [
-        "The effective gas price is 50 gwei, the 30 gwei base fee is burned, and the remaining 20 gwei goes to the proposer as an extra tip, not back to the sender.",
-        "The effective gas price is 30 gwei, the base fee is burned, and no proposer tip is paid because the priority fee applies only when the cap is exceeded.",
-        "The transaction is invalid until the base fee reaches 48 gwei, because maxFeePerGas must equal the current base fee plus the stated priority fee."
+        "Only the block's builder, because pending trades go to builders and to nobody else in advance.",
+        "Only validators, because they alone hold the pending transactions for the next block.",
+        "Only the exchange's operator, because the DEX's contracts hold each order until a block takes it."
       ],
-      "explanation": "EIP-1559 separates the burned base fee from the priority fee, which goes to the block's fee recipient: the proposer's address, or the builder's in a block built by an outside builder. The user caps total price with maxFeePerGas, but overpayment above the current base fee plus priority fee is not charged.",
+      "explanation": "The mempool is public by default, so anyone running a node can read a pending trade, including its minimum out. Searchers' bots do exactly that.",
       "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "mempool",
+        "public-mempool",
+        "misconception",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Check: who sees the swap before it lands?",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "ethereum.org on transactions and on maximal extractable value: the mempool is public and pending transactions can be read"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A sender sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. The base fee is 30 gwei. What is charged, and where does it go?",
+      "correct_answer": "32 gwei: the 30 gwei base fee is burned, the 2 gwei tip goes to the fee recipient, and 18 gwei is never charged.",
+      "incorrect_answers": [
+        "50 gwei: the sender pays the whole cap, and the 20 gwei above the base fee all goes to the tip as a bonus.",
+        "32 gwei: the 2 gwei tip is burned and the 30 gwei base fee goes to the proposer, with the rest refunded.",
+        "30 gwei: the base fee alone, because a tip is added only when blocks run above half of the block gas limit."
+      ],
+      "explanation": "The charge is the lower of the cap and base fee plus tip: 30 plus 2 is 32 gwei. The base fee is burned, the tip goes to the fee recipient, and the 18 gwei of headroom is never charged.",
+      "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "03-ef-ethereum-network",
         "eip-1559",
-        "gas-fees",
-        "priority-fee",
         "base-fee",
-        "lesson",
-        "slides",
-        "mechanism"
+        "priority-fee",
+        "scenario",
+        "reading",
+        "reading-synthesis"
       ],
       "lesson_block": "Fees set the queue: base fee burned, tip paid",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Fee Mechanics As Inclusion Logic And User Risk / EIP-1559 Fee Mechanics"
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "EIP-1559 (Buterin et al.): base fee burned, priority fee to the block's fee recipient, fee capped by the sender"
+      }
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A student says, \"MEV searchers watch the Ethereum mempool, so there must be one official global queue of pending transactions.\" Which correction is most accurate?",
-      "correct_answer": "Ethereum nodes maintain local mempools that often converge through gossip but can differ, and public visibility of those local pending views creates ordering opportunities.",
+      "question_stem": "A trainee says MEV is just the fee a validator earns for proposing a block. What is MEV, as the lesson defines it?",
+      "correct_answer": "Value taken from block production, beyond reward and fees, by including, leaving out or reordering transactions.",
       "incorrect_answers": [
-        "Ethereum nodes deterministically sort one shared pending set by effective gas price, so searchers see the same queue that builders must include in that exact order before every slot begins.",
-        "Ethereum mempools belong to consensus clients and stay hidden until attestations, so searchers learn pending intent only after finalized Beacon-chain receipts are available to users.",
-        "Private submission removes transactions from ordering games because relays must include private transactions in arrival order once a user bypasses public gossip for all builders in a slot."
+        "The reward and gas fees a validator earns for proposing a block, paid when it includes the transactions.",
+        "Value a miner extracts on proof-of-work chains only, a practice that ended once blocks moved to validators, who earn it.",
+        "The fee a searcher pays a builder to include a bundle, burned together with the block's base fee each slot."
       ],
-      "explanation": "The lesson stresses that the mempool is not a single global queue. Public gossip makes user intent visible before inclusion, while private or direct submission changes the path through builders and relays rather than removing ordering power.",
+      "explanation": "MEV is value extracted from block production beyond the reward and fees, by including, leaving out or reordering transactions. It is not the validator's ordinary reward.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "mev",
+        "definition",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "MEV is profit from choosing the order",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "MEV is profit from choosing the order"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "In lab block A a bot buys before the subject and sells after, and the subject got exactly its minimum. What does that minimum do in a sandwich?",
+      "correct_answer": "It caps the damage: the router refuses the trade if the output falls below it.",
+      "incorrect_answers": [
+        "It hides the swap from the mempool, because a minimum above zero keeps it private.",
+        "It sets the bot's profit, because the bot keeps whatever the minimum leaves unspent.",
+        "It puts the subject first in the block, because a set minimum outranks a bot's tip."
+      ],
+      "explanation": "The minimum out is the trader's floor. If the bot pushes the output below it, the router refuses the trade, so the minimum caps the damage.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "sandwich",
+        "amount-out-min",
+        "mev",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A sandwich: three transactions, one victim",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "A sandwich: three transactions, one victim"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "In the mainnet sandwich, a trader paid 220,806 USDC and got 5,273 USDT back, with a minimum of 0. What does the minimum of 0 show?",
+      "correct_answer": "There was no floor: the router accepted any price, so the bot could push the price freely.",
+      "incorrect_answers": [
+        "The router would have refused the trade if the bot had not borrowed from Aave in its front-run.",
+        "The trader had chosen the price the bot would pay for the position just before the trade.",
+        "The builder keeps the trader's output whenever the minimum is 0, which was the loss."
+      ],
+      "explanation": "A minimum of 0 means no floor. The router accepted any price, so the bot could push the price as far as it liked and the trade still ran.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "sandwich",
+        "amount-out-min",
+        "mainnet-case",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A real sandwich: 220,806 USDC for 5,273 USDT",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "A real sandwich: 220,806 USDC for 5,273 USDT"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "In the MEV-Boost chain, who picks the best bid and signs the header, and who keeps the block body hidden until then?",
+      "correct_answer": "The validator picks the best bid and signs the header; the relay keeps the body hidden until the header is signed.",
+      "incorrect_answers": [
+        "The builder picks the best bid and signs the header; the searcher keeps the body hidden until it is signed.",
+        "The relay picks the best bid and signs the header; the validator keeps the body hidden until it is released.",
+        "The searcher picks the best bid and signs the header; the builder keeps the body hidden until signing it."
+      ],
+      "explanation": "Searchers send bundles to builders, builders build blocks, and relays pass only the header and bid. The validator picks the best bid and signs the header, and then the relay releases the block body.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "03-ef-ethereum-network",
-        "mempool",
-        "mev",
-        "private-submission",
-        "lesson",
-        "slides",
-        "misconception"
+        "mev-boost",
+        "builders-and-relays",
+        "validator",
+        "misconception",
+        "reading",
+        "reading-synthesis"
       ],
-      "lesson_block": "The mempool is public, so pending trades show",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Mempool Visibility And MEV / The Mempool"
+      "lesson_block": "Searchers, builders and relays set the order",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Flashbots docs: builders, relays and MEV-Boost; the relay hides the block body until the validator signs the header"
+      }
     },
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "In the MEV-Boost supply chain, what role separation is most accurate?",
-      "correct_answer": "Searchers find opportunities and submit bundles, builders assemble profitable blocks, relays validate and forward blinded bids, and validators choose a bid before receiving the full block body.",
+      "question_stem": "Address 0xB07 buys token X in pool P just before the subject and sells X just after, and it trades in many other pools. Is it working with the subject?",
+      "correct_answer": "No: a sandwich bot, a third party; High confidence, because the pattern and its many pools are the evidence.",
       "incorrect_answers": [
-        "Searchers send bundles directly to validators, validators assemble the profitable block, relays only broadcast finalized receipts, and builders observe after inclusion from the network rather than bidding.",
-        "Builders choose the validator committee and sign bids for proposers, relays execute the winning block, and searchers receive priority fees from included users after the slot closes.",
-        "Relays choose the canonical block and reveal it to the network, validators only verify receipts afterward, and builders are paid for hiding transactions from searchers during block construction."
+        "It traded on both sides of the subject in that block, so it is a second wallet; Moderate, pending its other pools.",
+        "Yes: sitting beside the subject in one block is a link; High, because that order cannot be chance.",
+        "Nothing can be said: a builder set the order, so the pattern is no evidence; Low, with the bot unknown."
       ],
-      "explanation": "Proposer-builder separation manages specialized block-building incentives by separating opportunity discovery, block assembly, bid relay, and proposer selection. It does not eliminate MEV or ordering discretion.",
+      "explanation": "An address that trades before and after the subject, and in many unrelated pools, is a sandwich bot. Position next to a trade is not a link; the pattern across pools is the evidence, hence High.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "03-ef-ethereum-network",
-        "mev",
-        "proposer-builder-separation",
-        "mev-boost",
-        "builders",
-        "relays",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Searchers, builders and relays set the order",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: MEV Supply Chain And PBS / Builder Relay Stack and MEV"
-    },
-    {
-      "id": "q14",
-      "question_type": "multiple_choice",
-      "question_stem": "An agent asks who was on the other side of a subject's Uniswap swap. What do you say?",
-      "correct_answer": "Nobody: the counterparty is the pool contract, whose reserves and formula set the price, so no person agreed to the trade.",
-      "incorrect_answers": [
-        "The router's operator, because the router takes the input tokens and keeps them for good, which makes its owner the other trader.",
-        "The previous trader in that pool, because a pool pairs each new buyer with the last seller who used it for a swap.",
-        "The exchange's company, because it runs the exchange and takes the other side of every swap that its users make."
-      ],
-      "explanation": "On a DEX built like Uniswap a pool contract holds the reserves and its formula sets the price. The trader swaps with the pool through a router, so the counterparty is code; nobody on the other side agreed to the trade.",
-      "difficulty_level": 2,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "dex",
-        "pool",
-        "router",
-        "counterparty",
-        "scenario",
-        "lesson",
-        "slides"
-      ],
-      "lesson_block": "A DEX swaps against a pool, not a person",
-      "source_type": "slides",
-      "specific_source": {
-        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
-        "anchor": "A DEX swaps against a pool, not a person"
-      }
-    },
-    {
-      "id": "q15",
-      "question_type": "multiple_choice",
-      "question_stem": "In one block, a bot buys token X in a pool, the subject then buys X in that pool, and the bot sells X right after. How do you describe the bot?",
-      "correct_answer": "A third party that sandwiched the subject's swap, not a counterparty or partner, so its address is not one of the subject's.",
-      "incorrect_answers": [
-        "The subject's other wallet, because it traded in the same pool and block, which is how one owner's wallets usually behave on chain.",
-        "The subject's counterparty, because it bought before the swap and sold after it, so it took the other side of the trade.",
-        "A partner of the subject, because its profit came from the subject's trade, so both of them acted together on one plan."
-      ],
-      "explanation": "This is a sandwich: front-run, victim, back-run. The bot is a searcher who took value from the subject's trade. It trades around many people for profit, so its address is not one of the subject's.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "mev",
+        "mev-bot",
         "sandwich",
-        "look-alikes",
+        "confidence-levels",
         "scenario",
-        "lesson",
-        "slides"
+        "lesson-synthesis"
       ],
-      "lesson_block": "A sandwich: three transactions, one victim",
-      "source_type": "slides",
+      "lesson_block": "Check: the address on both sides. A partner?",
       "specific_source": {
-        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
-        "anchor": "A sandwich: three transactions, one victim"
-      }
-    },
-    {
-      "id": "q16",
-      "question_type": "multiple_choice",
-      "question_stem": "Two wallets each sent a swap to the same Uniswap router address. Does that link the wallets?",
-      "correct_answer": "No: any trader can call the same router, which holds nothing afterward, so a shared router links nobody without more evidence.",
-      "incorrect_answers": [
-        "Yes: a router belongs to one operator, so two wallets that sent to it show that both wallets answer to a single owner here.",
-        "Yes, if both swapped the same pair: the router keeps a list of its callers, so a shared pair shows both were run by one person.",
-        "Only if the swaps were in one block: a router serves one trader per block, so two callers in one block must be the same."
-      ],
-      "explanation": "A router takes tokens from whoever called it and keeps nothing afterward, so any trader can use the same one. The real parties are found by reading the Transfer logs past the router.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "router",
-        "look-alikes",
-        "linking",
-        "scenario",
-        "lesson",
-        "slides"
-      ],
-      "lesson_block": "Routers and aggregators are only in the path",
-      "source_type": "slides",
-      "specific_source": {
-        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
-        "anchor": "Routers and aggregators are only in the path"
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Check: the address on both sides. A partner?"
       }
     },
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "A current Ethereum node is not just one program. Which architecture best reflects how a modern node is structured?",
-      "correct_answer": "A node coordinates an execution client and a consensus client, with separate responsibilities and authenticated local communication between them.",
+      "question_stem": "Two wallets both sent swaps to the same 1inch router address. What does that show?",
+      "correct_answer": "Nothing about a link: many traders use the router, so it is a service in the path.",
       "incorrect_answers": [
-        "A node is a browser wallet plus a hosted RPC endpoint, where local signing replaces peer communication and the remote service performs validation.",
-        "A node is one execution client with a consensus plug-in, so the same process runs the EVM and finalizes blocks without a separate consensus client.",
-        "A node is two consensus clients paired for redundancy, with one of them exposing JSON-RPC while the other stores the EVM state database."
+        "A link: both used one address, so they are one subject's wallets until shown otherwise.",
+        "That the wallets traded with each other, since the router is each trade's other party.",
+        "That each wallet paid 1inch a fee, so the two wallets are customers who work together."
       ],
-      "explanation": "The reading emphasizes post-Merge two-client architecture: consensus software handles agreement over chain history, execution software processes blocks and transactions, and the two coordinate locally, such as through an authenticated endpoint.",
-      "difficulty_level": 2,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "ethereum-nodes",
-        "execution-client",
-        "consensus-client",
-        "jwt-secret",
-        "reading",
-        "assigned-reading",
-        "mechanism",
-        "mastering-ethereum-ch3"
-      ],
-      "lesson_block": "Chapter 3. Ethereum Nodes",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Two-Client Node Architecture / Ethereum Nodes"
-    },
-    {
-      "id": "q12",
-      "question_type": "multiple_choice",
-      "question_stem": "A researcher needs to query old contract storage at many historical blocks. A developer only needs convenient transaction submission through a hosted API. Which distinction between node access models matters most?",
-      "correct_answer": "The researcher likely needs archive-node data, while the developer can use remote access but accepts trust and privacy tradeoffs relative to operating a full node.",
-      "incorrect_answers": [
-        "Both can use a default full node, because full nodes retain all historical storage while hosted APIs provide the same trust model as local validation.",
-        "The researcher can use a light client for arbitrary old storage, while the developer needs an archive node because transaction submission requires history.",
-        "A public testnet node fits both needs, because testnets mirror mainnet contract history and hosted access removes privacy tradeoffs for transactions and state queries."
-      ],
-      "explanation": "Chapter 3 separates full nodes, archive nodes, remote clients, and wallets by storage, verification, convenience, privacy, and trust. Archive access is about retaining historical state, while hosted APIs shift blockchain access to another node.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "archive-node",
-        "remote-client",
-        "full-node",
-        "wallets",
-        "node-trust-models",
-        "reading",
-        "assigned-reading",
-        "scenario",
-        "mastering-ethereum-ch3"
-      ],
-      "lesson_block": "Full, Archive, Remote, And Light Access",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Full, Archive, Remote, And Light Access / Remote Ethereum Clients"
-    },
-    {
-      "id": "q13",
-      "question_type": "multiple_choice",
-      "question_stem": "A team tests a trading bot only on a local blockchain simulation and a low-cost public testnet. Which limitation should they keep in mind before assuming mainnet behavior?",
-      "correct_answer": "Those environments are useful for development but may not reproduce mainnet congestion, real economic incentives, adversarial competition, or transaction sequencing pressure.",
-      "incorrect_answers": [
-        "Local simulations are the strongest model for MEV behavior because deterministic blocks recreate other searchers and independent producers at mainnet scale in each slot.",
-        "Public testnets reproduce mainnet fee markets because test ether has equivalent economic value and creates the same liquidation competition for trading bots.",
-        "Hosted JSON-RPC access makes environments equivalent by standardizing one mempool view and one transaction ordering policy across local, testnet, and mainnet."
-      ],
-      "explanation": "The reading treats testnets and local simulations as valuable but limited development environments. They reduce cost and friction, yet they do not fully model mainnet incentives, congestion, adversarial behavior, or organic transaction ordering.",
+      "explanation": "A router or aggregator such as 1inch is a service used by many traders. Two wallets that both used it are not linked by that.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "03-ef-ethereum-network",
-        "testnet",
-        "local-blockchain",
-        "json-rpc",
-        "development-environments",
-        "reading",
-        "assigned-reading",
-        "tradeoff",
-        "mastering-ethereum-ch3"
+        "router",
+        "aggregator",
+        "misconception",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Development Environment Realism",
-      "source_type": "assigned_reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Development Environment Realism / The JSON-RPC Interface"
+      "lesson_block": "Routers and aggregators are only in the path",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Routers and aggregators are only in the path"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A smart-account transaction was paid for by a paymaster. What does that make the paymaster?",
+      "correct_answer": "A service that paid for the operation, not the actor; the actor is the smart account.",
+      "incorrect_answers": [
+        "The actor, because the party that pays for an operation is the party that made it.",
+        "The subject's partner, because it agreed in advance to fund that account's trades in full.",
+        "The bundler, because a paymaster is the contract that sends the transaction on."
+      ],
+      "explanation": "A paymaster covers the cost of a UserOperation. It is a service in the path; the actor is the smart account whose operation ran.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "paymaster",
+        "erc-4337",
+        "smart-account",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Paymasters and relayers pay gas, not the bill",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "ERC-4337 account abstraction: bundlers, the EntryPoint and paymasters; a paymaster sponsors gas for an operation"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A relayer sends a user's signed request, and the transaction's from is the relayer. Who is the real party?",
+      "correct_answer": "The signer, whose address is appended to the call data, not the relayer named in the from field.",
+      "incorrect_answers": [
+        "The relayer, because it is the from of the transaction and it paid the gas for the request it forwarded.",
+        "The receiving contract, because it reads the call data and acts as the author of the request.",
+        "The paymaster, because it repays the relayer and so is the party behind the signed request."
+      ],
+      "explanation": "A gas relayer pays the gas and appears in the from field, but the signer's address is appended to the call data. The receiving contract reads the signer from there, so the signer is the real party.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "relayer",
+        "erc-2771",
+        "gas-relay",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "In the path, or the real party?",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "In the path, or the real party?"
+      }
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "The transaction's from is a bundler and its to is the EntryPoint; the two Transfer logs and Swap's to name a smart account. Who traded, and how sure?",
+      "correct_answer": "The smart account sold 2,000 cUSD for 0.98 WETH through the router; High, because the logs name it directly.",
+      "incorrect_answers": [
+        "The bundler sold 2,000 cUSD for 0.98 WETH, because it signed the transaction; High, as it is the from.",
+        "The router sold 2,000 cUSD for 0.98 WETH, because Swap's sender names it; Moderate, as it is a service.",
+        "The smart account, but only Low confidence, because the chain cannot say who holds its signing key."
+      ],
+      "explanation": "The bundler only sent the UserOperation and paid gas. The Transfer logs and Swap name the smart account, a direct read of the logs, so High.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "bundler",
+        "smart-account",
+        "confidence-levels",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Practice: a bundler sent this swap. Who traded?",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Practice: a bundler sent this swap. Who traded?"
+      }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "After reading the logs, the analyst knows the smart account traded. What can the chain not say about it?",
+      "correct_answer": "Who holds the key that signed the UserOperation; that is a question for other sources.",
+      "incorrect_answers": [
+        "Whether the smart account made the trade, since only a pattern, not a log, names it.",
+        "Which address the WETH went to, since Swap's to is the router and not the final recipient.",
+        "What the bundler is, since a service in the from field cannot be told apart on chain."
+      ],
+      "explanation": "The logs establish which smart account traded. They cannot say who holds the key that signed the UserOperation; that needs other sources.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "smart-account",
+        "confidence-levels",
+        "limits",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Answers: the smart account, and how sure",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Answers: the smart account, and how sure"
+      }
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "Which log names whose tokens were sold, and why is Swap's sender not the answer?",
+      "correct_answer": "The input Transfer's from; Swap's sender is the router, which called the pool.",
+      "incorrect_answers": [
+        "Swap's sender, because the pool records whoever supplied the input as the sender.",
+        "Sync, because it records which account's tokens were added to the pool's reserves.",
+        "The output token's Transfer to, because the recipient is always the one who sold."
+      ],
+      "explanation": "The input token's Transfer from names whose tokens were sold. Swap's sender is the router, because the router called the pool.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "swap-logs",
+        "swap-event",
+        "review",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: what to say about a DEX trade",
+      "specific_source": {
+        "lesson": "ethereum_03_ef_ethereum_network",
+        "reading": "Review: what to say about a DEX trade"
+      }
     }
   ]
 }

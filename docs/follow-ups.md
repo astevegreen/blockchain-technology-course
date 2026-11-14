@@ -40,8 +40,6 @@ slide index), which is never listed here.
   XSema slide is hidden (owner's decision B, 13 Nov 2026). Restore them to `glossary/lesson_terms/` from
   `git show 7057ae79^:blockchain-course/glossary/lesson_terms/01-FO-illicit_finance_regulation_case_studies.yml`.
   [13 Nov 2026, glossary run after the lesson rebuilds; narrowed 14 Nov 2026]
-- `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json` has no questions on the rebuilt 03-EF's checks,
-  the paymaster slide, the bundler practice or the review. [13 Nov 2026, 03-EF rebuild]
 - The 01-EF bank (`quizes/quiz_json/ethereum_01-EF-ethereum_intro-quiz-bank.json`) has no questions on the
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
 - **Closes with the 01-BF, 03-BF and 02-CP rebuilds.** The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
