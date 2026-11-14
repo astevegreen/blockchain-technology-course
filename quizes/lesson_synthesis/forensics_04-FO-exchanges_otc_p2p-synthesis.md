@@ -129,11 +129,11 @@ OTC desks arrange large trades off the order book; only the settlement can appea
 ## Suggested Difficulty Distribution
 
 - Level 1-2: 0 questions; the lesson is comparison and scenario work.
-- Level 3: 8 questions for mechanism and comparison.
-- Level 4: 7 questions for misconception diagnosis and heuristic limits.
+- Level 3: 12 questions for mechanism, comparison, the two checks and the review.
+- Level 4: 8 questions for misconception diagnosis, heuristic limits and the practice answers.
 - Level 5: 1 question for the practice pattern.
 
-This matches the mix of the existing 16-question forensics bank.
+This matches the mix of the 21 lesson questions in the forensics bank.
 
 ## Source Anchors
 
@@ -145,7 +145,8 @@ This matches the mix of the existing 16-question forensics bank.
 - Name the deposit, not the sweep.
 - OTC desks trade large amounts off the order book; Some OTC desks launder.
 - P2P markets; the exchange, OTC or P2P comparison table.
-- Practice: characterize three patterns.
+- Check: is this withdrawal the victim's 2 ETH?; Check: which address goes in the assessment?
+- Practice: characterize three patterns; Answers: three readings and how sure; Review: what the chain shows at an exchange.
 
 ## Anti-Trivia Guidance
 

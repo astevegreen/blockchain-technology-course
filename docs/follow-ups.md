@@ -23,9 +23,6 @@ slide index), which is never listed here.
   (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO; list 14 Nov 2026, from each
   lesson's last rebuild commit]
 
-- `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
-  new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
-  and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
 - `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
   (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
   or the review. [13 Nov 2026, 04-EF rebuild]
