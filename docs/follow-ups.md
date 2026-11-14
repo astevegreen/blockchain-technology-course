@@ -128,9 +128,6 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd:239` points to 02-IN's
   account table and block-card nonce; the rebuild cut both (the Ethereum slide still shows an account's nonce).
   Repoint it at its next rework. [13 Nov 2026, 02-IN rebuild review]
-- Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
-  `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
-  [12 Nov 2026, writing-standard review]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
   trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 971); the slides rebuilt on 13 Nov 2026
   (lines 17-970: the two checks, the Terra slide, the practice and review) have few questions, and two questions'

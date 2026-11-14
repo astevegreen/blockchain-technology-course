@@ -39,7 +39,8 @@ CROSSREF = re.compile(r"^(fig|tbl|sec|eq|lst|thm|lem|cor|prp|cnj|def|exm|exr|sol
 INLINE_CODE = re.compile(r"(`+)(?:(?!\1).)+?\1")
 LINK_TARGET = re.compile(r"\]\([^)]*\)|<https?://[^>]*>|https?://\S+")
 BIB_KEY = re.compile(r"^@\w+\s*\{\s*([^,\s]+)\s*,", re.MULTILINE)
-RAW_BLOCK = re.compile(r"<(style|script)\b", re.IGNORECASE)
+EMPTY_ALT_IMAGE = re.compile(r"!\[\s*\]\(([^)]*)\)(\{[^}]*\})?")  # ![](src){attrs}: alt must come from fig-alt
+RAW_BLOCK =re.compile(r"<(style|script)\b", re.IGNORECASE)
 
 
 @dataclass
@@ -172,6 +173,10 @@ def lint_file(path: Path, found: Findings, bib_cache: dict[Path, set[str]]) -> N
             if len(heading.group(1)) == slide_level or (len(heading.group(1)) == 2 and slide_level == 3):
                 slides.append({"line": num, "heading": clean_heading(heading.group(2)), "notes": None})
             continue
+        for image in EMPTY_ALT_IMAGE.finditer(INLINE_CODE.sub(" ", line)):
+            if not re.search(r"""fig-alt\s*=\s*(?:"\s*[^"\s]|'\s*[^'\s])""", image.group(2) or ""):
+                found.error(6, rel, num, f"image {image.group(1)} has empty alt text; "
+                            'add {fig-alt="what the image shows"}')
         if not hidden():
             text = LINK_TARGET.sub(" ", INLINE_CODE.sub(" ", line))
             for match in CITATION.finditer(text):

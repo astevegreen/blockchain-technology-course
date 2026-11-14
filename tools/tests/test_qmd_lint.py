@@ -106,6 +106,18 @@ class LintCase(unittest.TestCase):
         self.assertIn("front matter has no `lesson`", out)
         self.assertIn("must use aci-revealjs", out)
 
+    def test_image_without_alt_text_fails(self) -> None:
+        for image in ("![](../images/a.png)", "![](../images/a.png){width=\"50%\"}",
+                      "![](../images/a.png){fig-alt=\"\"}"):
+            code, out = self.lint(FRONT + "\n## Slide\n\n" + image + "\n" + NOTES)
+            self.assertEqual(code, 1, image)
+            self.assertIn("probe.qmd:11: image ../images/a.png has empty alt text", out)
+
+    def test_image_with_alt_text_passes(self) -> None:
+        for image in ("![A chart of fees](../images/a.png)",
+                      "![](../images/a.png){fig-align=\"center\" fig-alt=\"A chart of fees\"}"):
+            self.assertEqual(self.lint(FRONT + "\n## Slide\n\n" + image + "\n" + NOTES), (0, ""), image)
+
     def test_unknown_citation(self) -> None:
         code, out = self.lint(FRONT + "\n## Slide\n\nClaim [@no_such_key_2099].\n" + NOTES)
         self.assertEqual(code, 1)
