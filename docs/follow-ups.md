@@ -26,8 +26,7 @@ slide index), which is never listed here.
 - `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
   (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
   or the review. [13 Nov 2026, 04-EF rebuild]
-- `quizes/quiz_json/forensics_12-FO-aml_typologies_frameworks-quiz-bank.json` has no questions on the rebuilt 12-FO's
-  new slides (the part 1 and part 2 checks, the drainer answers with their confidence words, the review). [13 Nov 2026, 12-FO rebuild]
+- `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd` contradicts itself on a crossing matched by amount and time: the chain-hop slide (line 164) and the part 1 check (line 278) call it Low, but the Ronin worked slide (lines 674 and 692) rates the same kind of crossing Moderate. Pick one rating (recommend Low, the chain-hop slide's rule), then fix the other slides and q15 if needed. [14 Nov 2026, wave 2C review of the 12-FO bank]
 - **Closes with the 04-BF rebuild.** `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);
