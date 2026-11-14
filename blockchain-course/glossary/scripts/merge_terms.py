@@ -51,6 +51,7 @@ MODIFIER_CANONICALS = [
 
 OVERLOADED_MODIFIERS = {
     "account": {"Ethereum"},
+    "access control": {"Smart Contracts"},
     "account model": {"Ethereum"},
     "address": {"Bitcoin", "Ethereum"},
     "attestation": {"Ethereum", "Proof of Stake"},

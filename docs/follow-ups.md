@@ -116,11 +116,6 @@ slide index), which is never listed here.
   `lesson_terms/*.yml`, so those dates are neither tagged nor listed when a fact changes.
   [12 Nov 2026, "Sources in the speaker notes" build]
 
-- The glossary lists "Access control (smart contracts)" only as an alias of the permissioned-ledger entry (04-DS);
-  the Find the line card (`docs/lab-cards/find-the-line.md`, line 5) wants the alias given its own definition (who a
-  contract lets do each thing: `onlyOwner`, an approval, no check). Needs the glossary pipeline. [11 Nov 2026, Find the
-  line build]
-
 - `tools/pointer_check.py`: a link to an old anchor kept as `[]{#old-id}` on a visible slide is flagged "not a visible slide"
   (`HREF_TITLE` slugs come only from heading text); and `SLIDE_TITLE` looks for the lesson code only 160 characters
   before the title, so a code after it or on the next line is missed or bound to an earlier sentence. [14 Nov 2026, rail audit of wave 1]

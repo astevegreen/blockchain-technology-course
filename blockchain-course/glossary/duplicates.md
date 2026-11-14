@@ -1664,12 +1664,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-DS` / From Logs to Ledgers: A time-ordered record of events or actions that preserves history by adding new entries rather than rewriting old ones.
 - `04-EF` / Events record only what the author chose to emit: An append-only record emitted during a transaction and stored in the transaction receipt for off-chain systems to read.
 
-## Access control
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-DS` / Transparency vs. Privacy: Rules that determine who may read data, propose transactions, endorse updates, order entries, or administer the ledger.
-- `04-EF` / Worked: SimpleStorage lets anyone overwrite it: Contract logic that restricts which callers may execute privileged functions or change protected state.
-
 ## Zero-Knowledge Proof
 
 Multiple definitions were proposed. Kept the earliest course appearance.
