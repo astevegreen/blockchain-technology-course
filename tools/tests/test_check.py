@@ -161,7 +161,7 @@ class Planning(unittest.TestCase):
         self.assertEqual(names, ["lesson pointers", "pretest", "post-test"])
 
     def test_files_that_name_slides_check_lesson_pointers(self) -> None:
-        for path in ("docs/lab-cards/is-it-final-yet.md", "blockchain-course/assets/labs/merkle-trees/index.html",
+        for path in ("quizes/posttest/posttest_day10-quiz-bank.json", "docs/lab-cards/is-it-final-yet.md", "blockchain-course/assets/labs/merkle-trees/index.html",
                      "dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md", "dynamic-labs/wallet/gateway/static/lab/index.html"):
             names, _ = self.names([path])
             self.assertIn("lesson pointers", names, path)

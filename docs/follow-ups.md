@@ -132,5 +132,8 @@ slide index), which is never listed here.
   `build-a-ledger-in-four-failures`, `what-time-was-it-sent` and the block-time and confirmations line in
   `terminal-scavenger-hunt`. Re-check each in ch. 2, 6, 11 and 12 of the 3rd edition and move it, or keep it with a note
   where the 3rd edition lacks it. [12 Nov 2026, R6]
+- `tools/pointer_check.py`: a link to an old anchor kept as `[]{#old-id}` on a visible slide is flagged "not a visible slide"
+  (`HREF_TITLE` slugs come only from heading text); and `SLIDE_TITLE` looks for the lesson code only 160 characters
+  before the title, so a code after it or on the next line is missed or bound to an earlier sentence. [14 Nov 2026, rail audit of wave 1]
 
 ## Notion and documents
