@@ -26,9 +26,6 @@ slide index), which is never listed here.
 - `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
   new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
   and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
-- 07-EF has no quiz bank of its own (only `quizes/quiz_json/weekone_check-quiz-bank.json` cites it), so nothing
-  tests the rebuilt 07-EF's new slides: the three checks (Sync direction, which pool to quote, Bybit exits), the worked six
-  checks on TKN, the MEME practice answers and the review. [13 Nov 2026, 07-EF rebuild]
 - `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
   (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
   or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",

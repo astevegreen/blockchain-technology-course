@@ -1,0 +1,533 @@
+{
+  "lesson_id": "ethereum_07_ef_liquidity_and_exits",
+  "lesson_title": "Liquidity: Pools, Thin Markets and Exits",
+  "date_generated": "2026-11-14",
+  "topic": "ethereum",
+  "tags": [
+    "ethereum",
+    "07-ef-liquidity-and-exits",
+    "liquidity-and-exits",
+    "liquidity-pools",
+    "automated-market-maker",
+    "constant-product",
+    "price-impact",
+    "thin-markets",
+    "quoted-vs-realizable-value",
+    "lp-tokens",
+    "rug-pulls",
+    "honeypot-tokens",
+    "exit-routes",
+    "six-checks",
+    "confidence-wording",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "ethereum",
+    "lesson_file_stem": "07-EF-liquidity_and_exits",
+    "reading_status": "partial",
+    "source_mix": {
+      "lesson_questions": 12,
+      "reading_questions": 4
+    },
+    "question_count": 16
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A pool holds 50 ETH and 150,000 USDC. Someone sells 5 ETH into it. The `Sync` after the trade reads reserve0 (USDC, 6 decimals) = 136400000000 and reserve1 (WETH, 18 decimals) = 55 x 10^18. What does the analyst conclude?",
+      "correct_answer": "The ETH reserve grew and the USDC reserve shrank, so ETH got cheaper: 136,400 / 55 is about 2,480 USDC per ETH.",
+      "incorrect_answers": [
+        "The ETH reserve grew, so ETH got dearer, because the pool now holds more ETH than it did before the trade.",
+        "The ETH reserve grew and ETH got cheaper, at about 0.0004 USDC per ETH, because price is the ETH reserve over USDC.",
+        "The ETH reserve grew and ETH got cheaper, at about 2.5 x 10^-9 USDC per ETH, from dividing the raw integers."
+      ],
+      "explanation": "Price is one reserve divided by the other, after scaling each raw integer by its token's decimals and checking which token is token0. Selling ETH in adds ETH and removes USDC, so ETH gets cheaper. Skipping the scaling or inverting the ratio gives prices that are off by a huge factor or upside down.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "sync-swap-logs",
+        "constant-product",
+        "price-impact",
+        "mechanism",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: sell ETH in. Which way does the price go?",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Check: sell ETH in. Which way does the price go?"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject holds 20,000 ABC. Pool A holds 1,000,000 ABC and 50 ETH (price 0.00005 ETH). Pool B holds 5,000 ABC and 0.5 ETH (price 0.0001 ETH). Which pool's price should the report quote, and why?",
+      "correct_answer": "Pool A's, named with its depth: no sale in pool B could raise more than its 0.5 ETH.",
+      "incorrect_answers": [
+        "Pool B's, because the higher price shows what buyers are willing to pay for the token.",
+        "Pool B's, because the higher of two disagreeing prices is the more cautious figure to quote.",
+        "Either pool's, because arbitrage keeps both pool prices equal to the wider market price."
+      ],
+      "explanation": "A thin pool's price is one trade's word. Depth decides which quote means anything for a holding: pool A is deep enough for 20,000 ABC and pool B is not. The higher number is the tempting one, and often reflects failed arbitrage. The report names the pool and its depth.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "quoted-vs-realizable-value",
+        "thin-markets",
+        "arbitrage",
+        "scenario",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: which pool's price would you quote?",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Check: which pool's price would you quote?"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "Stolen stETH is swapped for ETH on DEX pools within minutes, and the ETH is later converted to bitcoin through an exchange that swaps coins anonymously. Who could have stopped each stage?",
+      "correct_answer": "Step 1: only the issuer, in some cases; step 2: no one, as a pool can't freeze and ETH has no issuer; step 3: the exchange.",
+      "incorrect_answers": [
+        "The DEX operator could have frozen the swap, and the issuer of ETH could have frozen the proceeds after the swap occurred.",
+        "The token's issuer could have stopped every stage, because the stolen tokens stay traceable and freezable after the swap.",
+        "No one at any stage, since funds that enter a DEX pool cannot be traced or stopped by anyone at all later on after that point."
+      ],
+      "explanation": "Every exit is a place someone either can or cannot stop the funds. A v2 pool's code has no freeze and ETH has no issuer, which is why launderers swap tokens to ETH on DEXs first, then move to services that can freeze but may refuse. An exit someone can stop is a lead.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "exit-routes",
+        "bybit-laundering",
+        "token-freeze",
+        "centralized-exchanges",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: which exit at each Bybit step?",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Check: which exit at each Bybit step?"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "In the worked TKN case, checks 1 to 3 give a ceiling of about 9.5 ETH against a 200 ETH quote. What does check 4, finding the creator holds 98% of the LP tokens, add?",
+      "correct_answer": "It shows the creator could empty the pool with one `Burn`, so the 9.5 ETH ceiling holds only while it stays.",
+      "incorrect_answers": [
+        "It shows the token cannot be sold, because one holder of most of the LP tokens blocks every sale in the pool.",
+        "It lifts the ceiling above 9.5 ETH, because the creator's LP tokens add their own reserves to the pool.",
+        "It shows the pool's price is wrong, because a single holder of most LP tokens sets the price directly."
+      ],
+      "explanation": "Whoever holds the LP tokens can withdraw the reserves, so LP control is a risk to the exit itself, not to the arithmetic of the ceiling. Check 4 changes the report from 'a sale could raise about 9.5 ETH' to 'and that exit could vanish in one transaction'.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "six-checks",
+        "lp-tokens",
+        "rug-pulls",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Worked: the six checks on the thin TKN pool",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Worked: the six checks on the thin TKN pool"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject holds 2,000,000 MEME. One pool holds 400,000 MEME and 20 ETH; the creator holds all LP tokens; sales come only from the creator; the token's transfer rule reverts unless the sender is the pool or the owner. Which finding settles whether the subject can exit?",
+      "correct_answer": "The transfer rule: the subject is neither the pool nor the owner, so any attempt to send MEME onward reverts.",
+      "incorrect_answers": [
+        "The pool's 20 ETH: a pool this shallow cannot take a holding of 2,000,000 MEME, so any sale there fails.",
+        "The creator's hold on all LP tokens: LP control means the subject's sale is blocked by the creator itself.",
+        "The many buys from different addresses: a pool with only buyers has no one to take the other side of a sale."
+      ],
+      "explanation": "Depth and LP control cap or endanger a sale, but only check 5 (the token's code) decides whether a sale can happen at all. Students who stop at checks 1 to 3 report about 16.66 ETH; reading the rule shows the subject could realize nothing.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "honeypot-tokens",
+        "six-checks",
+        "exit-routes",
+        "scenario",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Practice: run the six checks on a second token",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Practice: run the six checks on a second token"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst gives High confidence that the MEME balance cannot exit, but only Moderate confidence that the TKN balance could raise about 9.5 ETH. Why does the confidence word differ?",
+      "correct_answer": "MEME rests on code and matching logs, so no missed pool changes it; a missed TKN pool could.",
+      "incorrect_answers": [
+        "MEME's quoted value is smaller than TKN's, and a smaller figure carries less risk of being wrong.",
+        "TKN's creator holds 98% of the LP tokens and MEME's all, and a fuller holding is more certain.",
+        "High is given to balances that cannot exit and Moderate to balances that can, whatever the evidence."
+      ],
+      "explanation": "Confidence reflects what could be missed, not feel. A direct read of the code that leaves no unseen alternative earns High. A search for pairs can miss a pool on another DEX or a CEX listing, which would change the TKN ceiling, so Moderate fits.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "confidence-wording",
+        "six-checks",
+        "honeypot-tokens",
+        "tradeoff",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Answers: the six checks, and the confidence word",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Answers: the six checks, and the confidence word"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet holds 500,000 ZED. The pool's price is 0.0004 ETH and the pool holds 5 ETH. Which sentence belongs in the report?",
+      "correct_answer": "500,000 ZED, quoted at 200 ETH in the named pool, which holds 5 ETH, so a sale there could raise under 5 ETH.",
+      "incorrect_answers": [
+        "The wallet holds 200 ETH of ZED that it could sell, since the pool's price times the units held is the proceeds.",
+        "The wallet holds about 100 ETH of ZED, which is the quoted value less a modest allowance for the pool's fee on sales.",
+        "The wallet holds nothing of value to report, because a pool's price cannot be turned into proceeds."
+      ],
+      "explanation": "Holding times last price is a quoted value, not proceeds. A sale cannot return more than the pool's other reserve, so the report states the units, the quote with its named pool and the pool's depth.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "quoted-vs-realizable-value",
+        "confidence-wording",
+        "application",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: quoted value against what can leave",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Review: quoted value against what can leave"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "The same 5 ETH sale is made into pool P (500 ETH reserve) and pool Q (25 ETH reserve), both starting at the same price. Which gives the seller the worse fill, and why?",
+      "correct_answer": "Pool Q, because 5 ETH is a larger share of its reserves, so the ratio of reserves shifts much further.",
+      "incorrect_answers": [
+        "Pool P, because a bigger pool has more ETH to absorb and so its price moves further after the sale is made.",
+        "Both the same, because the fee is a fixed share of the 5 ETH sold and nothing else differs between them.",
+        "Pool Q only if its price started higher; with equal starting prices the two fills are the same."
+      ],
+      "explanation": "Price impact depends on trade size relative to depth. A fee is fixed, but the shift in the reserve ratio grows as the trade grows against the pool, so the same sale hurts far more in a thin pool.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "price-impact",
+        "thin-markets",
+        "constant-product",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A bigger trade gets a worse price",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: A bigger trade gets a worse price"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A deep pool and a thin pool each drift 5% above the wider market price of the same token. What is the difference in what happens next?",
+      "correct_answer": "The deep pool is arbitraged back as traders sell into it; the thin pool's profit is too small, so its gap can stay.",
+      "incorrect_answers": [
+        "Both close at the same pace, because each pool's own rule forces its price back to the wider market price.",
+        "The thin pool closes faster, because a few trades move its reserves much further than they would a deep one.",
+        "Neither closes, because a pool knows only its own reserves and so nothing ever pulls its price back at all."
+      ],
+      "explanation": "A pool knows only its own reserves. Arbitrage, trading the gap beyond the fee, is what pulls a deep pool toward the wider market. A thin pool is cheap to move but unprofitable to arbitrage, so its price is a claim to check rather than a value.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "arbitrage",
+        "thin-markets",
+        "liquidity-pools",
+        "mechanism",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A thin market moves on a small sale",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: A thin market moves on a small sale"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A pool's logs show a `Mint` from one address, then dozens of buy `Swap`s from different addresses, then a `Burn` that empties most of the reserves. What identifies who withdrew the liquidity?",
+      "correct_answer": "The LP-token holder: follow the tokens; whoever burned them withdrew the pool's reserves.",
+      "incorrect_answers": [
+        "The `sender` field of the `Mint`, which always names the person who made the pool and burned it.",
+        "The `to` field of the largest buy `Swap`, which names the buyer who made the most from the trade.",
+        "The last `Sync` before the `Burn`, which names the single address that held all of the reserves."
+      ],
+      "explanation": "A `Mint`, many buys and a `Burn` is the rug-pull pattern. The `sender` is often a router, so follow the tokens and the LP tokens, not the `sender`. LP-token control is the key to the reserves.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "rug-pulls",
+        "lp-tokens",
+        "sync-swap-logs",
+        "scenario",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Thin pools let creators pull the rug",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Thin pools let creators pull the rug"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A subject holds 300,000 QRT. The pool's latest `Sync` shows near-zero reserves after a `Burn` by the address that held the LP tokens. Which reason leaves the balance with no exit, and what does the report say?",
+      "correct_answer": "Liquidity was withdrawn; the balance is evidence of what happened, not proceeds the subject could spend.",
+      "incorrect_answers": [
+        "The token's code blocks sales; the balance is worthless and should be left out of the report altogether as well.",
+        "The issuer froze the address; the balance becomes spendable again as soon as the freeze is lifted.",
+        "The pool is only thin; the subject can still sell at the last `Sync` price, in small lots, and report that value."
+      ],
+      "explanation": "There are four reasons for no exit: no or too thin a pool, liquidity withdrawn, a sale blocked by token code, and an issuer freeze. An empty pool after a `Burn` is liquidity withdrawn. A stuck balance is still evidence; the report says which reason applies.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "exit-routes",
+        "rug-pulls",
+        "quoted-vs-realizable-value",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Some tokens have no exit",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: Some tokens have no exit"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A token trades in pool X, where one address holds 2% of the LP tokens, and in pool Y, where one address holds 97%. Which exit could vanish fastest, and which check reveals it?",
+      "correct_answer": "Pool Y, because its main LP holder could empty it with one `Burn`; check 4, who holds the LP tokens.",
+      "incorrect_answers": [
+        "Pool X, because its many small LP holders could each withdraw at once; check 2, the pool's depth.",
+        "Pool Y, because a concentrated holder could freeze the token itself; check 5, whether it can be sold.",
+        "Neither, because LP holders can withdraw only their own deposit and never the pool's other reserves."
+      ],
+      "explanation": "LP tokens redeem a share of both reserves, so a holder of most of them can withdraw most of the pool. Check 4 reads the LP holders from the pool's own `Transfer` logs or holder list.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "lp-tokens",
+        "six-checks",
+        "liquidity-pools",
+        "scenario",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A DEX pool is the other side of the trade",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Lesson slide: A DEX pool is the other side of the trade"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A contract reads the spot price from a thin pool. An attacker buys to inflate it, triggers the contract, then sells back in the same transaction. Why does this work?",
+      "correct_answer": "A thin pool's price moves cheaply on one trade, so a contract that reads it as a price feed can be handed a false value.",
+      "incorrect_answers": [
+        "A deep pool's price cannot be moved, so the attacker needs the contract's own keys to change the value that it reads.",
+        "The pool's fee is too low to deter trades, so moving the price costs almost nothing in any pool of any size at all.",
+        "The LP tokens give the attacker direct control of the price, so the contract simply trusts whatever the holder reports."
+      ],
+      "explanation": "The v2 paper warns that a pool's price, read as a price feed, is very easy to manipulate: in a thin pool one trade moves it, and it can be reversed in the same transaction. A thin price is a claim to check, not a fact to depend on.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "price-oracle-manipulation",
+        "thin-markets",
+        "arbitrage",
+        "scenario",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A thin market moves on a small sale",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Adams, Zinsmeister, Robinson, Uniswap v2 Core: price oracle and manipulation discussion"
+      }
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "Chainalysis reported that proceeds of pig-butchering scams moved through centralized exchanges less and less. What reason did it give, and how far does the finding reach?",
+      "correct_answer": "Possibly because exchanges can freeze funds; it describes one crime type, not all laundering.",
+      "incorrect_answers": [
+        "Because exchanges stopped listing the assets; it shows that all laundering has now left exchanges.",
+        "Because exchanges cannot freeze deposits; it describes every crime type that Chainalysis tracks.",
+        "Because exchanges banned those scam operators; it proves who ran the laundering networks behind them."
+      ],
+      "explanation": "The lesson's exits table gives the exchange as the party that can stop a deposit, and cites Chainalysis (January 2026) for the finding that pig-butchering proceeds moved through exchanges less, potentially because exchanges can freeze funds. The finding is about that one crime type, so the assessment does not stretch it to all laundering.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "confidence-wording",
+        "scenario",
+        "reading",
+        "reading-synthesis",
+        "exchange-freezes"
+      ],
+      "lesson_block": "Where funds can be sold or leave the chain",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Chainalysis, The Chinese-language Underground Crypto Money Laundering Ecosystem: pig-butchering proceeds and exchange freezes"
+      }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A colleague applies check 4 to a Uniswap v3 pool and asks for its LP-token holder list. What is wrong with the approach?",
+      "correct_answer": "v3 and v4 pools work differently from the v2 pool that check 4 assumes, so a v2 holder list does not apply.",
+      "incorrect_answers": [
+        "Nothing is wrong: every Uniswap version issues the same LP tokens, so the holder list works the same way.",
+        "v3 pools have no liquidity providers, so the reserves belong to the protocol and nobody can withdraw them.",
+        "v3 LP tokens exist, but only the pool's creator is able to read their holder list on a block explorer."
+      ],
+      "explanation": "The lesson's checks 2 and 4 read a Uniswap v2-style pool, where the pool contract is itself the ERC-20 LP token. The Uniswap docs describe v3 and v4 positions as price ranges, so the analyst reads that DEX's own events instead.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "lp-tokens",
+        "six-checks",
+        "automated-market-maker",
+        "misconception",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Can it exit here? Six checks",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Uniswap Labs, How Uniswap Works: v2 versus v3/v4 liquidity positions"
+      }
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "A colleague says a 10 ETH sale into a small pool filled badly because of the 0.30% fee. What is the best response?",
+      "correct_answer": "The fee is a fixed share of the input; most of the shortfall is price impact, which grows with trade size.",
+      "incorrect_answers": [
+        "Correct: the fee applies to the whole sale, so it is the main reason that large sales fill badly in any pool.",
+        "Price impact is only a shortfall that arbitrage refunds to the seller soon after the trade has settled.",
+        "Price impact affects only buys, because a sell adds to the reserves and so improves the price it gets."
+      ],
+      "explanation": "The v2 paper and docs separate a fixed fee, which stays in the pool for LPs, from price impact, which grows with the trade's size against the reserves. A large sale in a thin pool is dominated by impact.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "07-ef-liquidity-and-exits",
+        "price-impact",
+        "constant-product",
+        "misconception",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A bigger trade gets a worse price",
+      "specific_source": {
+        "lesson": "ethereum_07_ef_liquidity_and_exits",
+        "reading": "Uniswap v2 Core and How Uniswap Works: fee and price impact"
+      }
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_ethereum",
+        "title": "Ethereum",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_liquidity_exits_lesson_synthesis",
+            "title": "Liquidity: Pools, Thin Markets and Exits - lesson synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12"
+            ]
+          },
+          {
+            "id": "lec_liquidity_exits_reading_synthesis",
+            "title": "Liquidity: Pools, Thin Markets and Exits - reading synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q13",
+              "q14",
+              "q15",
+              "q16"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
