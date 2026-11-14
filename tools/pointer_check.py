@@ -460,9 +460,10 @@ def bank_titles(bank: dict, stem_lesson: Lesson | None, course: Course):
         lesson = (lesson_of(named, course) if named else None) or stem_lesson
         if isinstance(source, dict):
             outside = str(source.get("reading", "")).startswith("/")  # a reading file: the anchor is its section, not a slide
+            external = "reading-synthesis" in (question.get("tags") or [])  # its reading is a cited paper, not a slide
             for field in ("anchor", "reading"):
                 value = source.get(field)
-                if outside:
+                if outside or (external and field == "reading"):
                     continue
                 if isinstance(value, str) and not value.startswith("/") and ".txt" not in value:
                     yield qid, f"specific_source.{field}", value, lesson, False

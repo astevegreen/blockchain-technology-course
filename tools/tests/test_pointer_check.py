@@ -194,6 +194,14 @@ class PointerCheckTest(unittest.TestCase):
         self.assertIn("q1 sources.slide", found[0])
         self.assertIn("q2 specific_source.anchor", found[1])
 
+    def test_reading_synthesis_reading_is_a_cited_paper_not_a_slide(self) -> None:
+        sp = {"lesson": "02-BF", "reading": "Adams et al., Uniswap v2 Core"}
+        qs = [{"id": "q1", "tags": ["reading-synthesis"], "specific_source": sp},
+              {"id": "q2", "tags": ["lesson"], "specific_source": sp}]
+        found = self.bank("bitcoin_02-BF-x-quiz-bank.json", qs)
+        self.assertEqual(len(found), 1)
+        self.assertIn("q2 specific_source.reading", found[0])
+
     def test_prose_path_then_two_titles_joined_by_and(self) -> None:
         found = self.prose('See `lessons/b/02-BF-bitcoin.qmd`, "Mining a Candidate Block" and "Old Mempool Slide".\n')
         self.assertEqual(len(found), 1)
