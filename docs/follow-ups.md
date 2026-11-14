@@ -48,8 +48,11 @@ slide index), which is never listed here.
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
-- `quizes/quiz_json/bitcoin_02-BF-transactions_and_mining-quiz-bank.json` has no questions on the rebuild's two
-  checks, the worked SegWit fee rate, the six-field practice or the review. [13 Nov 2026, 02-BF rebuild]
+- `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd` (around lines 306 and 330): the locktime slide says
+  "no earlier than height 887,985", but the consensus rule needs a block height above the locktime and the lesson's own
+  example is mined at 887,986. Run it through the `source` skill, then fix. The Answers slide's notes also contradict
+  themselves: the Overall Slide Concept says "three agreeing clues give Moderate", while the slide and Key Points say
+  two. [14 Nov 2026, 02-BF quiz bank]
 - `quizes/quiz_json/permissioned_ledger_01-PC-permissioned_distributed_ledgers-quiz-bank.json` has no questions on the
   01-PC rebuild's three checks, two worked Tron reads, Raft and PBFT, the practice or the review. [13 Nov 2026, 01-PC rebuild]
 - `quizes/quiz_json/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-quiz-bank.json`:
@@ -82,7 +85,7 @@ slide index), which is never listed here.
   **Sources** lists seem one slide off (the keys a slide cites are listed under the next slide's notes). Re-pair
   each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
-- Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 02-BF, 01-EF,
+- Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF,
   06-EF, 02-FO and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF,
   02-FO and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
   label. The `specific_source_lesson` strings in the 02-IN, 04-EF and 04-CP banks still name old titles (the check does not

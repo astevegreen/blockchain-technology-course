@@ -1,372 +1,29 @@
 {
   "lesson_id": "bitcoin_02_bf_transactions_and_mining",
   "lesson_title": "Bitcoin - Reading a Transaction",
-  "date_generated": "2026-11-01",
+  "date_generated": "2026-11-14",
   "topic": "bitcoin",
   "tags": [
     "bitcoin",
     "02-bf-transactions-and-mining",
-    "transactions-and-mining",
-    "utxo-model",
     "transactions",
-    "transaction-fees",
-    "mempool",
-    "mining",
-    "proof-of-work",
-    "block-validation",
-    "confirmations",
-    "probabilistic-finality",
+    "script-types",
+    "fee-rate",
+    "change-attribution",
+    "merkle-proof",
     "quiz-bank"
   ],
   "metadata": {
     "module": "bitcoin",
     "lesson_file_stem": "02-BF-transactions_and_mining",
-    "reading_status": "acquired",
+    "reading_status": "partial",
     "source_mix": {
-      "lesson_grounded_questions": 9,
-      "reading_grounded_questions": 3
+      "lesson_grounded_questions": 14,
+      "reading_grounded_questions": 6
     },
-    "lesson_source_path": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd",
-    "reading_source_path": "/tmp/blockchain-course-readings/mastering_bitcoin_ch06.adoc"
+    "lesson_source_path": "blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd",
+    "note": "The lesson names no assigned reading. Reading questions rest on documents the lesson cites and quotes (BIP 125, Bitcoin Core 28.0 and 29.0 notes, BIP 141, BIP 341, the developer guide, Narayanan et al.), and each states a fact that is on a visible slide. Coverage: q1-q9 give one question to each visible check, worked example, practice, answers and review slide; q10-q14 cover the replace-by-fee, coinbase, Merkle root, timestamp and co-spending slides."
   },
-  "questions": [
-    {
-      "id": "q3",
-      "question_type": "multiple_choice",
-      "question_stem": "Alice spends two UTXOs worth 0.60 BTC and 0.70 BTC to pay Bob 1.00 BTC, creates a 0.29 BTC change output, and has no other outputs. What fee does the transaction pay?",
-      "correct_answer": "0.01 BTC, because fees are total input value minus total output value.",
-      "incorrect_answers": [
-        "0.29 BTC, because sender change is counted as revenue for miners.",
-        "0.30 BTC, because only Bob's output is subtracted from the inputs.",
-        "0.00 BTC, because creating a change output means no fee is left."
-      ],
-      "explanation": "The transaction consumes 1.30 BTC of inputs and creates 1.29 BTC of outputs. The missing 0.01 BTC is the implicit transaction fee.",
-      "difficulty_level": 3,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "utxo-model",
-        "transactions",
-        "transaction-fees",
-        "change-addresses",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "UTXO Accounting And Transaction Construction",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: Example Transaction / Change Addresses and Fees"
-    },
-    {
-      "id": "q4",
-      "question_type": "multiple_choice",
-      "question_stem": "A node receives a transaction whose input references a UTXO that was already spent in an earlier accepted block. Why is the new transaction invalid under the UTXO model?",
-      "correct_answer": "A transaction input must consume a currently unspent output; once that output has been spent, it cannot be used again.",
-      "incorrect_answers": [
-        "A transaction input is valid if the wallet controls enough total UTXO value, even when this exact output was already used.",
-        "A spent output can be reused if the new transaction pays a higher fee than the transaction that spent it in an earlier block.",
-        "An input only needs a valid signature for the referenced output; nodes do not check whether the output remains unspent."
-      ],
-      "explanation": "The UTXO model simplifies validation by making each input point to a discrete previous output. Double-spend checks reduce to whether that referenced output is still unspent and unlocked correctly.",
-      "difficulty_level": 3,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "utxo-model",
-        "double-spending",
-        "transaction-validation",
-        "lesson",
-        "slides",
-        "scenario"
-      ],
-      "lesson_block": "No slide now: Why the UTXO Model?",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: UTXO Visualized / Why the UTXO Model?"
-    },
-    {
-      "id": "q5",
-      "question_type": "multiple_choice",
-      "question_stem": "A valid signed transaction has propagated to several nodes and is visible in their mempools. What is still missing before it has one confirmation?",
-      "correct_answer": "A miner must include it in a valid block that full nodes accept as part of the chain.",
-      "incorrect_answers": [
-        "It must appear in every reachable node's mempool before any miner may include it in a block.",
-        "The receiving wallet must sign it before miners can place the payment in a valid block.",
-        "A full node must turn the mempool entry into a local balance update before it can be mined."
-      ],
-      "explanation": "Mempool presence means a transaction is an unconfirmed candidate for block inclusion. One confirmation begins only after the transaction is mined into an accepted block.",
-      "difficulty_level": 2,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "mempool",
-        "confirmations",
-        "p2p-networking",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Network Relay, Mempools, And Inclusion Incentives",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: Where Does a Transaction Go? / When Is a Transaction Complete?"
-    },
-    {
-      "id": "q6",
-      "question_type": "multiple_choice",
-      "question_stem": "During a crowded mempool period, two valid transactions are waiting for inclusion. Why would miners usually prefer the one with the higher fee rate?",
-      "correct_answer": "Miners have limited block space and collect fees from included transactions, so higher-fee transactions are economically more attractive.",
-      "incorrect_answers": [
-        "Higher fee rate proves the transaction transfers a larger bitcoin amount, so miners prioritize it over smaller payments with lower values.",
-        "Higher fee rate lowers the proof-of-work target for that block, making the candidate block easier for a miner to find under network congestion.",
-        "Higher fee rate lets the transaction skip ordinary full-node validation after it is included in a block, reducing the miner's orphan risk after relay."
-      ],
-      "explanation": "The lesson connects fee choice to confirmation speed. Miners choose among mempool transactions under block constraints and are incentivized by fees, but fee payment does not replace validation.",
-      "difficulty_level": 3,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "mempool",
-        "transaction-fees",
-        "mining",
-        "lesson",
-        "slides",
-        "tradeoff"
-      ],
-      "lesson_block": "Network Relay, Mempools, And Inclusion Incentives",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: Network Relay, Mempools, And Inclusion Incentives"
-    },
-    {
-      "id": "q7",
-      "question_type": "multiple_choice",
-      "question_stem": "A transaction inside a block is changed after the miner found a valid proof-of-work. What would this do to the block's commitment structure?",
-      "correct_answer": "It would change the Merkle root, which changes the block header hash and breaks the previously found proof-of-work.",
-      "incorrect_answers": [
-        "It would change only the local wallet record for nodes, leaving the Merkle root and block header hash unchanged.",
-        "It would require new transaction signatures, but the old proof-of-work would still match the same header.",
-        "It would change the previous block hash pointer while leaving the current block transaction commitment intact."
-      ],
-      "explanation": "The Merkle root commits the header to the block's transaction list. Altering a transaction changes that commitment and therefore the header hash that proof-of-work was found over.",
-      "difficulty_level": 4,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "merkle-trees",
-        "block-validation",
-        "proof-of-work",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Blocks, Mining, And Validation",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: The Data Structure of a Block / Transactions in a Block"
-    },
-    {
-      "id": "q8",
-      "question_type": "multiple_choice",
-      "question_stem": "A miner broadcasts a block with a valid-looking proof-of-work, but one transaction spends an already-spent output. What should full nodes do?",
-      "correct_answer": "Reject the block, because miners propose blocks but full nodes independently validate transaction validity and unspent inputs.",
-      "incorrect_answers": [
-        "Accept it temporarily, because valid proof-of-work lets later confirmations repair an invalid transaction after peers build on top.",
-        "Forward it for miner replacement, because mining pools decide whether referenced outputs are still unspent before full nodes accept it.",
-        "Accept the valid transactions in the block and ignore only the double-spending transaction inside it during validation."
-      ],
-      "explanation": "The lesson distinguishes miner proposal from full-node acceptance. Valid proof-of-work is necessary but not sufficient; peers also validate the transactions and chain extension rules.",
-      "difficulty_level": 4,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "mining",
-        "full-nodes",
-        "block-validation",
-        "double-spending",
-        "lesson",
-        "slides",
-        "misconception"
-      ],
-      "lesson_block": "Blocks, Mining, And Validation",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: After Finding a Valid Block"
-    },
-    {
-      "id": "q9",
-      "question_type": "multiple_choice",
-      "question_stem": "What are miners trying to accomplish when they change the nonce and hash the block header again during proof of work?",
-      "correct_answer": "Find a block header hash that falls below the current target.",
-      "incorrect_answers": [
-        "Choose the transaction set that pays the highest total fees.",
-        "Find a previous block hash that points to the chain tip.",
-        "Make the coinbase output match the block subsidy and fees."
-      ],
-      "explanation": "Proof of work is a guessing search over the block header. Miners change the nonce and hash the header again until one hash falls below the network's target, which no one can predict in advance.",
-      "difficulty_level": 2,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "mining",
-        "proof-of-work",
-        "block-header",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Proof of work is guessing until a hash is low",
-      "source": "lesson",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd: Proof of work is guessing until a hash is low"
-    },
-    {
-      "id": "q10",
-      "question_type": "multiple_choice",
-      "question_stem": "A merchant accepts a zero-confirmation payment for a high-value item because the transaction is visible in a mempool. Which risk assessment is most accurate?",
-      "correct_answer": "The payment has not yet gained probabilistic settlement security; inclusion and additional confirmations reduce reversal risk.",
-      "incorrect_answers": [
-        "It has the same settlement security as several confirmations because mempool relay shows nodes accepted it into their candidate ledgers.",
-        "Its main remaining risk is only slow wallet display; a relayed transaction cannot conflict with another spend of the same UTXO.",
-        "It becomes final once enough peers store it in their mempools, even before any block includes it in the chain history."
-      ],
-      "explanation": "Bitcoin finality is probabilistic. A transaction becomes more secure after block inclusion and as additional blocks build on top, while zero-confirmation payments carry greater double-spend or non-inclusion risk.",
-      "difficulty_level": 4,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "confirmations",
-        "probabilistic-finality",
-        "temporary-forks",
-        "lesson",
-        "slides",
-        "tradeoff"
-      ],
-      "lesson_block": "Confirmations, Forks, And Probabilistic Finality",
-      "source_type": "slide_only_qmd",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/bitcoin_02-BF-transactions_and_mining-slides-only.qmd: Confirmations, Forks, And Probabilistic Finality"
-    },
-    {
-      "id": "q11",
-      "question_type": "multiple_choice",
-      "question_stem": "In Bitcoin's transaction model, why does a normal input need both a previous transaction identifier and an output index?",
-      "correct_answer": "Together they form an outpoint that identifies the exact previous output being spent.",
-      "incorrect_answers": [
-        "Together, they identify the sender's account and the sequence number of the next withdrawal.",
-        "Together, they identify a block height and the transaction's confirmation count.",
-        "Together, they identify the input script and a private key for unlocking value."
-      ],
-      "explanation": "The reading emphasizes that an input points to a specific prior output, not to a user account. The transaction identifier plus output index lets nodes locate the exact UTXO and its spending conditions.",
-      "difficulty_level": 2,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "bitcoin-transactions",
-        "outpoints",
-        "utxo-model",
-        "transaction-validation",
-        "reading",
-        "assigned-reading",
-        "reading-source",
-        "mechanism"
-      ],
-      "lesson_block": "Reading: Inputs And Outpoints",
-      "source_type": "reading_source",
-      "specific_source_reading": "/tmp/blockchain-course-readings/mastering_bitcoin_ch06.adoc: Outpoint / UTXO Validation"
-    },
-    {
-      "id": "q12",
-      "question_type": "multiple_choice",
-      "question_stem": "A transaction creates many tiny outputs that are technically possible under consensus rules, but most nodes refuse to relay it as dust. What distinction does this illustrate?",
-      "correct_answer": "Consensus validity and relay or mining policy are not identical; policy can discourage outputs that burden the UTXO set.",
-      "incorrect_answers": [
-        "Consensus rules require nodes to relay every valid transaction they see, even when outputs are uneconomical for wallets.",
-        "Relay policy can make a transaction valid even when consensus rules would reject one of its spends in a block at validation time.",
-        "Dust policy mainly protects miners from large signatures, not the growing UTXO database maintained by full nodes."
-      ],
-      "explanation": "The reading uses dust and standardness policy to show that not every technically valid transaction pattern is relayed or mined by default. Tiny UTXOs impose ongoing costs on full-node operators.",
-      "difficulty_level": 4,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "dust-policy",
-        "standard-transactions",
-        "full-nodes",
-        "utxo-model",
-        "reading",
-        "assigned-reading",
-        "reading-source",
-        "tradeoff"
-      ],
-      "lesson_block": "Reading: Consensus Rules Versus Policy",
-      "source_type": "reading_source",
-      "specific_source_reading": "/tmp/blockchain-course-readings/mastering_bitcoin_ch06.adoc: Consensus Rules Versus Policy / Uneconomical outputs and disallowed dust"
-    },
-    {
-      "id": "q13",
-      "question_type": "multiple_choice",
-      "question_stem": "A contract protocol builds a child transaction that depends on a parent's transaction ID before the parent confirms. Why was transaction malleability dangerous for this pattern?",
-      "correct_answer": "If authorization data could be changed in a way that changed the parent's txid, the child transaction's reference could break even though the spend was otherwise valid.",
-      "incorrect_answers": [
-        "If witness data changed, it would reveal the parent's private key to the child spender before either transaction confirmed, letting the child spend other outputs from the same wallet.",
-        "If the parent changed, the child would spend the whole parent transaction instead of one specific output index, consuming every output together from that parent.",
-        "If the parent was unconfirmed, nodes would require each child transaction to confirm first, creating a circular confirmation rule for dependent contract spends."
-      ],
-      "explanation": "The reading connects malleability to dependent and presigned transactions. Segwit reduces this problem by separating witness data from the txid calculation, improving txid stability for contract protocols.",
-      "difficulty_level": 4,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "segwit",
-        "witness-data",
-        "transaction-malleability",
-        "bitcoin-transactions",
-        "reading",
-        "assigned-reading",
-        "reading-source",
-        "scenario"
-      ],
-      "lesson_block": "Reading: Segwit And Malleability",
-      "source_type": "reading_source",
-      "specific_source_reading": "/tmp/blockchain-course-readings/mastering_bitcoin_ch06.adoc: Circular Dependencies / Transaction Malleability / Segregated Witness"
-    },
-    {
-      "id": "q14",
-      "question_type": "multiple_choice",
-      "question_stem": "You open a confirmed payment in mempool and see an address and type beside its input, but no replace-by-fee badge. How do you record the input and RBF?",
-      "correct_answer": "Its address and type come from the output it spends, and RBF is read from nSequence: 0xffffffff means no signal.",
-      "incorrect_answers": [
-        "Its address and type are stored in the input, and a missing badge on a confirmed payment proves RBF was off.",
-        "Its address and type come from the output it spends, and RBF is read from locktime: zero means no signal.",
-        "Its address and type are the explorer's own labels, and RBF is read from the fee rate: a high rate means no signal."
-      ],
-      "explanation": "A transaction's input holds only a reference to the output it spends, so the explorer looks up that output to show the input's address and type. Confirmed transactions get no RBF badge, so read the input's nSequence: 0xffffffff is no BIP 125 signal.",
-      "difficulty_level": 3,
-      "topic": "bitcoin",
-      "tags": [
-        "bitcoin",
-        "02-bf-transactions-and-mining",
-        "explorer",
-        "rbf",
-        "transactions",
-        "lesson",
-        "slides",
-        "scenario"
-      ],
-      "lesson_block": "Reading Alice's payment, field by field",
-      "source_type": "slides",
-      "specific_source": {
-        "lesson": "blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd",
-        "anchor": "Reading Alice's payment, field by field"
-      }
-    }
-  ],
   "hierarchy": {
     "sections": [
       {
@@ -375,10 +32,12 @@
         "enabled": true,
         "lectures": [
           {
-            "id": "lec_transactions_and_mining_slides_only",
-            "title": "Bitcoin - Reading a Transaction - slides-only lesson",
+            "id": "lec_reading_a_transaction_lesson",
+            "title": "Bitcoin - Reading a Transaction - lesson synthesis",
             "enabled": true,
             "question_ids": [
+              "q1",
+              "q2",
               "q3",
               "q4",
               "q5",
@@ -387,21 +46,544 @@
               "q8",
               "q9",
               "q10",
+              "q11",
+              "q12",
+              "q13",
               "q14"
             ]
           },
           {
-            "id": "lec_transactions_and_mining_assigned_reading",
-            "title": "Bitcoin - Reading a Transaction - assigned reading",
+            "id": "lec_reading_a_transaction_reading",
+            "title": "Bitcoin - Reading a Transaction - reading synthesis",
             "enabled": true,
             "question_ids": [
-              "q11",
-              "q12",
-              "q13"
+              "q15",
+              "q16",
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A case note says funds sit in a 3-prefix address and calls it a multisig wallet, but the output has never been spent. What may the analyst write about its spending rule?",
+      "correct_answer": "A P2SH output whose spending rule is not yet revealed; the script appears only when the output is spent.",
+      "incorrect_answers": [
+        "A multisig output, because the 3 prefix is reserved for multisig and shows that several keys must sign.",
+        "A native SegWit output, because the 3 prefix marks SegWit and the signature sits in the witness.",
+        "A Taproot output, because a 3 prefix locks to a public key whose spending rule is never shown."
+      ],
+      "explanation": "A 3 address is P2SH: it locks to a script's hash, and the script appears only when the output is spent. Multisig is the common use, but P2SH can also wrap a single-key SegWit wallet, so only what the chain has revealed goes in the assessment.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "p2sh",
+        "multisig",
+        "script-types",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: an unspent 3… address. Is it multisig?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Check: an unspent 3… address. Is it multisig?"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A case note says a payment was \"sent 14:02\", the time the explorer prints beside it. Which line should the analyst record?",
+      "correct_answer": "Mined in block N, with block time 14:02 UTC as stated by its miner.",
+      "incorrect_answers": [
+        "Sent at 14:02 UTC, the time its sender stamped on the signed transaction.",
+        "Confirmed at 14:02 UTC, when the network agreed the block was found.",
+        "Paid at 14:02 UTC, the earliest moment the transaction was broadcast."
+      ],
+      "explanation": "The explorer's time is the block's, which its miner wrote. The transaction carries no time of its own and may have waited in the mempool before that, so the record is the block height and the block time, as the miner's claim.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "block-time",
+        "timestamps",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: \"sent 14:02\". What do you record?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Check: \"sent 14:02\". What do you record?"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "One payment paid 5,000 sat and is 250 vB; another paid 50,000 sat and is 2,500 vB. Which bid more for block space?",
+      "correct_answer": "Neither: both pay 20 sat/vB, so the bigger fee bought more bytes, not a faster place.",
+      "incorrect_answers": [
+        "The second: it paid ten times the fee, so miners rank it ahead of waiting transactions.",
+        "The first: it paid less in total, so each of its bytes was priced higher than the other's.",
+        "The second: both paid the same rate, so it must have sent about ten times more bitcoin."
+      ],
+      "explanation": "5,000 / 250 and 50,000 / 2,500 are both 20 sat/vB. Miners rank waiting transactions by fee rate, so the second paid ten times the fee for ten times the space. A fee shows block space bought, not the size of the payment.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "fee-rate",
+        "transaction-fees",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: \"sent 14:02\". What do you record?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Check: \"sent 14:02\". What do you record?"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A defense expert shows a valid Merkle proof for a payment. What does the proof establish?",
+      "correct_answer": "The payment is in that block; it says nothing about who sent it or who controls its outputs.",
+      "incorrect_answers": [
+        "The payment came from the wallet that holds its inputs, since the proof ties the block to signers.",
+        "The payment's inputs belong to one owner, because the proof hashes them with the outputs.",
+        "The sender, because the proof is built from the signature that spent each of its inputs."
+      ],
+      "explanation": "A Merkle proof is the transaction plus the sibling hashes up to the root. It shows inclusion in a block only: not who sent the money and not who controls its outputs.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "merkle-proof",
+        "inclusion",
+        "attribution",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A Merkle proof shows inclusion, not the sender",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: A Merkle proof shows inclusion, not the sender"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A SegWit payment has total size 382 bytes and weight 880, and paid a fee of 440 sat. What fee rate does the analyst record?",
+      "correct_answer": "2 sat/vB: virtual size is weight divided by 4, which is 220 vB, and 440 divided by 220 is 2.",
+      "incorrect_answers": [
+        "About 1.15 sat/vB: the fee divided by the total size of 382 bytes, witness bytes counted in full.",
+        "About 0.5 sat/vB: the fee divided by the weight of 880, which counts every byte four times.",
+        "About 2.65 sat/vB: the fee divided by the base size of 166 bytes, since witness bytes carry no fee."
+      ],
+      "explanation": "Virtual size is weight divided by 4, so 880 / 4 is 220 vB and 440 / 220 is 2 sat/vB. Dividing by total size gives about 1.15, which is wrong for SegWit, because the 216 witness bytes count as only 54 vB.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "fee-rate",
+        "segwit",
+        "virtual-size",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Worked: a SegWit fee rate, discount included",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Worked: a SegWit fee rate, discount included"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "Alice's payment has one input, and its second output returns 0.0845 BTC to the address that input spent from; the other output is 0.015 BTC. How sure is the call that the second output is change?",
+      "correct_answer": "High: it returns to the input's own address with an un-round amount, and one input rules out a CoinJoin.",
+      "incorrect_answers": [
+        "Moderate: only the un-round amount points to change, so a CoinJoin could still break the whole call.",
+        "Low: an explorer does not mark change, so any call on one transaction rests on a single weak clue.",
+        "High: the explorer marks that output as change, so no further reasoning is needed for the call."
+      ],
+      "explanation": "Only the holder of that key could spend from the address, so an output back to it returns to the payer. With the un-round amount, two lines agree, and one input means there can be no CoinJoin, so the course scale gives High. An explorer does not mark change.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "change-attribution",
+        "confidence-words",
+        "worked-example",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Reading Alice's payment, field by field",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Reading Alice's payment, field by field"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "In a payment, output 0 pays a 42-character bc1q address and output 1 pays a bc1p address. What do the prefixes tell the analyst?",
+      "correct_answer": "Output 0 is P2WPKH and output 1 is Taproot (P2TR), so the two outputs differ in script type.",
+      "incorrect_answers": [
+        "Both outputs are P2WPKH, because the bc1 prefix alone marks a modern single-key wallet on each side.",
+        "Output 0 is P2SH and output 1 is P2TR, because a bc1q address wraps a script hash like a 3 address.",
+        "Output 0 is P2WSH and output 1 is P2WPKH, because a bc1p address is the shorter native SegWit form."
+      ],
+      "explanation": "A bc1q address of 42 characters is P2WPKH, and bc1p is Taproot, so the outputs differ in type. That difference is one of the two clues behind a change call.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "script-types",
+        "bech32",
+        "practice",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Practice: six fields for the SegWit payment",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Practice: six fields for the SegWit payment"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction spends two P2WPKH inputs. Output 0 (14,112,262 sat) goes to an address seen for the first time and is P2WPKH, while output 1 (999,560 sat) is Taproot. How sure is the change call?",
+      "correct_answer": "Moderate: two clues agree, and a CoinJoin would void both of them.",
+      "incorrect_answers": [
+        "Low: neither output is round, so the round-amount clue gives nothing.",
+        "High: a new address and a matching type are two clues, so it is certain",
+        "High: a round output 1 is a third clue and that rules out a CoinJoin."
+      ],
+      "explanation": "A new address and the inputs' type agree, which lifts the call above a single clue's Low. It is not High, because a CoinJoin would void both clues. Neither output is a round amount, so that clue adds nothing.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "change-attribution",
+        "confidence-words",
+        "coinjoin",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Answers: six fields, and how sure of change",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Answers: six fields, and how sure of change"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "Co-spending alone and a round-amount change call alone: how sure is each, and what do they share?",
+      "correct_answer": "Co-spending is Moderate and the round amount alone is Low; a CoinJoin breaks both clues.",
+      "incorrect_answers": [
+        "Both are High: each is a pattern the chain shows, and a CoinJoin breaks neither.",
+        "Both are Low: no single clue earns more than that, because the chain proves nothing.",
+        "Co-spending is Low and the round amount is Moderate; both fail when a wallet pays itself change."
+      ],
+      "explanation": "The review slide rates co-spending Moderate and a round-amount change call alone Low, and names the failure they share: a CoinJoin, where several people build one transaction and sign only their own inputs.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "confidence-words",
+        "coinjoin",
+        "review",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: every hop records the same six fields",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Review: every hop records the same six fields"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet broadcasts version 1 of a transaction paying Bob, then version 2 spending the same input, paying Carol and a higher fee. What appears in a block?",
+      "correct_answer": "Only version 2: both spend the same input, so at most one is mined, and the trace follows that one.",
+      "incorrect_answers": [
+        "Both: the miner includes version 1 first and then version 2 as a second payment from one wallet.",
+        "Version 1: a transaction that was broadcast cannot be replaced, so its txid is the one mined.",
+        "Neither: two transactions that spend one output cancel each other, so the output stays unspent."
+      ],
+      "explanation": "Two transactions that spend the same output cannot both be mined. Until it is mined a transaction can be replaced by one paying a higher fee, so unconfirmed is not paid and the trace follows the version that was mined.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "replace-by-fee",
+        "unconfirmed",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Replace-by-fee: unconfirmed can still change",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Replace-by-fee: unconfirmed can still change"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A trace backwards reaches a transaction that spends no earlier output and is the first in its block. What has the analyst reached?",
+      "correct_answer": "A coinbase: newly mined coins, the subsidy plus the fees, not someone's earlier payment.",
+      "incorrect_answers": [
+        "An exchange withdrawal: the missing input means the sender's wallet is not shown on the chain.",
+        "A pool payout: it pays one miner's share, so the earlier payment is hidden from the trace.",
+        "A Taproot key-path spend: it shows no script, so its earlier input is not displayed."
+      ],
+      "explanation": "Every block's first transaction is the coinbase. It spends no earlier output and collects the subsidy plus the block's fees, so a trace that ends there has reached newly mined coins, not a person's payment.",
+      "difficulty_level": 2,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "coinbase",
+        "origin",
+        "subsidy",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A trace ending at a coinbase reached new coins",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: A trace ending at a coinbase reached new coins"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "One transaction in a mined block is altered. What follows from the Merkle root?",
+      "correct_answer": "The root changes, so the block no longer matches its header and the next block's link breaks.",
+      "incorrect_answers": [
+        "The header is unchanged, because the root covers only the first transaction, the coinbase.",
+        "Only that transaction's txid changes, because the root hashes the pairs and leaves out the rest.",
+        "Nothing changes, because the root is a copy of the block's size and not a hash of its txids."
+      ],
+      "explanation": "The txids are hashed in pairs up to one Merkle root in the header, which the next block's header hashes in turn. Changing any transaction changes the root, then the header, then every later block's link.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "merkle-root",
+        "tamper-evidence",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "The Merkle root commits to every transaction",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: The Merkle root commits to every transaction"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "In a made-up chain, block 800,002 is stamped 10:03 and block 800,001 is stamped 10:05, yet 800,002 names 800,001 as the block before it. Which came first, and why is this allowed?",
+      "correct_answer": "800,001: order comes from block height, and miners write block times that need not be in strict order.",
+      "incorrect_answers": [
+        "800,002: the earlier stamp shows it was found first, so the 10:05 stamp on 800,001 is a mistake.",
+        "800,001: explorers re-sort blocks by their stamps when they print a chain, so the order holds.",
+        "Neither can be placed: with conflicting stamps the order stays unknown until a later block is mined."
+      ],
+      "explanation": "The printed time is the block's, which its miner wrote. The rules do not mandate strict ordering of block timestamps, so order comes from block height, and 800,002 names 800,001 as its parent.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "block-time",
+        "block-height",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A transaction has no timestamp of its own",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: A transaction has no timestamp of its own"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "Alice's transaction spends two outputs, A1 and A2, together in one transaction. Which line follows the lesson?",
+      "correct_answer": "Co-spent with A2 (Moderate): most often one wallet, but in a CoinJoin the owners differ.",
+      "incorrect_answers": [
+        "Alice's wallet holds A2: both inputs signed one transaction, so one owner holds both keys.",
+        "A2 belongs to Bob: the output paying Bob shows that his wallet funded the second input.",
+        "Co-spent with A2 (High): signing together needs both keys, so a CoinJoin cannot alter it."
+      ],
+      "explanation": "Signing both inputs in one transaction most often means one wallet holds both keys, but a CoinJoin has several people sign their own inputs. With that known failure the clue is Moderate, and the line names the clue and its rating, not an owner.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "co-spending",
+        "coinjoin",
+        "confidence-words",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Co-spent inputs point to one owner",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Co-spent inputs point to one owner"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction signals replace-by-fee under BIP 125. What does the BIP require of a replacement?",
+      "correct_answer": "It must pay at least the original's fee; BIP 125 places no rule on where the outputs send the money.",
+      "incorrect_answers": [
+        "It must keep the original's recipient and raise the fee, so a replacement never changes who is paid.",
+        "It must pay the same total to the payee and add the fee difference from the original's change output.",
+        "It must wait for one confirmation of the original, and then it may replace that payment's outputs."
+      ],
+      "explanation": "The slide states BIP 125's rule: the replacement pays at least the original's fee, with no rule on outputs. That is why a replaced transaction can pay someone else.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "replace-by-fee",
+        "bip125",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Replace-by-fee: unconfirmed can still change",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Replace-by-fee: unconfirmed can still change",
+      "specific_source_reading": "BIP 125 (Harding), Opt-in Full Replace-by-Fee: replacement fee rule, as the slide states it"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "As of 24 Oct 2026, Bitcoin Core's default is full replace-by-fee. A payment's inputs carry sequence 0xffffffff, which signals nothing. Can a node accept a replacement?",
+      "correct_answer": "Yes: nodes accept replacements whether or not the original signaled, so the signal protects no one.",
+      "incorrect_answers": [
+        "No: nodes keep the first version they saw unless it signaled, so the missing signal protects the payment.",
+        "Yes, but only when the replacement was signed by a different wallet from the one that paid originally.",
+        "No: only a payment that signaled can be replaced, and the maximum sequence fixes it in place."
+      ],
+      "explanation": "Bitcoin Core 28.0 turned full replace-by-fee on by default and 29.0 removed the option, so nodes accept replacements whether or not the original signaled. The signal is a wallet trait to record, not a protection.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "replace-by-fee",
+        "bitcoin-core",
+        "wallet-behavior",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Replace-by-fee: unconfirmed can still change",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Replace-by-fee: unconfirmed can still change",
+      "specific_source_reading": "Bitcoin Core 28.0 and 29.0 release notes: full replace-by-fee on by default, then the option removed, as the slide states them"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction has 100 bytes outside the witness and 60 witness bytes, 160 in all. What are its weight and virtual size under BIP 141?",
+      "correct_answer": "Weight 460 and virtual size 115 vB: base size times 3 plus total size, then divided by 4.",
+      "incorrect_answers": [
+        "Weight 640 and virtual size 160 vB: every byte counts four times, with no witness discount.",
+        "Weight 160 and virtual size 40 vB: weight is the total size and virtual size a quarter.",
+        "Weight 400 and virtual size 100 vB: witness bytes carry no weight; base bytes count four times."
+      ],
+      "explanation": "The slide gives the formula: weight is base size times 3 plus total size, and virtual size is weight divided by 4. Here 100 x 3 + 160 is 460, and 460 / 4 is 115 vB, so the 60 witness bytes count as 15 vB.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "segwit",
+        "weight",
+        "virtual-size",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Fees are priced per virtual byte, not per BTC",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: Fees are priced per virtual byte, not per BTC",
+      "specific_source_reading": "BIP 141 (Lombrozo et al.), Segregated Witness: weight and virtual size formula, as the slide states it"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "Several people hold keys behind one bc1p output and spend it by key path. What does an observer of the spend see?",
+      "correct_answer": "One key and one signature: a key-path spend prevents observers from learning the spending conditions.",
+      "incorrect_answers": [
+        "A script listing each signer's key, as a P2SH spend reveals its multisig rule once it is spent.",
+        "The numbers m and n in the witness, because Taproot shows its signing rule on every key spend.",
+        "Nothing at all: a Taproot output hides its own amount until the transaction that spends it is mined."
+      ],
+      "explanation": "The slide quotes BIP 341: a key-path spend prevents observers from learning the spending conditions of a coin, and keys held by several people look like a single key. So one key does not show one person.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "taproot",
+        "key-path-spend",
+        "attribution",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "P2SH and Taproot reveal the rule only on spend",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: P2SH and Taproot reveal the rule only on spend",
+      "specific_source_reading": "BIP 341 (Wuille et al.), Taproot: key-path spend, as the slide quotes it"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction's locktime field reads 887,985. What does that say about when it may be mined?",
+      "correct_answer": "Not until the chain reaches block 887,985, since a locktime under 500 million is a height.",
+      "incorrect_answers": [
+        "It was sent at Unix time 887,985, because locktime holds the moment the wallet broadcast it.",
+        "It was mined in block 887,985, because locktime records the block that confirmed the spend.",
+        "No earlier than Unix time 887,985, because locktime is always a timestamp and never a height."
+      ],
+      "explanation": "The developer guide, as the slide states it: a locktime sets the earliest point a transaction may be mined; below 500 million it is a block height, otherwise a Unix time. It is not a send time.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "locktime",
+        "block-height",
+        "timestamps",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A transaction has no timestamp of its own",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: A transaction has no timestamp of its own",
+      "specific_source_reading": "Bitcoin.org developer guide, Transactions: locktime rule, as the slide states it"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "Block 277,316 holds 419 transactions. Why does a Merkle proof for one of them need 9 hashes?",
+      "correct_answer": "A proof grows by one hash each time the block doubles, and 2 to the 9th is 512, just above 419.",
+      "incorrect_answers": [
+        "A proof lists every other transaction's hash in the block, and those are then hashed in nine rounds.",
+        "A proof needs one hash for each 50 transactions in the block, so 419 transactions need nine.",
+        "A proof repeats the odd last transaction's hash nine times, once per level of the tree."
+      ],
+      "explanation": "The slide, from Narayanan et al.: a proof stays short, growing by one hash each time the block doubles. Block 277,316's 419 transactions fit under 512, which is 2 to the 9th, so a proof needs 9 hashes.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "bitcoin",
+        "02-bf-transactions-and-mining",
+        "merkle-proof",
+        "spv",
+        "mechanism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A Merkle proof shows inclusion, not the sender",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "02-BF-transactions_and_mining.qmd: A Merkle proof shows inclusion, not the sender",
+      "specific_source_reading": "Narayanan et al., Bitcoin and Cryptocurrency Technologies: proof length, as the slide states it"
+    }
+  ]
 }
