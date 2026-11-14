@@ -6,12 +6,22 @@
 - `output_path`: `lesson_synthesis/ethereum_05-EF-digital_assets_tokenization_and_nfts-reading-synthesis.md`
 - `module`: `ethereum`
 - `lesson_file_stem`: `05-EF-digital_assets_tokenization_and_nfts`
-- `reading_status`: `acquired`
+- `reading_status`: `partial`
 
 ## Assigned Reading
 
 - Ethereum.org. "ERC-20 Token Standard." Ethereum.org developer documentation. Syllabus lists the reading as Ethereum.org (2025); acquired local text reports page last update April 3, 2026.
 - Embedded primary specification used by the Ethereum.org reading: Fabian Vogelsteller and Vitalik Buterin, "ERC-20: Token Standard," Ethereum Improvement Proposals, no. 20, created November 19, 2015.
+
+## Readings Cited By The Rebuilt Lesson (Update 14 Nov 2026)
+
+The lesson was rebuilt after this synthesis was written and has no assigned reading. Its visible slides cite the documents below. They were NOT re-fetched for this update, so every item is unverified against the source text; the quiz bank states only facts that also sit on a visible slide body.
+
+- EIP-20 (Vogelsteller and Buterin): `approve` then `transferFrom` spends an allowance; `name`, `symbol` and `decimals` are optional. Unverified this pass (the earlier acquired text below covers it).
+- EIP-721 (Entriken et al.): an NFT is a token ID with one owner; `tokenURI` points to metadata kept off chain. Unverified.
+- TetherToken verified source on Ethereum: `addBlackList`, `removeBlackList` and `destroyBlackFunds` are `onlyOwner`; `isBlackListed` is public. Unverified.
+- MIT Digital Currency Initiative stablecoin redemptions review: redemption with the issuer is limited to verified customers; others cash out on the market. Unverified.
+- SEC releases on Terraform Labs: the UST and LUNA relationship (used only for the TerraUSD slide). Unverified.
 
 ## Executive Summary
 

@@ -32,8 +32,6 @@ slide index), which is never listed here.
   XSema slide is hidden (owner's decision B, 13 Nov 2026). Restore them to `glossary/lesson_terms/` from
   `git show 7057ae79^:blockchain-course/glossary/lesson_terms/01-FO-illicit_finance_regulation_case_studies.yml`.
   [13 Nov 2026, glossary run after the lesson rebuilds; narrowed 14 Nov 2026]
-- The 01-EF bank (`quizes/quiz_json/ethereum_01-EF-ethereum_intro-quiz-bank.json`) has no questions on the
-  rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
 - **Closes with the 01-BF, 03-BF and 02-CP rebuilds.** The 02-BF rebuild copied in Bitcoin's script and address-type slides and the Merkle root and proof slides
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
@@ -43,10 +41,6 @@ slide index), which is never listed here.
   example is mined at 887,986. Run it through the `source` skill, then fix. The Answers slide's notes also contradict
   themselves: the Overall Slide Concept says "three agreeing clues give Moderate", while the slide and Key Points say
   two. [14 Nov 2026, 02-BF quiz bank]
-- Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
-  trace to 05-EF slides hidden on 31 Oct 2026 (q8 and q9 read "No slide now: ..."); the slides rebuilt on 13 Nov 2026
-  (the two checks, the Terra slide, the practice and review) have few questions.
-  [11 Nov 2026, writing the Spot the fake questions; updated 13 Nov 2026, 05-EF rebuild]
 - **Closes when a hidden slide citing it is shown again** (no work until then). Hidden slides still cite the weak source `salisu_blockchainforensicsmodern_2023` (a low-tier journal article, W3
   in `docs/analysis/2026-11-sources-review.md`): `blockchain-course/lessons/forensics/01-FO-*.qmd` (5 uses) and
   `forensics/02-FO-*.qmd` (8 uses). Replace or pair it if those slides are ever shown.
