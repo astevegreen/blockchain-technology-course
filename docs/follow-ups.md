@@ -106,6 +106,10 @@ slide index), which is never listed here.
 - `quizes/pretest/pretest_week1-quiz-bank.json` (around line 283): the custody item's explanation says customer coins
   "often sit pooled in omnibus accounts", which the rebuilt 05-BF no longer teaches (04-FO does); repoint that sentence
   to 04-FO. The correct answer still traces to "Whoever holds the key controls the coins". [13 Nov 2026, 05-BF rebuild]
+- 06-BF has no quiz bank of its own (only `quizes/quiz_json/daily_d3_review_of_day2-quiz-bank.json` and
+  `weekone_check-quiz-bank.json` cite it), so nothing tests the rebuilt 06-BF's new slides: the three checks (which
+  wrapper; which key did not sign; which software built it), "three keys, one person", the PSBT steps, the lab-spend
+  practice and its Moderate change call, and the review. [13 Nov 2026, 06-BF rebuild]
 - The 02-BF rebuild renamed slides that other files name: `dynamic-labs/wallet/gateway/static/lab/index.html:48` and
   `quizes/quiz_json/weekone_check-quiz-bank.json:252` ("Coinbase pays the miner: subsidy plus fees", now "A trace
   ending at a coinbase reached new coins"); `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:135,140`,
