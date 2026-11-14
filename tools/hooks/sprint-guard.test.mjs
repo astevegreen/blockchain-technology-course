@@ -522,6 +522,8 @@ describe("--file-lock", () => {
       "tools/lab_manifest.py": "tools/lab_manifest.py", "quizes/verify_distractor_alignment.py": "quizes/verify_distractor_alignment.py",
       "quizes/pretest/verify_pretest.py": "quizes/pretest/verify_pretest.py", "quizes/posttest/verify_posttest.py": "quizes/posttest/verify_posttest.py",
       "quizes/challenge/verify_challenge.py": "quizes/challenge/verify_challenge.py",
+      "quizes/build_quiz_bank_bundle.py": "quizes/build_quiz_bank_bundle.py",
+      "blockchain-course/glossary/scripts/build_slide_index.py": "blockchain-course/glossary/scripts/build_slide_index.py",
       "quizes/verify_single_quiz.py": "quizes/verify_single_quiz.py",
       "blockchain-course/glossary/scripts/validate_glossary.py": "blockchain-course/glossary/scripts/validate_glossary.py",
       "tools/sprint/": "tools/sprint/queue.mjs", "tools/agy.mjs": "tools/agy.mjs", "tools/gemini-api.mjs": "tools/gemini-api.mjs", "tools/second-look": "tools/second-look.md",

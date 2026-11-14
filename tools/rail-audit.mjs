@@ -33,6 +33,8 @@ export const RAILS = [
   "quizes/pretest/verify_pretest.py",
   "quizes/posttest/verify_posttest.py",
   "quizes/challenge/verify_challenge.py",
+  "quizes/build_quiz_bank_bundle.py",
+  "blockchain-course/glossary/scripts/build_slide_index.py",
   "quizes/verify_single_quiz.py",
   "blockchain-course/glossary/scripts/validate_glossary.py",
   "tools/sprint/",
