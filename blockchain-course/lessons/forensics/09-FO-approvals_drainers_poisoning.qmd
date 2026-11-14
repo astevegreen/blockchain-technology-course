@@ -15,40 +15,42 @@ format:
 
 ## The victim's account paid: find out how {.smaller}
 
-**Bottom line:** in each theft in this lesson the money leaves the victim's own account. Something let it leave: a permission the victim gave, code the victim's account now runs, a send to the wrong address, or a key the thief holds. Each one leaves a different pattern on chain.
+::: {style="font-size: .85em;"}
 
-::: {style="font-size: .8em;"}
+**The case:** a victim tells an agent, "my wallet was drained: 9,800 USDC gone, and I never sent it." On chain the money did leave the victim's own account. Something let it leave: a permission the victim gave, code the account now runs, a send to the wrong address, or a key the thief holds. Today is how to tell which.
 
-| Question | The answer tells you |
-| --- | --- |
-| Who sent the transaction that moved the tokens? | The owner, or a spender with permission |
-| Did the victim approve, or sign a permit? | An approval drain |
-| Who sells the phishing kit? | A drainer rented as a service, and how a kit's cut shows |
-| Does the victim's address now hold code? | An EIP-7702 delegation |
-| Did a look-alike address appear just before? | Address poisoning |
-| Wrong recipient, but no lure? | Possibly a clipboard hijacker |
-| What if the stolen keys belong to a bridge? | Ronin, and North Korea |
-| How sure can you be? | The words for each finding |
+**Week 1 showed** two ways a token balance moves: the holder sends it, or an approved spender takes it (Tokens: ERC-20, Stablecoins and NFTs). Day 7 ended where traces go dark; on Ethereum the trail is in plain view, and the question is who moved it. Three parts:
+
+1. **Approvals and drainers:** someone else sent the outflow, with the victim's permission.
+2. **When the owner did not mean to send it:** code at the victim's address, a look-alike address, a hijacked clipboard.
+3. **Ronin:** stolen keys at a bridge, and who named the thief.
+
+**By the end:** given an outflow that emptied a victim's Ethereum account, say what let it leave, what the chain shows and what it cannot, and how sure you are (High, Moderate or Low).
+
+**The point to earn:** read who sent the outflow first. With what came just before it and whether the victim's address holds code, it names how the money left, or shows that the chain cannot say.
 
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 8, "Ethereum attacks and the loot". It sets the one question that sorts every case in the lesson: what let the money leave the victim's own account? It matters here because a drain, a poisoning and a stolen key all show the same thing at first, the victim's balance going to zero, and the analyst's first job is to tell them apart. Emphasize "who sent the transaction": it is the first field to read.
+This slide opens day 8, "Ethereum attacks and the loot", with a case and a question: a victim's 9,800 USDC is gone, and the victim says they never sent it. It matters here because a drain, a poisoning and a stolen key all show the same thing at first, the victim's balance going to zero, and the analyst's first job is to tell them apart. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- An ERC-20 token lets its owner give another address permission to spend; this lesson shows what a thief does with that permission.
-- Students recognize each pattern from transactions and published write-ups; in this lesson nobody reads code (the day 8 lab reads the Bybit code).
-- 10-FO takes flash loans, reentrancy and oracle attacks; 11-FO takes bytecode and NFT wash trading.
-- Ronin closes the lesson as the introduction to North Korea; 13-FO takes North Korea in depth.
+- Students already know what this lesson builds on. The week 1 tokens lesson showed the two ways a token balance moves: the holder sends it with `transfer`, or a spender the holder approved takes it with `transferFrom`. Today shows what a thief does with that second way, and with the first.
+- The 9,800 USDC case runs through the lesson: part 1 reads it as an approval drain, step by step; part 2 asks what the analyst sees when the victim's own address sent the money; part 3 sets Ronin, a bridge whose keys were stolen, beside it as the second case. The case's data are invented.
+- The point is a claim the lesson earns, not one it assumes: the "Sent by" field, what came just before the outflow and the code at the victim's address together sort most cases, and when they do not, "the chain cannot say" is the finding.
+- Students recognize each pattern from transactions and published write-ups; nobody reads code in this lesson. The day 8 lab opens by reading one exploit contract.
+- The next lesson (Flash Loans, Reentrancy and Oracle Manipulation) turns to thefts where the protocol pays, not the victim.
 
 **Walkthrough**
-1. Read the bottom line aloud.
-2. Walk the table; each row is one or two slides.
+1. Read the case and leave the victim's claim open; the lesson tests it.
+2. Read the link back to week 1 and day 7, then name the three parts.
+3. Read the objective aloud. Parts 1 and 2 end with a check every student answers, part 3 leads into the practice, and the close asks the objective again.
+4. Time plan, 50 minutes: opening 3, part 1 10, check 2, part 2 14, check 3, part 3 10, practice 4, answers 2, review and next 2. The optional five-minute lab on the first Ronin slide is outside the plan: run it only with time in hand.
 
 **Sources**
-None
+- @vogelsteller_eip20tokenstandard_2015
 
 :::
 
@@ -75,7 +77,7 @@ None
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide explains the token approval: the permission every drain in the next four slides abuses. It matters here because an approval separates the moment of the mistake (the victim approves) from the moment of the loss (the spender takes), sometimes by days. Emphasize the third column: the loss arrives in someone else's transaction.
+This slide explains the token approval: the permission every drain in the next three slides abuses, and the start of part 1. It matters here because an approval separates the moment of the mistake (the victim approves) from the moment of the loss (the spender takes), sometimes by days. Emphasize the third column: the loss arrives in someone else's transaction.
 
 **Key Points**
 - ERC-20's `approve` sets an allowance; `transferFrom` spends it; `allowance` reads what is left.
@@ -209,6 +211,7 @@ This slide walks one approval drain end to end, with invented data. It matters h
 **Walkthrough**
 1. Read each row left to right.
 2. Ask: how would you say step 2 to an agent? ("The victim's USDC was taken by 0xA11…, which the victim had given permission two days earlier.")
+3. Close: this is the running case from the opening. The victim's claim, "I never sent anything", is half true: the victim sent the approval, and the spender sent the loss.
 
 **Sources**
 - @metasleuth_infernoprofitsharing_2024
@@ -216,48 +219,39 @@ This slide walks one approval drain end to end, with invented data. It matters h
 
 :::
 
-## Five ways out of a wallet look different {.smaller}
+## Check: approval, permit, or a plain transfer? {.smaller}
 
-**Bottom line:** read who sent the outflow, what came just before it, and whether the victim's address holds code. Those three answers sort most cases.
+**The case:** a second victim, V, lost 4,000 USDC. The `Transfer` out of V sits in a transaction sent by an address S that V never used. V's own history shows no `approve` at all.
 
-::: {style="font-size: .78em;"}
+**Write one line:** what most likely let the tokens leave, and what do you look for to confirm it?
 
-| What let the money leave | Who sent the outflow | What comes before it | The victim's address |
-| --- | --- | --- | --- |
-| Approval | The spender | The victim's `approve` transaction | A plain account |
-| Permit | The spender | An `Approval` inside the spender's transaction | A plain account |
-| EIP-7702 delegation (next slide) | Anyone, even a stranger who pays the fee | A signed authorization; the account's code is set | Holds code starting `0xef0100` |
-| Stolen key | The victim's own address | Nothing on chain | A plain account |
-| Wrong recipient (poisoning, clipboard) | The victim's own address | A look-alike lure, or nothing | A plain account |
+::: {.fragment}
 
-: {tbl-colwidths="[24,22,30,24]"}
+**Answer:** most likely a permit. Look inside S's transaction for an `Approval` event naming V as owner, and for V's permit nonce going up by one [@lundfall_erc2612permit_2020]. It is not a plain transfer: V did not send it, and V's address holds no code, so someone held permission [@vogelsteller_eip20tokenstandard_2015].
+
+**Part 1 in one line:** when someone else sent the outflow, look first for a permission, the `Approval`; part 2 adds one more cause, code at the victim's address.
 
 :::
-
-A stolen key and a mistaken send both look like the owner's own payment. What tells them apart is the recipient.
-
-**Ask:** the victim's address sent all its tokens to a new address, with no lure and no approval before it. What are the two candidates?
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide puts the lesson's patterns side by side. It matters here because the victim's complaint is always the same ("my wallet was drained") and the analyst's finding has to name the mechanism. Emphasize the last two rows: when the victim's own address sent the funds, the chain cannot tell the owner from a thief holding the key, so the analyst reads the recipient and what came before.
+This slide checks part 1 before the lesson moves on. It matters here because the permit case is the one an analyst most often misreads: the victim's history is clean, so the drain looks like a stolen key. Emphasize the two clues together: someone else sent the outflow, and the victim sent no approval.
 
 **Key Points**
-- Approval and permit: the outflow is the spender's `transferFrom`.
-- EIP-7702: the next two slides; the outflow can arrive in a transaction anyone sent, running code at the victim's address.
-- Stolen key: the thief signs as the owner, so the outflow looks like the owner's own send.
-- Wrong recipient: the owner really did send it; poisoning leaves a lure, a clipboard hijacker does not.
+- The expected answer is a permit. A plain transfer would have been sent by V; an `approve` would show in V's own history; neither is there.
+- The confirming evidence is on chain: the `Approval` event inside S's transaction and V's permit nonce, which a valid permit raises by one.
+- An answer of "approval to a contract S controls" earns half credit if the student still names the `Approval` event as the thing to find.
+- A student who says "stolen key" has missed the sender: a thief with V's key would send from V's address.
 
 **Walkthrough**
-1. Read each row and ask the class to say the first column from the other three.
-2. Ask the slide's question. (A stolen key or a clipboard hijacker; the chain alone may not decide between them.)
-3. Likely question: "Why is 7702 in the table before we have learned it?" (So the table is complete; the next two slides teach it, and the class can come back to this row.)
+1. Read the case. Give thirty seconds; each student writes one line.
+2. Take a show of hands: approval, permit, stolen key.
+3. Reveal the answer, then the part 1 line. Part 2 asks what to read when the victim's own address sent the money.
 
 **Sources**
-- @vogelsteller_eip20tokenstandard_2015
 - @lundfall_erc2612permit_2020
-- @buterin_eip7702setcode_2024
+- @vogelsteller_eip20tokenstandard_2015
 
 :::
 
@@ -306,7 +300,7 @@ The standard warns that a bad delegate can take "near complete control" of the a
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide explains EIP-7702, the change that blurred the line between a plain account and a contract. It matters here because before May 2025 a plain account held no code, so every outflow from it was a transaction its key signed; after Pectra that is no longer true. Emphasize the second row: the delegation indicator is the thing to look for.
+This slide opens part 2, outflows the owner did not knowingly send, with EIP-7702, the change that blurred the line between a plain account and a contract. It matters here because before May 2025 a plain account held no code, so every outflow from it was a transaction its key signed; after Pectra that is no longer true. Emphasize the second row: the delegation indicator is the thing to look for.
 
 **Key Points**
 - Pectra activated on Ethereum mainnet on 7 May 2025 at epoch 364032, and 7702 is live [2026]{.asof}.
@@ -488,7 +482,7 @@ This slide covers the clipboard hijacker, or "clipper": the theft that happens b
 
 **Bottom line:** both end with the victim's own payment to the wrong address. Poisoning leaves its lure on chain; a clipper leaves its evidence on the device.
 
-::: {style="font-size: .8em;"}
+::: {style="font-size: .74em;"}
 
 | Sign | Address poisoning | Clipboard hijacker |
 | --- | --- | --- |
@@ -503,10 +497,16 @@ This slide covers the clipboard hijacker, or "clipper": the theft that happens b
 
 **Ask:** the victim paid an address sharing the payee's first and last four characters, but no lure is in their history. What do you say?
 
+::: {.fragment}
+
+**Answer:** a wrong recipient. Poisoning is not shown, since the lure is what decides it; a clipper, or a lure sent on another chain, are both possible [@tsuchiya_addresspoisoning_2025; @kaspersky_clipperfaketor_2023].
+
+:::
+
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide sets the two mistaken-send thefts side by side. It matters here because the analyst's finding differs: poisoning can be shown from the chain, a clipper cannot. Emphasize the last row: "cause not shown on chain" is a finding, not a failure.
+This slide sets the two mistaken-send thefts side by side, and its Ask is part 2's check. It matters here because the analyst's finding differs: poisoning can be shown from the chain, a clipper cannot. Emphasize the last row: "cause not shown on chain" is a finding, not a failure.
 
 **Key Points**
 - Poisoning: two lines of on-chain evidence, the look-alike match and the lure before the loss.
@@ -515,10 +515,66 @@ This slide sets the two mistaken-send thefts side by side. It matters here becau
 
 **Walkthrough**
 1. Read each row.
-2. Ask the slide's question. (Wrong recipient; poisoning not shown, since there is no lure; a clipper or a lure on another chain are both possible.)
+2. Ask the slide's question. Give thirty seconds; each student writes one line. Then reveal. (Wrong recipient; poisoning not shown, since there is no lure; a clipper or a lure on another chain are both possible.)
+3. A student who says "poisoning" from the look-alike alone has the most common error: the match is one line of evidence, and without the lure it is also what a careless copy or a clipper can produce.
 
 **Sources**
 - @tsuchiya_addresspoisoning_2025
+- @kaspersky_clipperfaketor_2023
+
+:::
+
+## Five ways out of a wallet look different {.smaller}
+
+**Bottom line:** read who sent the outflow, what came just before it, and whether the victim's address holds code. Those three answers sort most cases.
+
+::: {style="font-size: .68em;"}
+
+| What let the money leave | Who sent the outflow | What comes before it | The victim's address |
+| --- | --- | --- | --- |
+| Approval | The spender | The victim's `approve` transaction | A plain account |
+| Permit | The spender | An `Approval` inside the spender's transaction | A plain account |
+| EIP-7702 delegation | Anyone, even a stranger who pays the fee | A signed authorization; the account's code is set | Holds code starting `0xef0100` |
+| Stolen key | The victim's own address | Nothing on chain | A plain account |
+| Wrong recipient (poisoning, clipboard) | The victim's own address | A look-alike lure, or nothing | A plain account |
+
+: {tbl-colwidths="[24,22,30,24]"}
+
+:::
+
+::: {style="font-size: .8em;"}
+
+A stolen key and a mistaken send both look like the owner's own payment. What tells them apart is the recipient.
+
+**Ask:** the victim's address sent all its tokens to a new address, with no lure and no approval before it. What are the two candidates?
+
+::: {.fragment}
+
+**Answer:** a stolen key or a clipboard hijacker; the chain alone may not decide between them [@kaspersky_clipperfaketor_2023]. **Part 2 in one line:** when the owner's own address sent it, read what came before and the code at the address, and say what the chain cannot show.
+
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 by putting every pattern from parts 1 and 2 side by side. It matters here because the victim's complaint is always the same ("my wallet was drained") and the analyst's finding has to name the mechanism. Emphasize the last two rows: when the victim's own address sent the funds, the chain cannot tell the owner from a thief holding the key, so the analyst reads the recipient and what came before.
+
+**Key Points**
+- Approval and permit, from part 1: the outflow is the spender's `transferFrom`.
+- EIP-7702, from the start of part 2: the outflow can arrive in a transaction anyone sent, running code at the victim's address.
+- Stolen key: the thief signs as the owner, so the outflow looks like the owner's own send. Part 3's Ronin case is this row at a bridge.
+- Wrong recipient: the owner really did send it; poisoning leaves a lure, a clipboard hijacker does not.
+
+**Walkthrough**
+1. Read each row and ask the class to say the first column from the other three.
+2. Ask the slide's question, then reveal the answer and the part 2 line. (A stolen key or a clipboard hijacker; the chain alone may not decide between them.)
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @lundfall_erc2612permit_2020
+- @buterin_eip7702setcode_2024
 - @kaspersky_clipperfaketor_2023
 
 :::
@@ -547,7 +603,7 @@ On chain, the withdrawals were valid: enough validators had signed. It is a stol
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide revisits the Ronin bridge from 08-EF, day 4's bridges lesson, now as a theft case. It matters here because Ronin is the stolen-key pattern from the comparison slide, on a bridge: no contract bug, no approval, just keys in the wrong hands. Emphasize the last line: the chain cannot tell a forged withdrawal from a real one when the signatures are valid.
+This slide opens part 3 and the second case: the Ronin bridge from day 4's Layer 2s and Bridges by Type, now as a theft. It matters here because Ronin is the stolen-key pattern from the comparison slide, on a bridge: no contract bug, no approval, just keys in the wrong hands. Emphasize the last line: the chain cannot tell a forged withdrawal from a real one when the signatures are valid.
 
 **Key Points**
 - Withdrawals needed five of nine validator signatures; the thief controlled exactly five.
@@ -585,7 +641,7 @@ This slide revisits the Ronin bridge from 08-EF, day 4's bridges lesson, now as 
 :::
 
 - **What the chain shows:** where the funds went (a mixer on Ethereum, then Bitcoin and a Bitcoin mixer). **Who:** the FBI's finding.
-- Day 9's 13-FO takes North Korea's thefts and laundering in depth.
+- Day 9's State Actors: North Korea in Depth takes North Korea's thefts and laundering further.
 
 ::: {.notes}
 
@@ -596,8 +652,8 @@ This slide introduces North Korea through Ronin: the attribution, and where the 
 - The FBI's statement of 14 April 2022 confirmed Lazarus Group and APT38 for the $620M Ronin theft.
 - Treasury's first sanctions on a mixer (Blender, 6 May 2022) named the heist; Blender operated on Bitcoin, so some proceeds had moved off Ethereum.
 - Treasury's Tornado Cash sanctions (8 August 2022) cited over $455M stolen by Lazarus in the largest heist to date.
-- Bybit (February 2025, about $1.5B) is the largest theft on record, per Elliptic [Mar 2025]{.asof}; 13-FO covers it.
-- 05-FO covered the Tornado Cash sanctions and their later removal.
+- Bybit (February 2025, about $1.5B) is the largest theft on record, per Elliptic [Mar 2025]{.asof}; State Actors: North Korea in Depth covers it.
+- VASPs and the Rules covered the Tornado Cash sanctions and their later removal.
 
 **Walkthrough**
 1. Read the dates in order: theft, attribution, then the two mixers.
@@ -642,8 +698,8 @@ This slide applies the course's confidence scale to the lesson's findings. It ma
 - Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
 - Low: timing, amount or behavior alone, or one unverified label.
 - Independent means a different kind of evidence, not a second reading of the same transactions.
-- No word (—): a fact read off the chain takes no confidence word, as 01-FO's scale says. The confidence column holds only Low, Moderate or High.
-- An attribution made by a government is quoted with its source and date, not rated. 01-FO rates a government label on an address as one line of evidence; here the claim is who did it, which the chain cannot test.
+- No word (—): a fact read off the chain takes no confidence word, as the scale in Attribution and Confidence says. The confidence column holds only Low, Moderate or High.
+- An attribution made by a government is quoted with its source and date, not rated. Attribution and Confidence rates a government label on an address as one line of evidence; here the claim is who did it, which the chain cannot test.
 
 **Walkthrough**
 1. Read each row and ask the class for the word before revealing the column.
@@ -655,35 +711,127 @@ None (the course's confidence scale)
 
 :::
 
-## What to carry out of this lesson {.smaller}
+## Practice: name the way out for three outflows {.smaller}
 
-- Ask first who sent the transaction that moved the money: the owner, or a spender.
-- An approval or a permit lets a spender take tokens later; a permit leaves nothing in the victim's own history.
-- A drainer is a rented kit; the same cut to the same address ties drains to one kit.
-- Since May 2025 a plain account can hold code: look for `0xef0100`, then ask whether the key had leaked.
-- Poisoning: a look-alike and a lure before the loss. No lure: say what the chain cannot show.
-- Ronin was stolen keys; the FBI named North Korea. Quote attributions with their source and date.
+**The task:** three victims each say "my wallet was drained". For each outflow, say what let the money leave, how sure you are (High, Moderate or Low, or no word for a fact), and what would change your answer. (Invented data.)
 
-**Check:** a victim's tokens left in a transaction the victim did not send. What do you look for, and where, if the victim's own history shows none?
+::: {style="font-size: .85em;"}
+
+1. **Victim A:** 12,000 USDC left in a transaction sent by an address A never used. Inside it, an `Approval` names A as owner, and A's permit nonce went up by one. The spender then paid 20% to an admin address that took the same cut from two earlier victims, and 80% to a new address.
+2. **Victim B:** B paid 3,000 USDT to its usual supplier on Monday. One minute later, a zero-value transfer "from B" went to an address sharing the supplier's first four and last four characters. On Thursday B sent 3,000 USDT to that look-alike.
+3. **Victim C:** C's own address sent all its USDC to an address it had never paid. Nothing came before it: no lure, no approval, and C's address holds no code.
+
+:::
+
+Work alone for three minutes, then compare with a neighbor.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the lesson in six lines. It matters here because 10-FO turns from thefts that trick a person to thefts that trick a contract, and the "who sent it" habit carries over. Emphasize the first line.
+This slide is the lesson's practice: three outflows, one from each family the lesson taught. It matters here because the objective asks students to name the way out, what the chain shows and how sure they are, and this is the first time they do all three without a slide telling them which pattern to expect. Emphasize the third column of the next slide: what would change the answer.
 
 **Key Points**
-- Approval, allowance, `transferFrom`, permit, `setApprovalForAll`.
-- Drainer-as-a-service and its profit split.
-- EIP-7702: authorization, delegation indicator, sponsorship, sweepers.
-- Address poisoning and its three lures; clipboard hijackers.
-- Ronin, Lazarus and the FBI's attribution; 13-FO continues.
+- Victim A is part 1: the sender is not the owner and the `Approval` sits inside the spender's transaction, so it is a permit drain; the shared 20% cut links it to one kit.
+- Victim B is part 2's poisoning: a look-alike, and a lure a minute after the real payment.
+- Victim C is the row the chain cannot finish: the owner's own address sent it, with no lure, approval or code. A stolen key and a clipboard hijacker both fit.
+- Students use the confidence words from the slide before: a fact takes no word; one strong line is Moderate; two independent lines are High.
 
 **Walkthrough**
-1. Ask a student to say each line in their own words.
-2. Ask the Check. (An `Approval` from the victim to the spender; if the victim never sent `approve`, a permit's `Approval` inside the spender's transaction.)
+1. Read the task and the three outflows aloud.
+2. Three minutes alone, writing one line per victim; then a minute with a neighbor.
+3. Do not reveal yet; the next slide holds the answers.
 
 **Sources**
-None
+- @lundfall_erc2612permit_2020
+- @metasleuth_infernoprofitsharing_2024
+- @tsuchiya_addresspoisoning_2025
+
+:::
+
+## Answers: three outflows, three ways out {.smaller}
+
+::: {style="font-size: .72em;"}
+
+| Outflow | Way out | How sure, and why | What would change it |
+| --- | --- | --- | --- |
+| **A** | [A permit drain [@lundfall_erc2612permit_2020]; the same kit as the two earlier drains]{.fragment} | [The permit is a fact on the chain (no word). One kit: **Moderate**, one strong line, the same split to the same admin address [@metasleuth_infernoprofitsharing_2024]]{.fragment} | [A second line, such as the same phishing domain in all three cases, would raise the kit link; the site operators may still differ]{.fragment} |
+| **B** | [Address poisoning [@tsuchiya_addresspoisoning_2025]]{.fragment} | [**High**: two independent lines, the look-alike match and the lure a minute after the real payment]{.fragment} | [Evidence that B typed or pasted the address from somewhere other than its history would weaken it]{.fragment} |
+| **C** | [A stolen key or a clipboard hijacker; the chain cannot decide [@kaspersky_clipperfaketor_2023]]{.fragment} | [The outflow is a fact (no word). Either cause is at most **Low**, as on the How sure slide: no lure, no approval, and the proof is off chain. Say "sent from the victim's address to an unknown recipient; cause not shown on chain"]{.fragment} | [A device examination finding a clipper, or other outflows from C that C never meant, would decide it]{.fragment} |
+
+: {tbl-colwidths="[10,26,34,30]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the practice's answers, one row at a time. It matters here because the third outflow is the one students most want to force into a pattern, and the right answer is to say what the chain cannot show. Emphasize the last column: every finding carries what would change it.
+
+**Key Points**
+- A: the permit is read off the chain, so it takes no confidence word; the kit link is a judgment from one strong line, so Moderate. Two victims on different sites can share a kit but not an operator.
+- B: High, because the look-alike and the lure are two kinds of evidence; the timing, a minute after the real payment, fits what the study found works.
+- C: the outflow is the owner's own send. A stolen key and a clipper both produce it; the chain cannot tell them apart, and "cause not shown on chain" is the finding.
+- A student who wrote "clipboard hijacker, Low" or "stolen key, Low" has used the scale correctly; the error is to name one cause without the other, or to rate either above Low, since nothing on chain favors one.
+
+**Walkthrough**
+1. Reveal row A cell by cell and ask who wrote "permit".
+2. Reveal row B; ask why it is High when A's kit link is only Moderate. (Two kinds of evidence against one.)
+3. Reveal row C last and take the disagreement: some will have written "stolen key" alone. Ask what on the chain supports it over a clipper. (Nothing that a clipper would not also produce, so both stay at Low.)
+
+**Sources**
+- @lundfall_erc2612permit_2020
+- @metasleuth_infernoprofitsharing_2024
+- @tsuchiya_addresspoisoning_2025
+- @kaspersky_clipperfaketor_2023
+
+:::
+
+## Review: which way out, and who signed {.smaller}
+
+[]{#what-to-carry-out-of-this-lesson}
+
+::: {style="font-size: .72em;"}
+
+**The objective:** given an outflow that emptied a victim's Ethereum account, say what let it leave, what the chain shows and what it cannot, and how sure you are. Answer each question from memory, then reveal.
+
+| Question | Answer |
+| --- | --- |
+| **1.** What do you read first on any outflow? | [Who sent the transaction that moved the money: the owner, or a spender [@vogelsteller_eip20tokenstandard_2015].]{.fragment} |
+| **2.** A victim's tokens left in a transaction the victim did not send, and the victim's own history shows no `approve`. What do you look for, and where? | [An `Approval` naming the victim as owner inside the spender's transaction: a permit [@lundfall_erc2612permit_2020].]{.fragment} |
+| **3.** What ties drains on different sites to one kit? | [The same cut, such as 20%, to the same admin address [@metasleuth_infernoprofitsharing_2024].]{.fragment} |
+| **4.** A plain wallet now holds code. What do you check? | [Whether it starts `0xef0100`, which delegate it names, and whether the key had already leaked [@buterin_eip7702setcode_2024; @abrams_wintermutepectra_2025].]{.fragment} |
+| **5.** What separates poisoning from a clipboard hijacker on chain? | [A lure before the loss. With no lure, say the cause is not shown on chain [@tsuchiya_addresspoisoning_2025].]{.fragment} |
+| **6.** How do you state who stole from Ronin? | [As the FBI's attribution, with its date: Lazarus Group, 14 Apr 2022 [@fbinationalpressoffice_fbistatementattribution_2022].]{.fragment} |
+
+: {tbl-colwidths="[45,55]"}
+
+**Next:** Flash Loans, Reentrancy and Oracle Manipulation, where the protocol paid, not a victim. Can you now tell the agent whether the victim who lost 9,800 USDC really "never sent anything"?
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes the lesson by asking the objective again, as six questions answered from memory. It matters here because the next lesson turns from thefts that trick a person to thefts that trick a contract, and the "who sent it" habit carries over. Emphasize question 1: it comes first on every outflow.
+
+**Key Points**
+- The six questions follow the lesson's order: the sender, the permit, the kit, 7702, poisoning against a clipper, and quoting an attribution.
+- Question 2 was the old summary's check; it is part 1's check again, so students should now answer it fast.
+- The running case's answer: the victim did send something, the approval, but not the loss. That is the line an analyst gives the agent.
+- Next, Flash Loans, Reentrancy and Oracle Manipulation: the protocol paid, not a victim; Ronin comes back in AML Typologies: ATT&CK, the Diamond and AADAPT, and North Korea in State Actors: North Korea in Depth.
+
+**Walkthrough**
+1. Read the objective. Ask each question; take an answer from the room before each reveal.
+2. Close on the Next line: ask the case's question and take one answer. (The victim sent the approval two days before, on a fake airdrop site; the spender sent the loss.)
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @lundfall_erc2612permit_2020
+- @metasleuth_infernoprofitsharing_2024
+- @buterin_eip7702setcode_2024
+- @abrams_wintermutepectra_2025
+- @tsuchiya_addresspoisoning_2025
+- @fbinationalpressoffice_fbistatementattribution_2022
 
 :::
 
