@@ -107,5 +107,4 @@ slide index), which is never listed here.
   `lesson_terms/*.yml`, so those dates are neither tagged nor listed when a fact changes.
   [12 Nov 2026, "Sources in the speaker notes" build]
 
-
 ## Notion and documents
