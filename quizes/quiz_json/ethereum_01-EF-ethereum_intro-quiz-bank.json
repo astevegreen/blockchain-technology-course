@@ -1,36 +1,32 @@
 {
   "lesson_id": "ethereum_01_ef_ethereum_intro",
-  "lesson_title": "Ethereum - A Distributed Computer",
-  "date_generated": "2026-04-26",
+  "lesson_title": "Ethereum - Accounts, the EVM and Transactions",
+  "date_generated": "2026-11-14",
   "topic": "ethereum",
   "tags": [
     "ethereum",
     "01-ef-ethereum-intro",
-    "ethereum-intro",
-    "evm",
-    "smart-contracts",
-    "gas",
-    "deterministic-execution",
     "accounts",
-    "proof-of-stake",
-    "layer-2",
-    "rollups",
-    "data-availability",
+    "evm",
+    "transactions",
+    "gas",
+    "receipts",
+    "logs",
+    "internal-transfers",
+    "finality",
     "quiz-bank"
   ],
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "01-EF-ethereum_intro",
-    "question_count": 13,
+    "question_count": 16,
+    "reading_status": "partial",
     "source_mix": {
-      "lesson_questions": 10,
-      "reading_questions": 3
+      "lesson_grounded_questions": 12,
+      "reading_grounded_questions": 4
     },
-    "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd",
-    "reading_sources": [
-      "/tmp/blockchain-course-readings/text/ethereum_whitepaper.txt",
-      "/tmp/blockchain-course-readings/ethereum_whitepaper.pdf"
-    ]
+    "lesson_source_path": "01-EF-ethereum_intro.qmd",
+    "note": "The lesson names no assigned reading. Reading questions rest on documents the lesson cites (Wood, Ellis et al. and Eskandari et al., Flashbots, Otterscan) and each states a fact that is on a visible slide. Only the visible slides count; the hidden slides get no questions. Coverage: one question for each visible check, worked, practice, answers and review slide, plus the balances, contract, transaction, receipt and internal-transfer slides."
   },
   "hierarchy": {
     "sections": [
@@ -41,7 +37,7 @@
         "lectures": [
           {
             "id": "lec_ethereum_intro_lesson_slides",
-            "title": "Ethereum - A Distributed Computer - lesson slides",
+            "title": "Ethereum - Accounts, the EVM and Transactions - lesson synthesis",
             "enabled": true,
             "question_ids": [
               "q1",
@@ -53,17 +49,20 @@
               "q7",
               "q8",
               "q9",
-              "q10"
+              "q10",
+              "q11",
+              "q12"
             ]
           },
           {
             "id": "lec_ethereum_intro_assigned_reading",
-            "title": "Ethereum - A Distributed Computer - assigned reading",
+            "title": "Ethereum - Accounts, the EVM and Transactions - reading synthesis",
             "enabled": true,
             "question_ids": [
-              "q11",
-              "q12",
-              "q13"
+              "q13",
+              "q14",
+              "q15",
+              "q16"
             ]
           }
         ]
@@ -74,369 +73,398 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A developer says Ethereum is mainly Bitcoin with a different native coin. Which response best reflects how Ethereum is actually designed?",
-      "correct_answer": "Ethereum uses a blockchain as a shared execution platform where smart contracts can hold value, update state, and enforce application logic.",
+      "question_stem": "Block 3's transaction is from Account 1, whose address page shows a balance and a nonce but no Contract tab. What kind of account sent it, and what evidence says so?",
+      "correct_answer": "An EOA: only an EOA can start a transaction, and an address with no code shows no Contract tab.",
       "incorrect_answers": [
-        "Ethereum mainly records ether payments while smart contract rules run as wallet-side scripts outside the shared consensus process.",
-        "Ethereum gives each application its own isolated ledger so contract rules can differ without being verified by the wider network.",
-        "Ethereum extends Bitcoin with richer transaction templates, while persistent contract state is managed by separate off-chain services."
+        "A contract account: it holds a balance and a nonce, and a contract can start a transaction by its code.",
+        "An EOA, because the explorer prints an [EOA] tag beside the address, and that tag settles it alone.",
+        "A contract account, because only an account with code has a nonce, which shows it ran a program."
       ],
-      "explanation": "The lesson frames Ethereum as a shift from blockchain-as-digital-money to blockchain-as-shared-computer: common execution semantics let many applications share one replicated state machine.",
+      "explanation": "Two pieces of evidence, of different kinds: only an EOA can start a transaction, and an address with no code has no Contract tab. The explorer's [EOA] tag is a label to check against the code.",
       "difficulty_level": 2,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "smart-contracts",
-        "shared-computation",
-        "misconception"
+        "account-type",
+        "eoa-vs-contract",
+        "lesson-synthesis"
       ],
-      "lesson_block": "From Digital Money To Shared Computation",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Beyond Cryptocurrency: Buterin's Vision; From Digital Money To Shared Computation",
-      "source_type": "lesson_slides"
+      "lesson_block": "Check: block 3. Which account type sent it?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Check: block 3. Which account type sent it?"
     },
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "An ERC standard has been publicly specified and discussed, but major wallets and applications have not adopted it. What is its practical effect?",
-      "correct_answer": "The specification alone does not make it binding; practical impact depends on implementation, testing, and opt-in adoption by ecosystem participants.",
+      "question_stem": "On Ethereum's main network, a payment sits in a block made two minutes ago. The agent asks: \"So it's done, and can't be undone?\" What do you answer?",
+      "correct_answer": "Not yet: it is included, not final, and becomes final about 15 minutes after the block, once validators holding two-thirds of staked ETH vote for a later checkpoint.",
       "incorrect_answers": [
-        "The ERC becomes a de facto protocol rule once the proposal number is assigned, requiring wallets to support the interface before testing.",
-        "Core developers can activate the ERC through client releases, so application teams must treat it as consensus immediately after publication.",
-        "Validators enforce the ERC as part of block validity, so tokens using older interfaces are rejected even if their contract code has not changed."
+        "Yes: it is in a block, and a payment is final once a validator has put it in a block and every node has re-run it, so nothing more is needed to settle it.",
+        "Not yet: it is included, and becomes final once six or more later blocks sit on top of it, about as many as Bitcoin needs for a payment to settle fully.",
+        "Yes: every node has rerun it in the EVM and recorded the same result, and that agreement of every node is what makes a payment final and permanent on Ethereum."
       ],
-      "explanation": "Ethereum governance is social and operational. EIPs and ERCs matter when client teams, validators, node operators, applications, wallets, exchanges, and users coordinate around them.",
+      "explanation": "Included is not final. The block becomes final once validators holding two-thirds of staked ETH vote for a later checkpoint, about 15 minutes after the block. More blocks on top do not make it final; the votes do.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "eips",
-        "erc-standards",
-        "governance",
-        "scenario"
+        "finality",
+        "included-vs-final",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Governance As Opt-In Coordination",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Governance & Ethereum Improvement Proposals (EIPs); EIP Workflow; Stakeholders & Decision Making",
-      "source_type": "lesson_slides"
+      "lesson_block": "Check: a block two minutes old. Final?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Check: a block two minutes old. Final?"
     },
     {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "Why would a smart contract that directly reads a validator's local clock or fetches a website during execution threaten Ethereum consensus?",
-      "correct_answer": "Different nodes could observe different values, causing them to compute different state transitions from the same transaction.",
+      "question_stem": "Block 3 paid a fee of 0.000016180715292 ETH for 21,000 gas. Under EIP-1559, how is that fee split?",
+      "correct_answer": "Nearly all of it is burned as the base fee, and 21,000 wei, the tip, goes to the block's fee recipient.",
       "incorrect_answers": [
-        "Those values would make signatures invalid, because validators sign a transaction only after the contract has finished running.",
-        "The contract would spend extra gas for the website request, but consensus would still agree as long as the response is cached.",
-        "The issue is mainly privacy: a validator clock reveals metadata, while the state transition remains identical everywhere."
+        "All of it goes to the validator who proposed the block, as the network's reward for the work done.",
+        "Half of it is burned and half goes to the fee recipient, because the base fee and tip are equal parts.",
+        "The base fee goes to the fee recipient and the tip is burned, which limits the transaction count."
       ],
-      "explanation": "Ethereum requires deterministic execution: the same prior state and transaction input must produce the same result everywhere. Local clocks, network calls, and OS randomness break that property.",
+      "explanation": "Under EIP-1559 the base fee is destroyed and the tip goes to the block's fee recipient. Block 3: 16,180.715271 Gwei burned, 21,000 wei tip, 0.000016180715292 ETH in all.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "evm",
-        "deterministic-execution",
-        "consensus",
-        "mechanism"
+        "fees",
+        "eip-1559",
+        "lesson-synthesis"
       ],
-      "lesson_block": "EVM, Determinism, And Gas As The Execution Foundation",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: The Ethereum Virtual Machine (EVM); Determinism & Execution Constraints",
-      "source_type": "lesson_slides"
+      "lesson_block": "Worked: block 3's fee, most of it burned",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Worked: block 3's fee, most of it burned"
     },
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "What is the best explanation for why Ethereum uses gas instead of trying to prove ahead of time that every contract execution will finish?",
-      "correct_answer": "Because general halt prediction is undecidable, Ethereum meters execution and stops computation when the transaction's gas budget is exhausted.",
+      "question_stem": "Block 6's transaction shows Status Fail, Value 0 ETH and no logs. What did it still cost Account 4?",
+      "correct_answer": "The fee for the 24,835 gas it used, and Account 4's nonce 0, which the failed transaction used up.",
       "incorrect_answers": [
-        "Because contract authors can usually estimate loop bounds, Ethereum verifies source code during deployment and uses gas mainly to recover validator costs.",
-        "Because validators can simulate every possible branch before inclusion, Ethereum uses gas chiefly to divide execution fees among network participants.",
-        "Because Turing-complete code is converted into fixed-length bytecode, Ethereum uses gas to schedule execution order rather than to bound computation."
+        "Nothing, because a failed transaction is undone whole, so Account 4's balance and nonce stay as they were.",
+        "The fee for the whole 100,000 gas limit, because the sender pays the limit it set and not the gas used.",
+        "The fee, but nonce 0 stays free for the next try, because a failed one does not count in a sequence."
       ],
-      "explanation": "The lesson connects expressive smart-contract code to the Halting Problem. Gas bounds computation, prices resource use, and protects the network from unbounded execution.",
+      "explanation": "A failed call still pays for the gas it used (24,835 of 100,000), and its changes are undone. Account 4's nonce 0 is used up all the same, and no log was written.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "gas",
-        "halting-problem",
-        "evm",
-        "mechanism"
+        "failed-transaction",
+        "fees",
+        "nonce",
+        "lesson-synthesis"
       ],
-      "lesson_block": "No slide now: The Halting Problem",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: The Halting Problem; Gas: Metering Computation and Storage",
-      "source_type": "lesson_slides"
+      "lesson_block": "Worked: block 6's receipt: status 0, fee paid",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Worked: block 6's receipt: status 0, fee paid"
     },
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction calls a contract, updates storage temporarily, then runs out of gas before completion. What outcome should a student expect?",
-      "correct_answer": "The storage changes from that execution are reverted, but the sender still pays for computation already consumed.",
+      "question_stem": "An agent read only the To field of blocks 4 and 5 and wrote: \"Account 0 paid the token contract; Account 1 paid the Splitter.\" What do you tell the agent?",
+      "correct_answer": "The To field names the contract each transaction called, not who received the value; the receivers are in the logs and the internal transfers.",
       "incorrect_answers": [
-        "The contract's earlier storage writes remain in state, and unused gas is refunded once execution stops at the limit.",
-        "The contract returns the last successful intermediate state, while the sender loses only the unused gas for execution.",
-        "The failed call is excluded from the block, but the sender still pays a fixed fee for the attempted contract execution."
+        "The To field is right for both, because the value of a transaction always ends with the account that the To field names, so report both of them.",
+        "Block 4 is right, since the token contract holds the tokens, but block 5 is wrong, since the Splitter kept none of the ETH it was sent.",
+        "The To field is empty for a contract call, so the agent should read the From field to find out who received the value of each one."
       ],
-      "explanation": "Out-of-gas execution reverts state changes to preserve atomicity, but gas consumed before failure is still charged because the network spent resources executing the transaction.",
+      "explanation": "The To field is the contract each transaction called. The token receiver is in the log, and the ETH a contract passes on is in the internal transfers.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "gas",
-        "state-reversion",
-        "smart-contracts",
-        "scenario"
+        "to-field",
+        "logs",
+        "internal-transfers",
+        "misconception",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Worked: block 6's receipt: status 0, fee paid",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Gas: Metering Computation and Storage; Common Misconceptions And Confusions",
-      "source_type": "lesson_slides"
+      "lesson_block": "Practice: blocks 4 and 5. Who received what?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Practice: blocks 4 and 5. Who received what?"
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A crop-insurance contract needs to pay out when rainfall falls below a threshold. What new issue appears when an oracle supplies the rainfall data?",
-      "correct_answer": "The contract now depends on assumptions about the oracle's data quality, honesty, manipulation resistance, and availability.",
+      "question_stem": "Block 4's log reads Transfer 5,000 CRT from Account 0 to Account 3. Which statement about Account 3 needs a confidence word such as High, Moderate or Low?",
+      "correct_answer": "That one particular person holds Account 3's key, because the chain cannot show who holds a key.",
       "incorrect_answers": [
-        "The oracle makes the rainfall fact deterministic on-chain, so the remaining risk is whether users accept the payout schedule.",
-        "The contract can verify sensor signatures, so it no longer needs assumptions about who selected and maintained the weather stations.",
-        "The data feed moves execution off Ethereum, so validators no longer re-run the contract payout logic before accepting a block."
+        "That Account 3 received 5,000 CRT, because a log is only the token contract's own report.",
+        "That the transaction carried 0 ETH, because the explorer's Value field can differ from the chain record.",
+        "That the transaction paid a fee, because the fee is a judgment the explorer works out from gas used."
       ],
-      "explanation": "Oracles bridge the gap between deterministic on-chain execution and off-chain facts, but they do not make external reality trustless. They shift trust to data providers and reporting mechanisms.",
+      "explanation": "The chain records the log, the internal transfers and the fee, so they need no confidence word. Who holds an account's key is a judgment the chain cannot make, so it takes High, Moderate or Low.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "oracles",
-        "data-feeds",
-        "deterministic-execution",
-        "trust-assumptions"
+        "facts-vs-judgments",
+        "confidence-words",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Boundaries Of On-Chain Knowledge",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Oracles: Bridging Blockchains and Reality; Boundaries Of On-Chain Knowledge",
-      "source_type": "lesson_slides"
+      "lesson_block": "Answers: the logs and the internal transfer",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Answers: the logs and the internal transfer"
     },
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "Which scenario correctly distinguishes externally owned accounts from contract accounts in Ethereum?",
-      "correct_answer": "An EOA is controlled by a private key and initiates a transaction, while a contract account contains code and storage that execute only when called.",
+      "question_stem": "An agent sees a contract call with Value 0 ETH and writes that nothing moved. What is the better reading?",
+      "correct_answer": "Not necessarily: a token moves by a contract call with `value` 0, and the receiver is found in the logs.",
       "incorrect_answers": [
-        "An EOA has no contract code and signs transactions with a private key, while a contract account can initiate transactions whenever its code schedules them.",
-        "A contract account stores bytecode and persistent storage, while an EOA stores no code but can be triggered only by another contract call.",
-        "An EOA pays gas through a wallet signature, while a contract account must be controlled by a validator-selected private key before its code can run."
+        "Nothing moved in ETH or in tokens, because a call with Value 0 ETH carries no data for a contract.",
+        "Tokens may have moved, and the receiver is found in the To field, because To names who gets tokens.",
+        "Only the fee moved, because a call to a contract never changes any account except the sender's."
       ],
-      "explanation": "EOAs initiate transactions and pay gas through private-key control. Contract accounts are code and storage at addresses and run when invoked by transactions or other contract calls.",
+      "explanation": "Question 2 of the review: a token moves by a contract call with value 0, and its receiver is in the logs, so Value 0 ETH does not mean nothing moved.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "01-ef-ethereum-intro",
+        "token-transfer",
+        "logs",
+        "misconception",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: account, transaction, receipt, in order",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Review: account, transaction, receipt, in order"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst tries Bitcoin's change heuristic on block 3, where Account 1 paid 1.5 ETH to Account 2. Why does it have nothing to work on?",
+      "correct_answer": "Ethereum has no change output: the sender's balance just goes down by the value and the fee.",
+      "incorrect_answers": [
+        "Ethereum returns the change to a new address, so the change cannot be tied back to the sender.",
+        "Ethereum spends outputs whole as Bitcoin does, but every explorer hides which of them is change.",
+        "Ethereum keeps balances only for contract accounts, so a sender's change is not in its balance."
+      ],
+      "explanation": "Ethereum keeps one record per account and edits its balance and nonce in place. There is no change output, so Bitcoin's change heuristic has nothing to work on.",
       "difficulty_level": 2,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "accounts",
-        "eoa",
-        "contract-accounts",
-        "smart-contracts"
+        "account-model",
+        "change-heuristic",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Accounts, Transactions, And Smart Contracts",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Accounts & Global State (EOA vs Contract); From EVM to Programs - Smart Contracts",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q8",
-      "question_type": "multiple_choice",
-      "question_stem": "Why does Ethereum's account model fit persistent smart-contract applications better than Bitcoin's UTXO model?",
-      "correct_answer": "Ethereum can update mutable account balances and contract storage directly, which supports repeated interaction with long-lived program state.",
-      "incorrect_answers": [
-        "Ethereum turns each contract call into a fresh UTXO record, which makes prior contract state easier to reconstruct from spent outputs.",
-        "Ethereum accounts keep contract code and storage under addresses, but each update still consumes one-time outputs like Bitcoin payments.",
-        "Ethereum avoids storing long-lived program state on-chain, so applications rebuild balances from event logs instead of updating contract storage directly."
-      ],
-      "explanation": "The lesson contrasts Ethereum's mutable account balances and contract storage with Bitcoin's UTXO model. Persistent storage makes repeated stateful application logic more natural.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "accounts",
-        "utxo",
-        "contract-storage",
-        "comparison"
-      ],
-      "lesson_block": "Transaction Models: UTXO vs Accounts",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: Transaction Models: UTXO vs Accounts; Accounts & Global State (EOA vs Contract)",
-      "source_type": "lesson_slides"
+      "lesson_block": "Ethereum edits balances; Bitcoin spends outputs",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Ethereum edits balances; Bitcoin spends outputs"
     },
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "A user worries that The Merge restarted Ethereum and reset deployed contracts. Which answer best corrects that misconception?",
-      "correct_answer": "The Merge changed block production from proof-of-work mining to proof-of-stake validation while preserving users, balances, contracts, and application state.",
+      "question_stem": "On the lab chain, where does the token contract `0x5FbDB…` keep each holder's token balance?",
+      "correct_answer": "In its own storage: a token is an entry in the contract's storage, not a balance the chain keeps.",
       "incorrect_answers": [
-        "The Merge kept user balances but moved contract storage into PoS addresses, so applications had to migrate state through upgrade scripts after activation.",
-        "The Merge changed the EVM and consensus together, preserving ether balances while requiring deployed contracts to recompile under proof-of-stake.",
-        "The Merge left deployed contracts readable but paused state-changing calls until validators re-created application state under proof-of-stake checkpoints."
+        "In each holder's account: a token is a balance the chain keeps, as it keeps ETH, in its fields.",
+        "In the storage root of each holder's own account, because every account has a storage root for tokens.",
+        "In the `value` field of each transaction: it carries the token amount, and the chain adds it per holder."
       ],
-      "explanation": "The lesson treats The Merge as a consensus-layer transition, not an application-layer restart. It changed how blocks are produced and finalized while preserving the application state.",
+      "explanation": "The token contract keeps every holder's balance in its own storage. A token is an entry in that storage, not a balance the chain keeps.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "the-merge",
-        "proof-of-stake",
-        "consensus",
-        "misconception"
+        "contract-storage",
+        "tokens",
+        "lesson-synthesis"
       ],
-      "lesson_block": "The Merge And Post-Merge Transaction Processing",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: The Merge (Sept 15, 2022); Impact of The Merge",
-      "source_type": "lesson_slides"
+      "lesson_block": "A contract is code plus storage at an address",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: A contract is code plus storage at an address"
     },
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "In Ethereum's modular scaling roadmap, why is simply making L1 blocks much larger treated as a risky solution?",
-      "correct_answer": "Larger blocks can raise hardware, bandwidth, storage, and sync requirements, reducing broad verifiability and pressuring decentralization.",
+      "question_stem": "Block 4's transaction has the token contract in To and 0 ETH in `value`. Which kind of transaction is it, and where is the function named?",
+      "correct_answer": "A contract call, and the `data` field names a function such as `transfer(address,uint256)`.",
       "incorrect_answers": [
-        "Larger blocks would make gas metering unnecessary for contract execution, so the protocol would lose its normal resource bound during validation.",
-        "Larger blocks mainly weaken rollups by making L2 data unavailable, even when ordinary nodes can still verify L1 cheaply from home.",
-        "Larger blocks would let the EVM execute rollup data directly, replacing the need for separate L2 execution, settlement, and data availability layers."
+        "A plain transfer, and the `value` field names the function and the token amount to send.",
+        "A contract deployment, and the `to` field holds the code that creates the token contract.",
+        "A contract call, and the `nonce` field names the function that the sender wants run."
       ],
-      "explanation": "The lesson's scaling argument emphasizes verifiability. Ethereum keeps L1 focused on consensus, ordering, settlement, and data availability while L2s move much execution off L1.",
-      "difficulty_level": 4,
+      "explanation": "A token moves by a contract call: data names a function such as transfer(address,uint256) and value stays 0. That is why the receiver is not in the To field.",
+      "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "lesson",
-        "slides",
-        "layer-2",
-        "state-growth",
-        "scalability-trilemma",
-        "data-availability",
-        "tradeoff"
+        "transaction-fields",
+        "contract-call",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Scaling Through Modularity",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_01-EF-ethereum_intro-slides-only.qmd: State Growth & Storage Pressure; The Scaling Problem; Modular Scaling",
-      "source_type": "lesson_slides"
+      "lesson_block": "A transaction is a signed, numbered message",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: A transaction is a signed, numbered message"
     },
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "According to the Ethereum whitepaper, what is the key design motivation for Ethereum compared with launching a separate blockchain for each application?",
-      "correct_answer": "Ethereum provides a shared general-purpose state transition platform so applications can define logic without bootstrapping separate consensus and networking.",
+      "question_stem": "In block 7, Account 3 sent a call to the token contract with Value 0 ETH, and its one log reads Transfer 250 CRT from Account 3 to Account 1. Who received the tokens?",
+      "correct_answer": "Account 1, because a token transfer shows up in the logs, not in `value`.",
       "incorrect_answers": [
-        "Ethereum was designed to make each application inherit Bitcoin UTXO validation rules, avoiding separate consensus while keeping contract logic off-chain.",
-        "Ethereum offered a common scripting layer for application-specific chains, so developers could reuse EVM code while still launching independent consensus networks.",
-        "Ethereum treated the blockchain mostly as a payments ledger and expected complex applications to run through external meta-protocol clients instead of shared execution."
+        "The token contract, because To names the account that receives the tokens.",
+        "Nobody, because Value was 0 ETH and a log records only an event, nothing more.",
+        "Account 3, because a log names the account that sent the call, not the receiver."
       ],
-      "explanation": "The whitepaper argues that once blockchains provide decentralized ordering, a generalized execution layer can host many applications instead of forcing every application to create a new chain or constrained meta-protocol.",
+      "explanation": "A token transfer shows up in the logs, not in value. The log names Account 1 as the receiver, though To names the token contract.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "reading",
-        "assigned-reading",
-        "state-transition",
-        "decentralized-applications",
-        "bitcoin-scripting",
-        "design-motivation",
-        "ethereum-whitepaper"
+        "receipt",
+        "logs",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Reading: General-Purpose Blockchain Motivation",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/ethereum_whitepaper.txt: Ethereum; Alternative Blockchain Applications; Why Bitcoin-Layer Alternatives Were Not Enough",
-      "source_type": "assigned_reading"
+      "lesson_block": "The receipt says what actually happened",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: The receipt says what actually happened"
     },
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "An EOA sends a transaction to a contract, and that contract calls a second contract before returning a result. Which Ethereum concept does this best illustrate?",
-      "correct_answer": "Messages allow contracts to interact with other contracts, making contract accounts composable actors in Ethereum applications.",
+      "question_stem": "Block 5's transaction shows Account 1 sending 2 ETH to the Splitter. Where do you read that the ETH reached Accounts 2 and 4?",
+      "correct_answer": "In the internal transfers: ETH a contract sends during a transaction, which are not transactions of their own.",
       "incorrect_answers": [
-        "Internal messages can move ether, but they cannot carry call data or invoke another contract during the same transaction.",
-        "Contract accounts can run background loops between blocks, which lets the second contract respond without being triggered by a call.",
-        "The first contract temporarily becomes an EOA, signing a nested transaction to authorize the second contract call before returning."
+        "In the To and Value fields of the transaction, which list every account the contract paid during the call, in order.",
+        "In the logs, because a contract records each ETH it sends as a Transfer event in the receipt of the call.",
+        "In new transactions from the Splitter, since each ETH it sends is a separate signed transaction of its own."
       ],
-      "explanation": "The reading distinguishes signed external transactions from messages generated during execution. Contract-to-contract messages can carry value and data, return responses, and compose applications.",
+      "explanation": "The transaction shows only Account 1 to the Splitter. The ETH the Splitter sent on is an internal transfer, found by a trace; it is not a transaction of its own and wrote no log.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
-        "reading",
-        "assigned-reading",
-        "accounts",
-        "messages",
-        "contract-composability",
-        "mechanism",
-        "ethereum-whitepaper"
+        "internal-transfers",
+        "trace",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Reading: Accounts, Messages, And Composability",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/ethereum_whitepaper.txt: Ethereum Accounts; Messages and Transactions; Accounts, Messages, And Composability",
-      "source_type": "assigned_reading"
+      "lesson_block": "Contracts move value the transaction won't show",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Contracts move value the transaction won't show"
     },
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "Transaction fees on Ethereum are not merely a private payment from sender to block producer. Why?",
-      "correct_answer": "Every included transaction imposes verification, processing, and download costs on the wider network, so fees help regulate shared resource use.",
+      "question_stem": "A developer wants a contract to fetch an asset's price from a website while it runs. Why can't an EVM contract do that?",
+      "correct_answer": "To stay deterministic, a contract sees only the transaction's data and defined block fields, so every node gets the same result.",
       "incorrect_answers": [
-        "The block proposer is the main actor that executes transactions, so fees chiefly compensate proposer hardware and bandwidth costs.",
-        "Fees are set by wallet policy after execution, so they mainly measure payment priority rather than validation and download work imposed on nodes.",
-        "Gas prices reimburse validator opportunity cost for failed transactions, while successful transfers are verified locally by wallets."
+        "Gas meters every operation, and a website request would cost more gas than any one transaction is allowed to hold in a block.",
+        "A contract reads outside facts only through its creator's key, which signs each website request for every node on the network.",
+        "Every node would fetch the page at the same moment, so the site would block the repeat requests and the nodes would time out and stall."
       ],
-      "explanation": "The reading treats fees and gas as network-resource regulation. Transaction inclusion creates costs for validating nodes, which creates abuse and tragedy-of-the-commons concerns if costs are not priced.",
+      "explanation": "Determinism requires that every node reach the same result, so a contract cannot read websites, a clock or random numbers. It sees only the transaction's data and defined block fields (Wood, 2016).",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "01-ef-ethereum-intro",
+        "evm",
+        "determinism",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "One program on every node, seeing only the chain",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: One program on every node, seeing only the chain",
+      "specific_source_reading": "Wood, Ethereum Yellow Paper (`wood_ethereumsecuredecentralised_2016`): the EVM is deterministic, so every node reaches the same result from the same inputs"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "A contract acts on an asset's price that an oracle supplies. What does that add for the analyst to weigh?",
+      "correct_answer": "Trust in whoever supplies the oracle's data, because an oracle brings outside facts on chain.",
+      "incorrect_answers": [
+        "Nothing, because the nodes that rerun the contract also check the price against the market.",
+        "Trust in the validators, because an oracle is a validator duty and its price is voted on.",
+        "Trust in the contract's creator alone, since the code fixed the price when deployed to the chain."
+      ],
+      "explanation": "An oracle puts outside facts on chain and adds trust in whoever supplies them (Ellis et al., 2017; Eskandari et al., 2021).",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "01-ef-ethereum-intro",
+        "oracles",
+        "trust",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "One program on every node, seeing only the chain",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: One program on every node, seeing only the chain",
+      "specific_source_reading": "Ellis, Juels and Nazarov, Chainlink (`ellis_chainlinkdecentralizedoracle_2017`) and Eskandari et al., SoK: Oracles (`eskandari_sokoraclesground_2021`): an oracle brings outside data on chain, and a contract trusts whoever supplies it"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A block's tip went to an address that is not the validator who proposed the block. Which explanation does the lesson give?",
+      "correct_answer": "The fee recipient can be a builder, a firm that assembles blocks and pays the proposer to use them.",
+      "incorrect_answers": [
+        "The fee recipient is the miner of the previous block, because tips are paid one block late.",
+        "The tip is burned with the base fee, so that address is a burn address and not an account.",
+        "The sender names the fee recipient in a transaction field, so any address can be given the tip by it."
+      ],
+      "explanation": "The fee recipient can be a builder, a firm that assembles blocks and pays the proposer to use them (Flashbots builder payments).",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "01-ef-ethereum-intro",
+        "fee-recipient",
+        "builders",
         "reading",
-        "assigned-reading",
-        "fees",
-        "gas",
-        "scalability",
-        "network-resources",
-        "ethereum-whitepaper"
+        "reading-synthesis"
       ],
-      "lesson_block": "Reading: Fees As Network Resource Regulation",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/ethereum_whitepaper.txt: Fees; Fees As Network Resource Regulation; Scalability",
-      "source_type": "assigned_reading"
+      "lesson_block": "Worked: block 3's fee, most of it burned",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Worked: block 3's fee, most of it burned",
+      "specific_source_reading": "Flashbots, builder payments (`flashbots_builderpayments_2026`): a builder assembles a block and pays the proposer, and can be the fee recipient"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "How does Otterscan find the ETH a contract sends on during a transaction, such as the Splitter's 1 ETH to Account 2?",
+      "correct_answer": "It asks the node to replay the transaction step by step, a trace, and lists the internal transfers.",
+      "incorrect_answers": [
+        "It reads the receipt's logs, where the Splitter wrote each send as an event with its topics.",
+        "It reads the transaction's data field, which holds a signed list of every account the contract will pay.",
+        "It reads the validators' votes for the block, which record each send made while the block ran."
+      ],
+      "explanation": "Otterscan asks the node to replay the transaction step by step, a trace, and lists the internal transfers (Otterscan ots namespace).",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "01-ef-ethereum-intro",
+        "trace",
+        "internal-transfers",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Contracts move value the transaction won't show",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "01-EF-ethereum_intro.qmd: Contracts move value the transaction won't show",
+      "specific_source_reading": "Otterscan, ots namespace (`otterscan_otsnamespace_2026`): the node's trace shows internal calls that send ETH, which a transaction alone does not show"
     }
   ]
 }
