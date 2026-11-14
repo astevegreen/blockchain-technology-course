@@ -39,16 +39,11 @@ slide index), which is never listed here.
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);
   settle them when 04-BF is rebuilt. [13 Nov 2026, 05-FO rebuild]
-- 01-FO's hidden "Bridges & Swaps" laundering-flow diagram (USDC to DEX to ETH to instant exchange to Monero) was
-  not carried into 08-EF, which teaches bridge types, not flows; it fits day 8's cross-chain trace or day 9. Its
-  sources `salisu_blockchainforensicsmodern_2023` and `lin_tracktraceautomatically_2025` went with it.
-  [13 Nov 2026, 08-EF rebuild]
-- The glossary dropped twelve terms because no visible slide names them any more: XSema, Automated provenance
-  extraction, Timing window, Fee-adjusted amount matching, Unified provenance graph, Off-chain blind spot and
-  Attribution uncertainty (01-FO's hidden Challenges and Future of Forensics slides), First principles (01-IN),
-  Permissionless finance, Correlation, Forensic analysis and Blockchain vulnerability. Restore the first seven to
-  `glossary/lesson_terms/` (from git history before this run) when the laundering-flow material above gets a home.
-  [13 Nov 2026, glossary run after the lesson rebuilds]
+- **Closes with the XSema slide shown again.** The glossary dropped XSema, Automated provenance extraction and
+  Unified provenance graph with 01-FO's hidden Challenges and Future of Forensics slides; they stay out while the
+  XSema slide is hidden (owner's decision B, 13 Nov 2026). Restore them to `glossary/lesson_terms/` from
+  `git show 7057ae79^:blockchain-course/glossary/lesson_terms/01-FO-illicit_finance_regulation_case_studies.yml`.
+  [13 Nov 2026, glossary run after the lesson rebuilds; narrowed 14 Nov 2026]
 - `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json` has no questions on the rebuilt 03-EF's checks,
   the paymaster slide, the bundler practice or the review. [13 Nov 2026, 03-EF rebuild]
 - The 01-EF bank (`quizes/quiz_json/ethereum_01-EF-ethereum_intro-quiz-bank.json`) has no questions on the
