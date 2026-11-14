@@ -53,9 +53,6 @@ slide index), which is never listed here.
   "Transnational Organized Crime and the Convergence of Cyber-Enabled Fraud, Underground Banking and Technological
   Innovation in Southeast Asia" (Oct 2024), but its PDF does not load for automated readers, and the TRON wording may
   come from UNODC's Jan 2025 casinos report instead; read both by hand. [14 Nov 2026, wave 3]
-- `blockchain-course/lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.qmd`: some slides' notes
-  **Sources** lists seem one slide off (the keys a slide cites are listed under the next slide's notes). Re-pair
-  each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`: the
   "Each confirmation makes reversal harder" slide quotes "somewhat arbitrary" with no citation on the slide (its notes
