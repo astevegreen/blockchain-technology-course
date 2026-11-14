@@ -32,10 +32,11 @@
    saw 1 ETH to its caller's name.
 5. **The name** (shell: `name`): reentrancy. Parts: re- (again) + entry. Plain: a contract is called again before
    its first call has finished, and the second call sees the records the first had not yet updated.
-6. **The explorer view** (shell: `explorer`): the same transaction in Otterscan, saved from the course chain. The
-   Logs tab holds the one deposit; the trace tab shows the call tree, `withdraw` nested inside itself, each level
-   with its 1 ETH value; the internal operations list the five transfers. These are the four rows of the slide:
-   one transaction, a contract caller, nested withdraw and pay, a loss beyond the deposit.
+6. **The explorer view** (shell: `explorer`): the same transaction in Otterscan, saved from the chain it was
+   recorded on. The Logs tab holds the one deposit; the trace tab shows the call tree, `withdraw` nested inside
+   itself, each level with its 1 ETH value; the overview lists the ETH transfers, five of them from the vault.
+   These are the four rows of the slide: one transaction, a contract caller, nested withdraw and pay, a loss beyond
+   the deposit.
 7. **The twist** (shell: `twist`): a second transaction on another vault shows the same nesting, three levels deep,
    from a contract that deposited 3 ETH; the vault paid back 3 ETH and still holds everyone else's funds. "Is this
    a reentrancy theft?" Choices: yes, the nesting proves it; no, it is a callback, and no loss shows; it cannot be
@@ -43,7 +44,7 @@
    not theft: some contracts call back legitimately; the loss beyond the deposit is what makes it one (the slide's
    Ask).
 8. **The sentence** (shell: `tell`): "Tell the agent where the vault's 4 ETH went." Example: "Transaction
-   0x3b9e…c4d1 emptied the vault by reentrancy: the attacker's contract deposited 1 ETH and called withdraw five
+   0xb17b…ab5a emptied the vault by reentrancy: the attacker's contract deposited 1 ETH and called withdraw five
    times, each call nested inside the vault's last payment, and took out 5 ETH, its own 1 and the depositors' 4
    (Moderate confidence from the trace alone; the payments appear in the call trace, not the logs)."
 9. **The game, if any**: none. The plan calls it "a diagnosis, not a contest".
@@ -65,10 +66,16 @@ Left out, for the owner to see: the old lab's invented gas numbers, its "miner" 
 are dropped (static-labs review). The fix (pay last, or a lock) is on the slide "Reentrancy: the contract pays
 before it updates" and is the afternoon part's twist, not this one's.
 
-How it is built: the lab is a static page in `src.zip`, a stepper over one recorded trace. The vault and attacker
-are small in-house contracts run once on anvil at build (the course chain from the tokens lab); the page stores
-the real call trace and logs that run returned, and saved Otterscan pages of the same transaction, so every
-number on screen comes from the EVM, not from the page.
+How it is built: the lab is a static page in `src.zip`, a stepper over two recorded transactions. The vaults and
+their callers are small in-house contracts run on a fresh Anvil (Foundry 1.8.6) by an instructor-only kit,
+`dynamic-labs/explorer/chain/vault-recording/` (listed in `student-exclude.txt`, since its notes say what each
+contract does). Its `record.sh` writes the page's `recording.js` from the node's own answers (the call trees, logs,
+ETH transfers and balances) and saves Otterscan 2.11.0's pages of both transactions in the page's `saved/`; a rerun
+gives the same hashes. Every number on screen comes from the EVM, not from the page. Only the vaults' source is
+verified, under neutral names (`VaultA`, `VaultB`), so Otterscan names each vault and shows the callers as bare
+addresses, as an attacker's contract usually is; both callers' entry function is `run()`, so no name gives the
+answer away. (Recorded 14 Nov 2026; the first build's trace was
+written by hand.)
 
 ## Load check
 
@@ -82,8 +89,9 @@ number on screen comes from the EVM, not from the page.
 
 ## Sources
 
-The vaults, their balances, both transactions, the hash and the protocol's message are made up for the lab and say
-so; the contracts' behaviour is their own code, run at build (the vault writes no event when it pays).
+The vaults, their depositors and the protocol's message are made up for the lab and say so; both transactions were
+recorded on a test chain from the lab's own contracts, so the balances, the hash and the trace are what the EVM
+returned (the vault writes no event when it pays).
 
 - Internal ETH transfers are "only unveiled by examining the internal calls"; Otterscan's trace is "a call tree" —
   `@otterscan_otsnamespace_2026`; Otterscan 2.11.0 — `@otterscan_otterscan_2025` (as of 23 Oct 2026)

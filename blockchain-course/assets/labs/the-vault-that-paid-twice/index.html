@@ -18,44 +18,54 @@
 .ledger .loss { border-color: var(--private-key); background: var(--private-key-tint); }
 .ops td, .ops th { padding: .12em .7em .12em 0; text-align: left; }
 .nolog { color: var(--ink-soft); font-size: .9em; }
+.saved { display: block; max-width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 4px; margin: .4em 0; }
 </style>
 </head>
 <body>
 <div data-lab-root></div>
 <script src="../shared/shell.js"></script>
+<script src="recording.js"></script>
 <script>
-/* Design card: docs/lab-cards/the-vault-that-paid-twice.md. The vaults, balances, addresses, transaction hashes
-   and the protocol's message are made up for this lab. The call trace is the one such a vault and such an
-   attacker contract produce: the vault pays before it updates its records and writes an event only on a
-   deposit. It is stored here as data, written by hand: no anvil run was available at build, so it has not been recorded from the EVM (docs/follow-ups.md). The page adds nothing to it. */
-var VAULT = "0x7d1e5a90c2b84f36e1a07d93bc5f28e4a6d0a3f2";
-var ATTACKER = "0xc0de4b71a93e58d20f6b8c14e7a52d90f3e6b17a";
-var TX = "0x3b9e07a4d15c82f6e0b93a7d41c85e2f96a0d7b3c18e4f52a9d60b7e3c5ac4d1";
-var DEPTH = 5;   // withdraw is called five times, each inside the vault's last payment
+/* Design card: docs/lab-cards/the-vault-that-paid-twice.md. The protocol, its vaults and the message are made up
+   for this lab. The two transactions are real ones, recorded on a fresh Anvil from in-house contracts by the
+   instructor's kit (dynamic-labs/explorer/chain/vault-recording/, not shipped): recording.js holds the node's own call trees, logs, internal transfers and balances,
+   and saved/ holds Otterscan 2.11.0's pages for them. The page adds only the words that say what each call is. */
+var D = RECORDING.drain, T = RECORDING.twist;
+var VAULT = D.vault, ATTACKER = D.caller, TX = D.tx;
 
-/* The call tree of the drain, outside in; depth is the nesting. A payment is a call that carries ETH, and
-   it has no log. */
-function buildTrace() {
-  var nodes = [
-    { depth: 0, from: "wallet", to: "attacker", fn: "attack()", eth: 1, kind: "in", log: false, note: "the one transaction; it carries 1 ETH" },
-    { depth: 1, from: "attacker", to: "vault", fn: "deposit()", eth: 1, kind: "in", log: true, note: "1 ETH in, recorded to the attacker's contract; the vault logs a Deposit" }
-  ];
-  for (var level = 1; level <= DEPTH; level++) {
-    nodes.push({ depth: 2 * level - 1, from: "attacker", to: "vault", fn: "withdraw()", eth: 0, log: false, level: level,
-      note: level === 1 ? "asks for its 1 ETH back" : "called again from inside the last payment" });
-    nodes.push({ depth: 2 * level, from: "vault", to: "attacker", fn: "(plain payment)", eth: 1, kind: "out", pay: true, log: false, level: level,
-      note: level < DEPTH ? "1 ETH sent before the vault updates its records, so the attacker's contract runs and asks again"
-        : "1 ETH sent; this time the attacker's contract does not call back, and the calls unwind" });
-  }
-  return nodes;
+function role(rec, address) {
+  return address === rec.vault ? "vault" : address === rec.caller ? "attacker" : "wallet";
 }
-var TRACE = buildTrace();
-var PAYMENTS = TRACE.filter(function (n) { return n.pay; }).length;   // 5
+function payments(rec) {   // the vault's plain payments: ETH out, no function called
+  return rec.calls.filter(function (c) { return role(rec, c.from) === "vault" && c.eth > 0 && c.input === "0x"; });
+}
+function sum(list) { return list.reduce(function (s, c) { return s + c.eth; }, 0); }
+
+/* The drain's call tree, outside in, as recorded; each row gets the words that say what it is. */
+var PAYMENTS = payments(D).length;
+var PAID_IN = D.calls.filter(function (c) { return c.fn === "deposit()"; })[0].eth;
+var PAID_OUT = sum(payments(D));
+var LOSS = PAID_OUT - PAID_IN;
+var TRACE = (function () {
+  var level = 0;
+  return D.calls.map(function (c) {
+    var n = { depth: c.depth, from: role(D, c.from), to: role(D, c.to), fn: c.fn, eth: c.eth, log: c.logs > 0, raw: c };
+    if (n.from === "wallet") { n.kind = "in"; n.note = "the one transaction; it carries " + c.eth + " ETH"; }
+    else if (c.fn === "deposit()") { n.kind = "in"; n.note = c.eth + " ETH in, recorded to the attacker's contract; the vault logs a Deposit"; }
+    else if (c.fn === "withdraw()") { level++; n.level = level; n.note = level === 1 ? "asks for its " + PAID_IN + " ETH back" : "called again from inside the last payment"; }
+    else if (n.from === "vault") {
+      n.fn = "(plain payment)"; n.kind = "out"; n.pay = true; n.level = level;
+      n.note = level < PAYMENTS ? c.eth + " ETH sent before the vault updates its records, so the attacker's contract runs and asks again"
+        : c.eth + " ETH sent; this time the attacker's contract does not call back, and the calls unwind";
+    }
+    return n;
+  });
+})();
 
 function who(api, name) {
   return name === "vault" ? api.el("span", { class: "addr", title: VAULT }, "vault " + api.short(VAULT, 4))
     : name === "attacker" ? api.el("span", { class: "addr", title: ATTACKER }, "attacker " + api.short(ATTACKER, 4))
-    : api.el("span", null, "attacker's wallet");
+    : api.el("span", { class: "addr", title: D.from }, "attacker's wallet");
 }
 
 /** Put li at the given nesting depth under root; stack remembers the open node at each depth. */
@@ -71,6 +81,16 @@ function place(api, root, stack, li, depth) {
   stack.push(li);
 }
 
+function saved(api, file, alt) {
+  return api.el("img", { class: "saved", src: "saved/" + file, alt: alt, loading: "lazy" });
+}
+
+/* The twist, read from its recording: the same nesting, and the vault's balance before and after. */
+var TWIST_DEPTH = T.calls.filter(function (c) { return c.fn === "withdraw(uint256)"; }).length;
+var TWIST_IN = T.calls.filter(function (c) { return c.fn === "deposit()"; })[0].eth;
+var TWIST_OUT = sum(payments(T));
+var WORDS = ["no", "one", "two", "three", "four", "five", "six"];
+
 LabShell.start({
   id: "the-vault-that-paid-twice",
   title: "The vault that paid twice",
@@ -80,9 +100,10 @@ LabShell.start({
       "<p>An agent forwards a screenshot from a protocol's support channel: " +
       "<em>\"Our vault shows zero. The explorer shows one small deposit and nothing leaving. Where did the money go?\"</em> " +
       "The transaction is attached.</p>" +
-      "<p>The protocol, the vault and the message are made up for this lab.</p>" },
+      "<p>The protocol, the vault and the message are made up for this lab; the transaction is real, recorded on a test chain.</p>" },
     commit: {
-      question: "The vault held 4 ETH of its depositors' money. One transaction later it holds nothing. Its Logs tab shows a single entry: a deposit of 1 ETH. Where did the 4 ETH go?",
+      question: "The vault held " + D.vaultBefore + " ETH of its depositors' money. One transaction later it holds " + (D.vaultAfter ? D.vaultAfter + " ETH" : "nothing") +
+        ". That transaction's Logs tab shows a single entry: a deposit of " + PAID_IN + " ETH. Where did the " + D.vaultBefore + " ETH go?",
       choices: [
         "Nowhere that can be traced: no log, no record.",
         "The logs were deleted after the theft.",
@@ -96,12 +117,14 @@ LabShell.start({
       var inn = api.el("output", null, "0 ETH"), out = api.el("output", null, "0 ETH"), loss = api.el("output", null, "0 ETH");
       var nextBtn = api.el("button", { class: "btn primary", type: "button" }, "Open the first call");
       var status = api.el("p", { role: "status" });
+      var last = TRACE.filter(function (n) { return n.pay; }).pop().raw;
 
       el.appendChild(api.el("table", { class: "facts" },
         api.el("tr", null, api.el("th", null, "Vault"), api.el("td", null, api.el("span", { class: "addr", title: VAULT }, api.short(VAULT, 4)))),
-        api.el("tr", null, api.el("th", null, "Balance"), api.el("td", null, "0 ETH")),
-        api.el("tr", null, api.el("th", null, "Transactions"), api.el("td", null, "1: ", api.el("span", { class: "hash", title: TX }, api.short(TX, 4)))),
-        api.el("tr", null, api.el("th", null, "Logs"), api.el("td", null, "1: a deposit of 1 ETH"))));
+        api.el("tr", null, api.el("th", null, "Balance before"), api.el("td", null, D.vaultBefore + " ETH, from " + D.earlierDeposits + " deposits")),
+        api.el("tr", null, api.el("th", null, "Balance after"), api.el("td", null, D.vaultAfter + " ETH")),
+        api.el("tr", null, api.el("th", null, "The transaction"), api.el("td", null, api.el("span", { class: "hash", title: TX }, api.short(TX, 4)), ", block " + D.block)),
+        api.el("tr", null, api.el("th", null, "Its logs"), api.el("td", null, D.logs.length + ": " + D.logs.map(function (l) { return l.event + ", " + l.eth + " ETH"; }).join("; ")))));
       el.appendChild(api.el("p", null, "Start at the drained vault and open the transaction's calls from the outside in, one at a time. The counter adds each payment the vault makes as it opens. Open every call: Next unlocks when the last one is open."));
       el.appendChild(api.el("div", { class: "ledger" },
         api.el("div", null, "Paid in: ", inn), api.el("div", null, "Paid out by the vault: ", out), api.el("div", { class: "loss" }, "Loss: ", loss)));
@@ -116,28 +139,28 @@ LabShell.start({
           api.el("div", { class: "call" }, who(api, n.from), " calls ", who(api, n.to), " ",
             api.el("span", { class: "fn" }, n.fn), " ",
             n.eth ? api.coin({ role: n.kind === "out" ? "output" : "input", amount: n.eth + " ETH", who: n.kind === "out" ? "paid out" : "paid in" }) : api.el("span", { class: "nolog" }, "0 ETH"),
-            " ", api.el("span", { class: "nolog" }, n.log ? "(log: Deposit, 1 ETH)" : "(no log)")),
+            " ", api.el("span", { class: "nolog" }, n.log ? "(log: Deposit, " + n.eth + " ETH)" : "(no log)")),
           api.el("div", { class: "nolog" }, n.note));
         place(api, list, stack, li, n.depth);
-        if (n.fn === "deposit()") inn.textContent = "1 ETH";
-        if (n.pay) { paid += n.eth; status.textContent = "Payment " + n.level + " of " + PAYMENTS + ": the vault sent 1 ETH and no log says so."; }
+        if (n.fn === "deposit()") inn.textContent = n.eth + " ETH";
+        if (n.pay) { paid += n.eth; status.textContent = "Payment " + n.level + " of " + PAYMENTS + ": the vault sent " + n.eth + " ETH and no log says so."; }
         out.textContent = paid + " ETH";
-        loss.textContent = Math.max(0, paid - 1) + " ETH";
+        loss.textContent = Math.max(0, paid - PAID_IN) + " ETH";
         if (shown < TRACE.length) { nextBtn.textContent = "Open the call inside"; return; }
         nextBtn.disabled = true;
         nextBtn.textContent = "All calls open";
         el.appendChild(api.el("details", { class: "panel" }, api.el("summary", null, "The raw fields of the last payment"),
           api.el("table", { class: "facts" },
-            api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr", title: VAULT }, api.short(VAULT, 4)))),
-            api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr", title: ATTACKER }, api.short(ATTACKER, 4)))),
-            api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, "1 ETH")),
-            api.el("tr", null, api.el("th", null, "Input data"), api.el("td", null, "none: a plain payment")),
-            api.el("tr", null, api.el("th", null, "Logs written"), api.el("td", null, "0")))));
+            api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr", title: last.from }, api.short(last.from, 4)))),
+            api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr", title: last.to }, api.short(last.to, 4)))),
+            api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, last.eth + " ETH")),
+            api.el("tr", null, api.el("th", null, "Input data"), api.el("td", null, api.el("code", null, last.input), ": none, a plain payment")),
+            api.el("tr", null, api.el("th", null, "Logs written"), api.el("td", null, String(last.logs))))));
 
-        status.textContent = PAYMENTS + " ETH paid out against 1 ETH paid in: a loss of " + (PAYMENTS - 1) + " ETH. Every payment is in the calls and none is in the logs.";
+        status.textContent = PAID_OUT + " ETH paid out against " + PAID_IN + " ETH paid in: a loss of " + LOSS + " ETH. Every payment is in the calls and none is in the logs.";
         if (!finished) {
           finished = true;
-          api.finish({ choice: 2, note: "<p>The 4 ETH left in payments that the logs do not record, nested inside one another, and you opened every one. Answers (a) and (b) fail in front of you: every payment is there, in the calls. (d) fails too: there is one transaction, sent from the attacker's own wallet to its contract, and the drain happens inside it.</p><p class=\"src\">Sources: <code>@otterscan_otsnamespace_2026</code> (internal transfers are \"only unveiled by examining the internal calls\"); <code>@solidityteam_securityconsiderations_2026</code>.</p>" });
+          api.finish({ choice: 2, note: "<p>The " + D.vaultBefore + " ETH left in payments that the logs do not record, nested inside one another, and you opened every one. Answers (a) and (b) fail in front of you: every payment is there, in the calls. (d) fails too: there is one transaction, sent from the attacker's own wallet to its contract, and the drain happens inside it.</p><p class=\"src\">Sources: <code>@otterscan_otsnamespace_2026</code> (internal transfers are \"only unveiled by examining the internal calls\"); <code>@solidityteam_securityconsiderations_2026</code>.</p>" });
         }
       }
       nextBtn.addEventListener("click", open);
@@ -145,35 +168,34 @@ LabShell.start({
     name: {
       term: "reentrancy",
       parts: "re- (again) + entry",
-      plain: "<p>A contract is called again before its first call has finished, and the second call sees the records the first had not yet updated. Here the vault paid before it updated its records, so each nested call still saw 1 ETH in the attacker's name.</p><p class=\"src\">Sources: <code>@solidityteam_securityconsiderations_2026</code>; <code>@ethereum.org_smartcontractsecurity_2026</code>; <code>@l34_ethereum_dao_vulnerability_2016</code>.</p>"
+      plain: "<p>A contract is called again before its first call has finished, and the second call sees the records the first had not yet updated. Here the vault paid before it updated its records, so each nested call still saw " + PAID_IN + " ETH in the attacker's name.</p><p class=\"src\">Sources: <code>@solidityteam_securityconsiderations_2026</code>; <code>@ethereum.org_smartcontractsecurity_2026</code>; <code>@l34_ethereum_dao_vulnerability_2016</code>.</p>"
     },
     explorer: { render: function (el, api) {
-      el.appendChild(api.el("p", null, "The same transaction in Otterscan, as an analyst meets it (a copy made up for this lab, not a live page). Three tabs, one after another."));
+      el.appendChild(api.el("p", null, "The same transaction in Otterscan, as an analyst meets it: pages saved from Otterscan 2.11.0 reading the test chain this transaction was recorded on. Three tabs, one after another."));
       el.appendChild(api.el("div", { class: "panel" }, api.el("h3", null, "Logs"),
-        api.el("p", null, "1 entry: ", api.el("code", null, "Deposit"), ", 1 ETH, from the attacker's contract."),
-        api.el("p", { class: "nolog" }, "A log exists only when the contract's code writes one. A plain ETH payment is the value a call carries, and the vault's code writes nothing when it pays.")));
-      var tree = api.el("ul", { class: "tree" }), stack = [];
-      TRACE.forEach(function (n) {
-        var label = n.fn === "attack()" ? "attacker.attack()" : n.to === "vault" ? "vault." + n.fn : "attacker.receive()";
-        place(api, tree, stack, api.el("li", null, api.el("div", { class: "call" },
-          api.el("span", { class: "fn" }, label), " ",
-          n.eth ? api.coin({ role: n.kind === "out" ? "output" : "input", amount: n.eth + " ETH" }) : "")), n.depth);
-      });
+        saved(api, "drain-logs.png", "Otterscan's Logs tab for the transaction: one entry, a Deposit by the vault, account the attacker's contract, amount 1,000,000,000,000,000,000 wei (1 ETH)."),
+        api.el("p", { class: "nolog" }, "One entry. A log exists only when the contract's code writes one. A plain ETH payment is the value a call carries, and the vault's code writes nothing when it pays. The amount is in wei: 10^18 wei is 1 ETH.")));
       el.appendChild(api.el("div", { class: "panel" }, api.el("h3", null, "Trace"),
-        api.el("p", { class: "nolog" }, "A call tree: withdraw nested inside itself, with a 1 ETH payment at each level."), tree));
+        saved(api, "drain-trace.png", "Otterscan's Trace tab: the wallet calls the attacker's contract's run with 1 ETH; it calls the vault's deposit with 1 ETH, then withdraw; inside withdraw the vault calls the attacker's contract with 1 ETH, which calls withdraw again; " + PAYMENTS + " payments, each nested in the last."),
+        api.el("p", { class: "nolog" }, "A call tree: withdraw nested inside itself, with a " + payments(D)[0].eth + " ETH payment at each level. The vault's name shows because its source is verified; the attacker's contract is not, so Otterscan shows its address. Otterscan labels a payment that calls no function ", api.el("code", null, "<fallback>"), ": the attacker's contract runs its own code when the ETH arrives.")));
       var ops = api.el("table", { class: "ops" }, api.el("tr", null, api.el("th", null, "#"), api.el("th", null, "From"), api.el("th", null, "To"), api.el("th", null, "Value")));
-      for (var i = 1; i <= PAYMENTS; i++) ops.appendChild(api.el("tr", null, api.el("td", null, String(i)), api.el("td", null, "vault"), api.el("td", null, "attacker"), api.el("td", null, "1 ETH")));
-      el.appendChild(api.el("div", { class: "panel" }, api.el("h3", null, "Internal operations"), ops));
+      D.internal.forEach(function (op, i) {
+        ops.appendChild(api.el("tr", null, api.el("td", null, String(i + 1)), api.el("td", null, who(api, role(D, op.from))), api.el("td", null, who(api, role(D, op.to))), api.el("td", null, op.eth + " ETH")));
+      });
+      el.appendChild(api.el("div", { class: "panel" }, api.el("h3", null, "Overview: the ETH transfers"),
+        saved(api, "drain-overview.png", "Otterscan's Overview tab: status Success, block " + D.block + ", and under Interacted With, " + D.internal.length + " transfers of " + payments(D)[0].eth + " ETH: wallet to the attacker's contract, the attacker's contract to the vault, then " + PAYMENTS + " from the vault to the attacker's contract."),
+        api.el("p", { class: "nolog" }, "The overview lists every ETH transfer inside the transaction, the payments the logs leave out. (Its \"days ago\" counts from the day the page was saved, 14 Nov 2026.) The same list, as text:"), ops));
       el.appendChild(api.el("p", null, "These are the slide's four rows: one transaction, a contract caller, withdraw and pay nested, and a loss beyond the deposit."));
-      el.appendChild(api.el("p", { class: "src", style: "color:var(--ink-soft);font-size:0.85rem" }, "Sources: @otterscan_otterscan_2025 (Otterscan 2.11.0, as of 23 Oct 2026); @otterscan_otsnamespace_2026 (its trace is a call tree; internal ETH transfers show only in the internal calls); @solidityteam_securityconsiderations_2026 (an ether transfer hands control to the receiver, which can call back); @ethereum.org_smartcontractsecurity_2026 (the balance is updated only after the call); @l34_ethereum_dao_vulnerability_2016 (the DAO's repeated calls); @odni_icd203_2015 (confidence words). The vaults and transactions are made up for this lab."));
+      el.appendChild(api.el("p", { class: "src", style: "color:var(--ink-soft);font-size:0.85rem" }, "Sources: @otterscan_otterscan_2025 (Otterscan 2.11.0, as of 23 Oct 2026); @otterscan_otsnamespace_2026 (its trace is a call tree; internal ETH transfers show only in the internal calls); @solidityteam_securityconsiderations_2026 (an ether transfer hands control to the receiver, which can call back); @ethereum.org_smartcontractsecurity_2026 (the balance is updated only after the call); @l34_ethereum_dao_vulnerability_2016 (the DAO's repeated calls); @odni_icd203_2015 (confidence words). The vaults and transactions were made up for this lab and recorded on a test chain (" + RECORDING.node + ")."));
     } },
     twist: {
-      html: "<p>A second transaction, on another vault, shows the same nesting, three levels deep, from a contract that deposited 3 ETH. The vault paid back 3 ETH, and still holds everyone else's funds.</p>" +
-        "<div class=\"panel\"><h3>Another vault (made up for this lab)</h3><table class=\"facts\">" +
-        "<tr><th>Paid in</th><td>3 ETH, by a contract</td></tr>" +
-        "<tr><th>Calls</th><td><code>withdraw</code> nested three levels deep, 1 ETH paid at each</td></tr>" +
-        "<tr><th>Paid out</th><td>3 ETH</td></tr>" +
-        "<tr><th>Vault balance</th><td>everyone else's funds untouched</td></tr></table></div>",
+      html: "<p>A second transaction, on another vault, shows the same nesting, " + WORDS[TWIST_DEPTH] + " levels deep, from a contract that deposited " + TWIST_IN + " ETH. The vault paid back " + TWIST_OUT + " ETH, and still holds everyone else's funds.</p>" +
+        "<div class=\"panel\"><h3>Another vault (made up for this lab, recorded on the same test chain)</h3><table class=\"facts\">" +
+        "<tr><th>Paid in</th><td>" + TWIST_IN + " ETH, by a contract</td></tr>" +
+        "<tr><th>Calls</th><td><code>withdraw</code> nested " + WORDS[TWIST_DEPTH] + " levels deep, " + payments(T)[0].eth + " ETH paid at each</td></tr>" +
+        "<tr><th>Paid out</th><td>" + TWIST_OUT + " ETH</td></tr>" +
+        "<tr><th>Vault balance</th><td>" + T.vaultBefore + " ETH before, " + T.vaultAfter + " ETH after: the other depositors' funds untouched</td></tr></table>" +
+        "<img class=\"saved\" src=\"saved/twist-trace.png\" alt=\"Otterscan's Trace tab for the second transaction: a contract deposits " + TWIST_IN + " ETH in the other vault, then withdraw is nested " + TWIST_DEPTH + " levels deep, a 1 ETH payment at each, and before each next withdraw the contract asks the vault for its balance.\" loading=\"lazy\"></div>",
       question: "Is this a reentrancy theft?",
       choices: [
         "Yes: the nesting proves it.",
@@ -185,8 +207,8 @@ LabShell.start({
       why: "<p>Some contracts call back legitimately, so nesting alone is not theft. The loss beyond the deposit is what makes it one, and here the vault paid back exactly what was put in. Low confidence as an attack. This is the slide's Ask.</p><p class=\"src\">Sources: <code>@l34_ethereum_dao_vulnerability_2016</code>; <code>@ethereum.org_smartcontractsecurity_2026</code>; the slide \"Reading a reentrancy: one call nested in itself\". Confidence words: <code>@odni_icd203_2015</code>.</p>"
     },
     tell: {
-      prompt: "<p>Tell the agent where the vault's 4 ETH went. One sentence, with a confidence word.</p>",
-      example: "Transaction 0x3b9e…c4d1 emptied the vault by reentrancy: the attacker's contract deposited 1 ETH and called withdraw five times, each call nested inside the vault's last payment, and took out 5 ETH, its own 1 and the depositors' 4 (Moderate confidence from the trace alone; the payments appear in the call trace, not the logs)."
+      prompt: "<p>Tell the agent where the vault's " + D.vaultBefore + " ETH went. One sentence, with a confidence word.</p>",
+      example: "Transaction " + TX.slice(0, 6) + "…" + TX.slice(-4) + " emptied the vault by reentrancy: the attacker's contract deposited " + PAID_IN + " ETH and called withdraw " + WORDS[PAYMENTS] + " times, each call nested inside the vault's last payment, and took out " + PAID_OUT + " ETH, its own " + PAID_IN + " and the depositors' " + LOSS + " (Moderate confidence from the trace alone; the payments appear in the call trace, not the logs)."
     }
   }
 });

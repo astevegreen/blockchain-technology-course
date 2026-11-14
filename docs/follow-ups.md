@@ -161,4 +161,3 @@ slide index), which is never listed here.
   where the 3rd edition lacks it. [12 Nov 2026, R6]
 
 ## Notion and documents
-- `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
