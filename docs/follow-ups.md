@@ -147,9 +147,6 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.qmd:537`: the
   Sources line "Encyclopaedia Britannica, "Keynesian economics"" has no `Blockchain.bib` key.
   [12 Nov 2026, labelling the Ammous citations]
-- The slide help overlay (`?`) still lists reveal.js's "G Jump to slide" beside the glossary's `G`; the glossary
-  plugin (`_extensions/aci/_extensions/glossary-lookup/glossary-lookup.js`) replaced that binding, so the entry is
-  stale. [12 Nov 2026, writing "How to read these slides"]
 
 - `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:1784` (hidden "chain hopping"
   slide, TRON callout): the UNODC claim (USDT on TRON the preferred choice of Asian crime syndicates) cites
@@ -209,4 +206,3 @@ slide index), which is never listed here.
 
 ## Notion and documents
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
-- `06-FO` "A mixer pools coins and pays out others": the two-column slide runs about 18 px past the bottom at 1280x800; trim it in a future pass. [13 Nov 2026, 06-FO rebuild]

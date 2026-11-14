@@ -341,7 +341,13 @@
         global.addEventListener("resize", place);
 
         // G replaces reveal.js's own G (jump to a slide number); the slide menu still jumps to any slide.
-        deck.addKeyBinding({ keyCode: 71, key: "G", description: "Look up a term in the glossary" },
+        // The help overlay lists a static "G: Jump to slide" row; rewrite that row and bind the key without
+        // a `key`, so the overlay shows one G row, the glossary's.
+        // reveal.js re-sets its static rows when it configures, so register again once it is ready.
+        const relabel = () => deck.registerKeyboardShortcut("G", "Look up a term in the glossary");
+        relabel();
+        deck.on("ready", relabel);
+        deck.addKeyBinding({ keyCode: 71, description: "Look up a term in the glossary" },
           () => open(selectedText()));
       },
     };
