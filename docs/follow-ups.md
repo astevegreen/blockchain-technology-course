@@ -170,3 +170,4 @@ slide index), which is never listed here.
 
 ## Notion and documents
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
+- `06-FO` "A mixer pools coins and pays out others": the two-column slide runs about 18 px past the bottom at 1280x800; trim it in a future pass. [13 Nov 2026, 06-FO rebuild]
