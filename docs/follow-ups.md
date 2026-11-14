@@ -70,9 +70,6 @@ slide index), which is never listed here.
   transaction already shows the trade", now merged into "A router call names the path and the minimum out" (old
   anchor kept); the bank has no questions on the rebuilt 03-EF's checks, the paymaster slide, the bundler practice or
   the review. [13 Nov 2026, 03-EF rebuild]
-- `blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd`, "A sandwich: three transactions, one victim":
-  the worked sandwich is the lab chain's made-up block A; a sourced real mainnet sandwich (from a cited MEV study)
-  would show the pattern on a public chain. [13 Nov 2026, 03-EF rebuild]
 - `dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md:172` names the old 04-EF title "Upgradeability and Proxy
   Patterns"; it is now "A proxy lets the code change; ask who upgrades" (the old anchor still resolves).
   [13 Nov 2026, 04-EF rebuild]

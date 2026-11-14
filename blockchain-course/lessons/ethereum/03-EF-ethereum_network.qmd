@@ -43,13 +43,13 @@ This slide opens day 4 with a case and two questions: Account 3's swap on today'
 - The running case is a real transaction on the course's own L1 chain: block 9, Account 3 selling 5,000 cUSD for WETH through the course exchange. It is the worked example on the afternoon lab's worksheet, so students meet it twice. The lab's questions use block 11; do not work block 11 in class.
 - A decentralized exchange (DEX) is an exchange run by contracts: no company takes the order. Uniswap is the best-known one, and the course exchange is built the way Uniswap version 2 is.
 - The point is a claim the lesson earns: part 1 shows the contract on the other side, part 3 shows the bots beside the trade, and part 4 names the services in its path.
-- The second case, a sandwich, comes in part 3 from the Find the sandwich lab's block.
+- The second case, a sandwich, comes in part 3 from the Find the sandwich lab's block, followed by a real one from Ethereum mainnet.
 
 **Walkthrough**
 1. Read the case and leave the agent's two questions open; the lesson answers both.
 2. Read the link back to day 3 and day 1, then name the four parts.
 3. Read the objective aloud. Each part ends with a check every student answers, and the close asks the objective again.
-4. Time plan, 50 minutes: opening 2; part 1, reading a swap, 10 (check 2); part 2, seen before it lands, 7 (check 2); part 3, who chooses the order, 10 (check 2); part 4, in the path, 13 (check 3); practice 3, answers 2, review 2, next 1. The optional five-minute Find the sandwich lab in part 3 is outside the plan: run it only with time in hand.
+4. Time plan, 50 minutes: opening 2; part 1, reading a swap, 9 (check 2); part 2, seen before it lands, 7 (check 2); part 3, who chooses the order, 12 (check 2); part 4, in the path, 12 (check 3); practice 3, answers 2, review 2, next 1. The optional five-minute Find the sandwich lab in part 3 is outside the plan: run it only with time in hand.
 
 **Sources**
 - @uniswaplabs_uniswapdocs_2025
@@ -988,6 +988,49 @@ This slide works the MEV pattern analysts meet most often in DEX activity, a san
 - @ethereumorg_mev_2026
 - @uniswaplabs_uniswapv2router02_2020
 - @adams_uniswapv2core_2020
+
+:::
+
+## A real sandwich: 220,806 USDC for 5,273 USDT {.smaller}
+
+Ethereum block 22,029,771, 12 Mar 2025, Uniswap v3 USDC/USDT pool [@etherscan_block22029771_2025]:
+
+| Pos. | Who | Trade |
+| --- | --- | --- |
+| 0 | Bot `0x26ce…50af` | Pays 18.65 M USDC, gets 17.58 M USDT |
+| 1 | Trader `0x5a89…ec5d` | Pays 220,806 USDC, gets 5,273 USDT |
+| 2 | Same bot | Pays 17.32 M USDT, gets 18.60 M USDC |
+
+- The trader's minimum was 0, like Account 3's: no floor at all [@etherscan_block22029771_2025].
+- The bot borrowed 1.09 M USDC from the lending protocol Aave in its front-run and repaid it in its back-run [@etherscan_block22029771_2025]; it kept about \$8,688 and paid the builder 100.56 ETH [@eigenphi_sixsandwiches_2025].
+- Researchers open a 2026 MEV study with this trade [@gogol_sandwichl2_2026].
+
+**For the analyst:** the chain shows the shape and the loss, not why the trader set no minimum.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide puts a real mainnet sandwich next to the lab's made-up one, so students see the same shape at full size. It matters here because a subject's swap may be one of these, and the loss can be most of the trade. Emphasize the same three marks as block A: one block, one pool, the same address just before and just after.
+
+**Key Points**
+- The trader swapped 220,806 USDC for USDT and got 5,273 USDT back. Both are dollar stablecoins, so the trade should have returned about 220,000 USDT; the trader lost roughly 215,500 dollars.
+- Uniswap v3 is a later version of the same exchange; its router's `exactInputSingle` call has the same minimum-out argument, named `amountOutMinimum`.
+- The trader's call to the Uniswap router set `amountOutMinimum` to 0 and no price limit, so the router would accept any price. EigenPhi's analysis says this told everyone it would accept any swapping price.
+- The bot's trades were huge, 18.65 million USDC in and 18.60 million USDC back, because a bigger front-run pushes the price further. Unlike block A, the bot does not sell back all it bought: it sold 17.32 million of its 17.58 million USDT, so it ends about 260,000 USDT up and about 50,000 USDC down, and that gap is the take. It borrowed 1.09 million USDC from Aave, a lending protocol, in the front-run transaction and paid it back in the back-run: both legs are in the receipts.
+- EigenPhi reports the searcher kept about 8,688 dollars and paid the block's builder 100.5585 ETH. Most of the value went to the builder as the searcher's bid, which is the next slide's point: builders choose the order.
+- The amounts and addresses come from reading the three transactions' receipts on Ethereum mainnet; EigenPhi's post and a 2026 arXiv paper by Gogol and colleagues describe the same block.
+- Whether the trader made a mistake or used a broken tool, the chain does not say. That is the limit of the record.
+
+**Walkthrough**
+1. Point at positions 0, 1 and 2: the same bot address before and after the trader.
+2. Read the trader's row and ask what minimum would have stopped this. (Expected answer: any sensible `amountOutMinimum`; the router refuses a trade below it.)
+3. Read the funding line: borrowed, repaid and bid away in the same block.
+4. Read the analyst line, then move to who chose the order.
+
+**Sources**
+- @etherscan_block22029771_2025
+- @eigenphi_sixsandwiches_2025
+- @gogol_sandwichl2_2026
 
 :::
 
