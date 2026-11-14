@@ -100,6 +100,12 @@ for path in web_root.rglob("*"):
     for svc in ("/api/v1/historical-price", "/api/v1/prices"):
         updated = updated.replace(f"}}{svc}", f"}}{base_path}{svc}")
 
+    # The live-update websocket is built as host + port + "{network}/api/v1/ws" ({network} is "" on mainnet), so
+    # the quoted-prefix pass misses it too and the dashboard connects to /api/v1/ws, off the prefix, and shows
+    # "Offline". Put the prefix in front of {network}. No-op when base_path == "".
+    for quote in ('"', "'", "`"):
+        updated = updated.replace(f"{quote}{{network}}/api/v1/ws", f"{quote}{base_path}{{network}}/api/v1/ws")
+
     if updated != content:
         path.write_text(updated, encoding="utf-8")
 

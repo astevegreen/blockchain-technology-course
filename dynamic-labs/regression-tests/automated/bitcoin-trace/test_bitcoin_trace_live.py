@@ -6,13 +6,17 @@ that no longer matches the worksheet, the saved pages or the instructor answers 
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
 import re
+import socket
+import ssl
 import time
 import unittest
 from pathlib import Path
+from urllib.parse import urljoin, urlparse
 
 import requests
 
@@ -47,17 +51,38 @@ def is_round(sats: int) -> bool:
     return sats % 1_000_000 == 0
 
 
+def websocket_handshake(path: str) -> int:
+    """The status line's code for a websocket upgrade at path (101 when the backend takes it)."""
+    url = urlparse(BASE_URL)
+    port = url.port or (443 if url.scheme == "https" else 80)
+    request = (
+        f"GET {path} HTTP/1.1\r\nHost: {url.hostname}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+        f"Sec-WebSocket-Key: {base64.b64encode(os.urandom(16)).decode()}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    )
+    with socket.create_connection((url.hostname, port), timeout=30) as sock:
+        if url.scheme == "https":
+            sock = ssl.create_default_context().wrap_socket(sock, server_hostname=url.hostname)
+        sock.sendall(request.encode())
+        status = sock.recv(1024).split(b"\r\n", 1)[0].decode()
+    return int(status.split()[1])
+
+
 class BitcoinTraceLiveRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # electrs indexes the loaded chain after bitcoind starts; the last transaction answering means it is done.
+        # The mempool backend, which serves the dashboard's websocket, starts after electrs: wait for it too.
         deadline = time.time() + 300
         last = TX[FACTS["order"][-1]]["txid"]
         while True:
             try:
-                if get(f"{PREFIX}/healthz").status_code == 200 and get(f"{API}/tx/{last}").status_code == 200:
+                if (
+                    get(f"{PREFIX}/healthz").status_code == 200
+                    and get(f"{API}/tx/{last}").status_code == 200
+                    and websocket_handshake(f"{PREFIX}/mempool/api/v1/ws") == 101
+                ):
                     return
-            except requests.RequestException:
+            except (requests.RequestException, OSError, ValueError, IndexError):
                 pass
             if time.time() > deadline:
                 raise AssertionError(f"bitcoin-trace lab did not come up at {BASE_URL}")
@@ -87,6 +112,18 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         resp = get(f"{PREFIX}/mempool/")
         self.assertEqual(resp.status_code, 200)
         self.assertIn(f"{PREFIX}/mempool/", resp.text)
+
+    def test_dashboard_websocket_stays_under_the_lab_path(self) -> None:
+        # The dashboard's live updates: its script must open the socket under the lab's prefix (off it, the router
+        # has no route and the dashboard shows "Offline"), and the backend must accept the upgrade there.
+        index = get(f"{PREFIX}/mempool/").text
+        scripts = re.findall(r'src="([^"]*main[^"]*\.js)"', index)
+        self.assertTrue(scripts, "the explorer page loads no main script")
+        base = re.search(r'<base href="([^"]*)"', index)
+        main = get(urljoin(base.group(1) if base else f"{PREFIX}/mempool/", scripts[0])).text
+        self.assertIn(f'"{PREFIX}/mempool{{network}}/api/v1/ws"', main)
+        self.assertNotIn('"{network}/api/v1/ws"', main)
+        self.assertEqual(websocket_handshake(f"{PREFIX}/mempool/api/v1/ws"), 101)
 
     def test_worksheet_is_rendered_and_names_only_the_ransom(self) -> None:
         text = get(f"{PREFIX}/lab/").text

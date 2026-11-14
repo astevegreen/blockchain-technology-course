@@ -192,10 +192,11 @@ slide index), which is never listed here.
 - `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
   missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
   wave 3 fixes]
-- The mempool explorer's dashboard in the coinjoin-trace and bitcoin-trace labs stays as skeletons with an "Offline"
-  badge: its websocket connects to the unprefixed `ws://127.0.0.1/api/v1/ws` and fails, though the prefixed path
-  `/labs/<lab>/mempool/api/v1/ws` works. Address and transaction pages are unaffected; the playbooks call it a note.
-  [12 Nov 2026, desktop browser walks]
+- The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which
+  reaches the bitcoin, final-trace, wallet and hide-and-trace labs only when the owner next rebuilds the base image
+  (student-release, `rebuild_bases`); until then their dashboards may show "Offline". After that rebuild, drop the
+  stopgap `sed` loop in `coinjoin-trace/mempool/load-chain.sh` and `bitcoin-trace/mempool/load-chain.sh`.
+  [14 Nov 2026, wave 5a]
 
 ## Quizzes and instructor tools
 - **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from

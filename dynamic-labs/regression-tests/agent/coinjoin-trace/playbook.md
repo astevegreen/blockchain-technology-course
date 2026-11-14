@@ -46,8 +46,11 @@ For every failed step, capture the URL, the visible failure, console errors, net
 9. Open the payout. Confirm one input (the pool) and eight outputs, two of them within about 2% of the deposit.
 10. Confirm block times show as local time and that dollar figures or "Accelerate" buttons, if shown, are the
     offline quirks the worksheet's "Reading this explorer" names, not errors.
-11. Check console errors and failed network requests. Failed price or websocket reconnects that do not break a
-    page are notes; a page that does not load, or an API call outside `/labs/coinjoin-trace/mempool/`, is a failure.
+11. Open the explorer's dashboard (`/labs/coinjoin-trace/mempool/`). Confirm it shows the chain's blocks, not grey
+    skeletons with an "Offline" badge, and that its websocket connects at `/labs/coinjoin-trace/mempool/api/v1/ws`.
+12. Check console errors and failed network requests. Failed price requests that do not break a page are notes;
+    a page that does not load, a websocket that does not connect, or an API call outside
+    `/labs/coinjoin-trace/mempool/`, is a failure.
 
 ## Worksheet Flow
 
