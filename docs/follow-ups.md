@@ -94,10 +94,6 @@ slide index), which is never listed here.
   (student-release, `rebuild_bases`); until then their dashboards may show "Offline". After that rebuild, drop the
   stopgap `sed` loop in `coinjoin-trace/mempool/load-chain.sh` and `bitcoin-trace/mempool/load-chain.sh`.
   [14 Nov 2026, wave 5a]
-- `dynamic-labs/wallet/gateway/static/wallet/index.html` shows public keys (`#pubs`), receiving (`#recv`,
-  `#msaddr0`) and change addresses (`#chg`, `#msaddr1`) without the shared look's role colours, while Day 2's
-  05-BF diagram colours them (public key `#e5f3fc`/`#56b4e9`, change `#fdf0d5`/`#e69f00`).
-  [14 Nov 2026, wave 5b second look]
 
 ## Quizzes and instructor tools
 - **The pretest page hides three things from the marker.** `/instructor/pretest`
