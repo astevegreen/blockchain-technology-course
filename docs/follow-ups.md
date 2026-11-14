@@ -46,14 +46,6 @@ slide index), which is never listed here.
   `forensics/02-FO-*.qmd` (8 uses). Replace or pair it if those slides are ever shown.
   [12 Nov 2026, replacing weak sources on the shown slides]
 
-- `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:1784` (hidden "chain hopping"
-  slide, TRON callout): the UNODC claim (USDT on TRON the preferred choice of Asian crime syndicates) cites
-  `cointelegraph_unodcfraud_2024` because unodc.org returned 404 on 12 Nov 2026. Swap in the UNODC report itself
-  when it loads. [12 Nov 2026, source-checking R4's narrowed claims] Still held 14 Nov 2026: the report is UNODC's
-  "Transnational Organized Crime and the Convergence of Cyber-Enabled Fraud, Underground Banking and Technological
-  Innovation in Southeast Asia" (Oct 2024), but its PDF does not load for automated readers, and the TRON wording may
-  come from UNODC's Jan 2025 casinos report instead; read both by hand. [14 Nov 2026, wave 3]
-
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`: the
   "Each confirmation makes reversal harder" slide quotes "somewhat arbitrary" with no citation on the slide (its notes
   credit the developer guide; the slide cites the payment-processing page). Cite the right source; run the `source`
