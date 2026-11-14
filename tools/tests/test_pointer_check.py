@@ -259,6 +259,23 @@ class PointerCheckTest(unittest.TestCase):
         # a title in no lesson still fails as missing
         self.assertTrue(any("no slide titled" in f for f in self.prose('Open the slide "Nowhere Slide".' + chr(10))))
 
+    def test_specific_source_lesson_names_a_real_lesson_file_and_visible_titles(self) -> None:
+        def run(value: str) -> list[str]:
+            return self.bank("bitcoin_02-BF-x-quiz-bank.json", [{"id": "q1", "specific_source_lesson": value}])
+        self.assertEqual(run("02-BF-bitcoin.qmd: Mining a Candidate Block"), [])
+        self.assertTrue(any("bare file name" in f for f in run("blockchain-course/lessons/b/02-BF-bitcoin.qmd: Mining a Candidate Block")))
+        # several titles joined by "; "
+        self.assertEqual(run("02-BF-bitcoin.qmd: Mining a Candidate Block; Mining a Candidate Block"), [])
+        self.assertTrue(any("hidden slide" in f for f in run("02-BF-bitcoin.qmd: Old Mempool Slide")))
+        self.assertTrue(any("no slide titled" in f for f in run("02-BF-bitcoin.qmd: Gone Slide")))
+        self.assertTrue(any("not a lesson file" in f for f in run("/tmp/slides/02-BF-bitcoin-slides-only.qmd: Mining a Candidate Block")))
+        self.assertTrue(any("not a lesson file" in f for f in run("99-ZZ-nothing.qmd: Mining a Candidate Block")))
+        self.assertTrue(any("not a lesson file" in f for f in run("elsewhere/02-BF-bitcoin.qmd: Mining a Candidate Block")))
+        self.assertTrue(any("not " in f for f in run("no file here")))
+        # a part with no slide now says so, and may sit beside a visible title
+        self.assertEqual(run("02-BF-bitcoin.qmd: No slide now: Old Mempool Slide"), [])
+        self.assertEqual(run("02-BF-bitcoin.qmd: Mining a Candidate Block; No slide now: Old Mempool Slide"), [])
+
     def test_main_fails_when_only_out_of_lesson_titles_are_stale(self) -> None:
         from unittest import mock
         with mock.patch.object(pc, "load_course", return_value=self.title_course()),                 mock.patch.object(pc, "check_titles", return_value=["card.md: stale title"]),                 mock.patch.object(pc, "check_lesson", return_value=[]):

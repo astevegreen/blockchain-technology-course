@@ -480,6 +480,25 @@ def bank_titles(bank: dict, stem_lesson: Lesson | None, course: Course):
                 yield qid, "sources.slide", item["slide"], lesson_of(item["lesson"], course), False
 
 
+SOURCE_LESSON = re.compile(r"^(\S+?\.qmd):\s*(.+)$")  # "<lesson file>: Title; Title"
+
+
+def source_lesson_problems(value: str, course: Course) -> list[str]:
+    """Why a quiz question's specific_source_lesson ("<lesson file>: <slide titles joined by '; '>") is wrong."""
+    m = SOURCE_LESSON.match(value.strip())
+    if not m:
+        return [f'"{value}" is not "<lesson file>.qmd: <slide titles>"']
+    name, titles = m.groups()
+    lesson = next((les for les in course.lessons.values() if les.path.name == name), None)
+    if lesson is None:
+        return [f"{name} is not a lesson file (use the bare file name, no folder)"]
+    known = lesson.visible
+    parts = [titles]
+    if norm_title(titles) not in known:
+        parts = re.split(r";\s*", titles)
+    return [p for part in parts if not part.startswith("No slide now:") and (p := title_problem(part, lesson, course))]
+
+
 def check_bank(path: Path, course: Course) -> list[str]:
     try:
         bank = json.loads(path.read_text(encoding="utf-8"))
@@ -501,6 +520,11 @@ def check_bank(path: Path, course: Course) -> list[str]:
             problem = title_problem(part, lesson, course, hidden_only)
             if problem:
                 out.append(f"{rel}: {qid} {field}: {problem}")
+    for question in bank.get("questions", []):
+        value = question.get("specific_source_lesson")
+        if isinstance(value, str):
+            out += [f"{rel}: {question.get('id', '?')} specific_source_lesson: {p}"
+                    for p in source_lesson_problems(value, course)]
     return out
 
 
