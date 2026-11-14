@@ -1,7 +1,7 @@
 {
   "lesson_id": "forensics_02_fo_foundations_obfuscation_tracing",
   "lesson_title": "Clustering, Change and Peel Chains",
-  "date_generated": "2026-04-26",
+  "date_generated": "2026-11-14",
   "topic": "forensics",
   "tags": [
     "forensics",
@@ -10,25 +10,20 @@
     "blockchain-forensics",
     "graph-analysis",
     "utxo-model",
-    "account-model",
     "address-clustering",
     "heuristics",
-    "ethereum-logs-traces",
-    "obfuscation",
-    "privacy-coins",
-    "chain-hopping",
     "attribution",
     "quiz-bank"
   ],
   "metadata": {
     "module": "forensics",
     "lesson_file_stem": "02-FO-foundations_obfuscation_tracing",
-    "slide_source_path": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd",
+    "slide_source_path": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
     "reading_source_path": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt",
     "reading_status": "acquired",
-    "question_count": 16,
+    "question_count": 18,
     "source_mix": {
-      "lesson_grounded_questions": 12,
+      "lesson_grounded_questions": 14,
       "reading_grounded_questions": 4
     }
   },
@@ -55,7 +50,9 @@
               "q9",
               "q10",
               "q11",
-              "q12"
+              "q12",
+              "q13",
+              "q14"
             ]
           },
           {
@@ -63,10 +60,10 @@
             "title": "Clustering, Change and Peel Chains - assigned reading",
             "enabled": true,
             "question_ids": [
-              "q13",
-              "q14",
               "q15",
-              "q16"
+              "q16",
+              "q17",
+              "q18"
             ]
           }
         ]
@@ -77,316 +74,397 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "An analyst is moving from a Bitcoin theft investigation to an Ethereum token theft investigation. Which shift in evidence source best describes the change in where forensic evidence is found?",
-      "correct_answer": "Bitcoin tracing follows spent and newly created UTXOs, while Ethereum token tracing often requires account, contract, event-log, and trace data.",
+      "question_stem": "Two addresses you have reached are spent together as inputs to one transaction. What does the trace row say, and how sure are you?",
+      "correct_answer": "One owner, since each input needs its own key's signature; a CoinJoin breaks it, so the word is Moderate.",
       "incorrect_answers": [
-        "Bitcoin tracing follows address-account balances and nonce histories, while Ethereum token tracing can usually stop at top-level ETH transfer fields.",
-        "Bitcoin tracing relies on contract event logs to identify coin ancestry, while Ethereum token tracing follows native balance updates without contract data.",
-        "Bitcoin tracing treats each address as a persistent account, while Ethereum token tracing treats each token transfer as a newly created output."
+        "One owner, since the Bitcoin rules require every input to share one owner; High, as signatures prove it.",
+        "Two owners, since each input has its own key; Low, as a CoinJoin is the usual reason inputs are spent together.",
+        "One owner, since signatures show who pays; Moderate, and a CoinJoin cannot break it, as it hides the inputs."
       ],
-      "explanation": "The lesson emphasizes that the ledger model determines where evidence lives. Bitcoin's UTXO model supports coin ancestry and co-spend reasoning, while Ethereum's account and contract model often requires logs and traces to see economically meaningful flows.",
+      "explanation": "Each input needs a signature, so inputs spent together most likely share an owner. A CoinJoin puts several people's inputs in one transaction on purpose, so co-spending alone is Moderate.",
       "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "utxo-model",
-        "account-model",
-        "ethereum-logs-traces",
-        "comparison"
+        "lesson-synthesis",
+        "co-spend",
+        "coinjoin",
+        "confidence-words"
       ],
-      "lesson_block": "Ledger Model Determines Evidence",
+      "lesson_block": "Co-spending links inputs, unless it's a CoinJoin",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Recall: UTXO vs. Account Model; Reminder: Bitcoin's UTXO Model; Reminder: Ethereum's Account Model"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Co-spending links inputs, unless it's a CoinJoin"
+      }
     },
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A graph shows one address sending funds to hundreds of new addresses in a short period. What is the most defensible interpretation of this pattern?",
-      "correct_answer": "It is a fan-out graph motif: one source sends to many destinations, so the pattern is only a contextual lead rather than a conclusion by itself.",
+      "question_stem": "Why must every link in a trace name the heuristic behind it?",
+      "correct_answer": "Links chain, so one false link merges two actors: a false change link merged Mt. Gox and Silk Road into one cluster.",
       "incorrect_answers": [
-        "It is a fan-in graph motif: many depositors converge on one collector, so the pattern points mainly to consolidation rather than broad distribution.",
-        "It is a peeling chain motif: one rolling change output survives across hops, so the key feature would be repeated two-output transactions.",
-        "It should be treated as a controlled payout batch, so destination ownership can be inferred before checking service and wallet context."
+        "Naming the heuristic raises the link's confidence one level, as a named method is a stronger kind of evidence.",
+        "Heuristics differ by chain, so the name tells the reader which blockchain the link was read from in the trace.",
+        "A false link harms only its own row, so the name tells the reader which row to fix, and the rest stay sound."
       ],
-      "explanation": "The slide-visible point is that graph motifs help convert transactions into behavioral hypotheses. A fan-out shape is not a conclusion by itself; analysts need context before inferring intent.",
+      "explanation": "A change link built on a wrong guess merged Mt. Gox, Instawallet, BitPay and Silk Road into one cluster of 1.6 million keys. Writing the heuristic beside every link lets a reader find where a chain went wrong.",
       "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "graph-analysis",
-        "fan-out",
+        "lesson-synthesis",
+        "false-link",
+        "clustering",
         "misconception"
       ],
-      "lesson_block": "Graph Thinking Converts Transactions Into Behavior",
+      "lesson_block": "One false link merges two actors into one",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Analyst's Mindset: Graph Thinking; Graph Motif: The Fan-Out"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "One false link merges two actors into one"
+      }
     },
     {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "Several Bitcoin inputs are spent together in one ordinary-looking transaction. When is common-input ownership reasoning most likely to be misleading?",
-      "correct_answer": "When the transaction was deliberately constructed by multiple parties, such as a CoinJoin, or by a service consolidating many customers' deposits.",
+      "question_stem": "A transaction's two outputs differ on one clue only: one amount is un-round beside a round one. How sure are you which output is change?",
+      "correct_answer": "Low: one clue alone is Low, as every change clue is a wallet habit and none is proof of change.",
       "incorrect_answers": [
-        "When all inputs appear in one ordinary wallet transaction and the outputs include a plausible change address with matching script type.",
-        "When the transaction includes more than one payment output, even if the inputs appear to come from the same wallet implementation family.",
-        "When the inputs have different confirmation ages, even though they are spent by one coordinated transaction under normal wallet behavior."
+        "Moderate: an un-round amount beside a round one is a clue wallets leave, and a clue like that is enough.",
+        "High: the payee would ask for a round amount, so the un-round output must be the wallet's own change.",
+        "Moderate: a clue like this is a habit, and with no other clue the trace row still stands on this hop."
       ],
-      "explanation": "CIOH assumes inputs are controlled by one entity that can authorize the spend. CoinJoin and service consolidation intentionally violate or complicate that assumption, so the result is a lead rather than proof.",
-      "difficulty_level": 4,
+      "explanation": "Every change clue is a wallet habit and none is proof. One clue alone is Low; several that agree are Moderate, because they all come from the same transaction.",
+      "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "cioh",
-        "address-clustering",
-        "coinjoin",
-        "heuristics"
+        "lesson-synthesis",
+        "change",
+        "clues",
+        "confidence-words"
       ],
-      "lesson_block": "Heuristics Are Useful But Probabilistic",
+      "lesson_block": "Change is a guess from several weak clues",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Address Clustering; Pitfalls & Counter-Heuristics; Counter-Heuristic #1: CoinJoin"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Change is a guess from several weak clues"
+      }
     },
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "A Bitcoin transaction sends 0.8 BTC to an old address and 3.17 BTC to a fresh address using the same script type as the inputs. What should a careful analyst conclude?",
-      "correct_answer": "The fresh, same-script, odd-sized output is a plausible change candidate, but the inference should be weighted with other wallet-behavior evidence.",
+      "question_stem": "In a check transaction, output 1 is the only fresh address, has the inputs' script type and an un-round amount. What word do you give the change call?",
+      "correct_answer": "Moderate: three clues from one transaction are still one kind of evidence, so it is not High.",
       "incorrect_answers": [
-        "The 0.8 BTC output to the old address is the stronger change candidate because payment outputs are usually smaller than wallet remainders.",
-        "The fresh same-script output should be added to the sender cluster immediately because matching script type is enough to prove control.",
-        "No change inference should be attempted until private keys or exchange KYC records identify which output returned to the same sender wallet."
+        "High: three clues agree, and each one points to the same output as the wallet's change.",
+        "Low: every change clue is a habit, so even clues that agree still leave the call at Low.",
+        "High: two clues come from the wallet and one from the amount, so there are two kinds."
       ],
-      "explanation": "Change detection depends on converging weak indicators, such as newness, script type, amount shape, address reuse, and wallet behavior. No single indicator is decisive enough to prove control.",
-      "difficulty_level": 4,
+      "explanation": "The three clues all come from that one transaction, so they are one kind of evidence. They give Moderate, not High; a different kind of evidence would be needed to go higher.",
+      "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "change-detection",
-        "heuristics",
-        "evidence-weighting",
-        "scenario"
+        "lesson-synthesis",
+        "check",
+        "change",
+        "confidence-words"
       ],
-      "lesson_block": "Change Address Detection",
+      "lesson_block": "Check: which output is change, and how sure?",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Heuristic #2: Change Address Detection; Pitfalls & Counter-Heuristics"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Check: which output is change, and how sure?"
+      }
     },
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "An Ethereum transaction has zero ETH value, but victims report that large amounts of USDC moved. What is the analyst's next best step?",
-      "correct_answer": "Inspect token contract event logs and transaction traces to reconstruct ERC-20 transfers and contract-to-contract execution.",
+      "question_stem": "In a peel chain, each transaction pays a small amount to one address and the rest to a fresh address. What do you follow, and what do you record?",
+      "correct_answer": "Follow the large remainder, which is the change, and record each small peel as a lead for the trace to check.",
       "incorrect_answers": [
-        "Follow native ETH balance differences and gas fields only, treating token contracts as labels rather than transaction evidence.",
-        "Apply Bitcoin-style UTXO ancestry to each USDC unit, reconstructing spent outputs from address balance changes on-chain.",
-        "Review only account nonces and block metadata to identify the user operation that authorized the token movement."
+        "Follow each small peel, since the payments are where money goes; the remainder is only the wallet change.",
+        "Follow the large remainder to the end; the peels are ordinary payments and carry no lead for the trace.",
+        "Follow both outputs at every hop and rate each at Low, since a peel chain does not separate change from payment."
       ],
-      "explanation": "ERC-20 transfers, swaps, and internal calls can move major token value without top-level ETH transfer. Ethereum investigations must use contract-aware evidence rather than only top-level transaction fields.",
+      "explanation": "The remainder carries the trace forward, and each peel is a payment to someone, so it is a lead. Meiklejohn et al. followed such chains to services: of Betcoin's 3,171 stolen BTC, 374.49 BTC reached known exchanges this way.",
       "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "ethereum-logs-traces",
-        "erc-20",
-        "smart-contracts",
+        "lesson-synthesis",
+        "peel-chain",
+        "leads",
         "mechanism"
       ],
-      "lesson_block": "Ethereum Requires Contract-Level Visibility",
+      "lesson_block": "Follow the remainder; the peels are your leads",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Ethereum Forensics: Where the Evidence Hides; Following Token Flows: ERC-20 Transfers"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Follow the remainder; the peels are your leads"
+      }
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A DeFi exploit investigation fails when the analyst reviews only the user-facing transaction and ignores proxy calls, flash-loan setup, and internal execution. What did the analyst miss?",
-      "correct_answer": "The trace-level path of contract execution that explains how state and token balances changed across contracts.",
+      "question_stem": "One input pays 45 different addresses and sends one output back to the payer. What is it, and how sure are you?",
+      "correct_answer": "A batch, most often a service paying out: Low until attribution, and only your subject's output is a lead.",
       "incorrect_answers": [
-        "The public token-holder snapshot, which is sufficient to reconstruct the exploit sequence without internal call data.",
-        "The gas-price and block-ordering metadata, which explain contract state changes more directly than execution traces.",
-        "The proxy contract's ABI or verified source alone, which determines every runtime call path without inspecting traces."
+        "A peel chain, since many small payments leave one input: Moderate, and all 45 outputs are leads for the trace.",
+        "A CoinJoin, since many outputs share one transaction: Moderate, and the 45 payees are all linked.",
+        "A batch, a service paying out: High, since a transaction of that shape is the one exchanges use for payouts."
       ],
-      "explanation": "Proxy contracts, flash loans, reentrancy, and nested calls can radically change what a transaction means. The lesson stresses that smart contract forensics often requires traces, not just visible top-level fields.",
-      "difficulty_level": 4,
+      "explanation": "Many outputs look busy but are not a peel chain. A batch is most often a service paying out, so it is Low until attribution, and the customers in it are not linked to each other.",
+      "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "ethereum-logs-traces",
-        "defi",
-        "flash-loans",
-        "reentrancy"
+        "lesson-synthesis",
+        "batch",
+        "confidence-words",
+        "misconception"
       ],
-      "lesson_block": "No slide now: Smart Contract Forensics",
+      "lesson_block": "Batched payouts look busy but aren't a peel",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Smart Contract Forensics"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Batched payouts look busy but aren't a peel"
+      }
     },
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "A stolen Bitcoin balance repeatedly sends a small amount onward while most of the remaining value rolls into a new address, then repeats the pattern many times. Which concept best explains why this remains graph-detectable?",
-      "correct_answer": "It resembles a peeling chain: repeated separation of payments from a rolling change output creates a recognizable laundering motif.",
+      "question_stem": "Forward tracing stops after one hop at two look-alike outputs. What does the lesson do next, and with what caution?",
+      "correct_answer": "Start where the money ended and walk back to the source, recording the direction; backward gives more false positives.",
       "incorrect_answers": [
-        "It resembles a payout fan-out: one transaction distributes many independent payments, so the rolling remainder is incidental.",
-        "It resembles a fan-in consolidation: many addresses merge into one collector, so detectability comes from deposit aggregation.",
-        "It resembles a CoinJoin round: equal-output coordination creates ambiguity among participants rather than a rolling remainder."
+        "Pick the larger output and go on forward, since the bigger value is likelier the change and saves many hops later.",
+        "Stop and write nothing, since a trace that cannot run forward has no result that an analyst could report to anyone.",
+        "Walk back, the safer direction, since each backward hop is read straight off the chain and so carries no error in it."
       ],
-      "explanation": "Peeling chains are useful because repeated automated behavior creates a persistent graph pattern. The motif still needs context, but it can help analysts follow a long-running laundering path.",
+      "explanation": "Sterlingov's trace stopped after one hop going forward, then reached the 2011 Mt. Gox withdrawal from the Bitcoin Fog deposit in seven hops. Backward gives more false positives, so record the direction and where forward stopped.",
       "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "peeling-chains",
-        "graph-analysis",
-        "laundering",
+        "lesson-synthesis",
+        "backward-trace",
+        "sterlingov",
         "mechanism"
       ],
-      "lesson_block": "Peeling Chains",
+      "lesson_block": "When forward fails, trace backward",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Heuristic #3: Peeling Chains; Live Trace: Following the Peeling Chains"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "When forward fails, trace backward"
+      }
     },
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "After funds pass through a mixer, an investigator cannot follow direct provenance with confidence. Which response best reflects sound investigative strategy?",
-      "correct_answer": "Shift toward timing, amount correlation, pool-volume limits, infrastructure clues, endpoint records, and user mistakes rather than claiming the cryptography was broken.",
+      "question_stem": "Your ransom reached a service at deposit D. A second trail with your thief's habits reaches the same service at deposit E, but walks back to a coin that never touched the ransom. What do you write?",
+      "correct_answer": "A separate trail: set it aside, since the ransom reached the service at D, not at deposit E.",
       "incorrect_answers": [
-        "Keep following a deterministic first-in, first-out link between deposits and withdrawals whenever amounts are roughly similar and the pool is quiet enough for confident tracing links.",
-        "Treat all pool participants as co-owners of the mixed funds, using shared transaction membership, pooled liquidity, and withdrawal timing as ownership evidence.",
-        "Focus on the mixer's cryptographic primitive first, because endpoint records become secondary once direct provenance is obscured inside the pool context."
+        "The same actor, as matching habits are one kind of evidence; merge it into the trace at Moderate.",
+        "The ransom's own trail, as the service swept both deposits together in one transaction at the end.",
+        "A fault in your trace, so drop the peel chain and trace again forward from deposit D to the end."
       ],
-      "explanation": "The lesson argues that obfuscation tools are usually attacked through operational, statistical, infrastructure, endpoint, or human weaknesses, not by directly defeating their cryptographic design.",
+      "explanation": "The service's sweep links the deposits to the service, not to each other's senders. The decoy walks back to a coin with no path from the ransom, so it is a separate trail and is not merged.",
       "difficulty_level": 4,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "mixers",
-        "obfuscation",
-        "endpoint-analysis",
-        "tradeoff"
+        "lesson-synthesis",
+        "check",
+        "decoy-trail",
+        "application"
       ],
-      "lesson_block": "Breaking Mixers",
+      "lesson_block": "Check: peel chain, batch or decoy?",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Obfuscation Service: Mixers & Tumblers; Breaking Mixers: Investigative Countermeasures"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Check: peel chain, batch or decoy?"
+      }
     },
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "How do Privacy Pools differ from a traditional mixer in terms of forensic and privacy tradeoffs?",
-      "correct_answer": "Privacy Pools aim to let users selectively prove they are not linked to known illicit deposits without revealing their exact deposit.",
+      "question_stem": "What lifts a hop from Moderate to High on the course scale?",
+      "correct_answer": "Another kind of evidence that agrees, such as an exchange's records; more same-transaction clues stay at Moderate.",
       "incorrect_answers": [
-        "Privacy Pools publish a full deposit-to-withdrawal graph for compliance teams while retaining only address-level pseudonymity.",
-        "Privacy Pools replace selective disclosure with mandatory KYC escrow of each user's withdrawal key before funds enter the pool.",
-        "Privacy Pools are simply larger Bitcoin CoinJoin rounds, so their main tradeoff is equal-output batching rather than membership proofs."
+        "A fourth change clue from the same transaction, as each agreeing clue adds weight until the call reaches High.",
+        "A longer peel chain with a steady pattern, as a long pattern is a separate kind of evidence from each of its hops.",
+        "A second heuristic run over the same transactions, as two methods that agree are two independent lines of evidence."
       ],
-      "explanation": "Privacy Pools are presented as a selective-disclosure design. The broader point is that privacy tools can be designed to reveal compliance-relevant facts without fully exposing user activity.",
-      "difficulty_level": 3,
-      "topic": "forensics",
-      "tags": [
-        "forensics",
-        "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "privacy-pools",
-        "selective-disclosure",
-        "obfuscation",
-        "comparison"
-      ],
-      "lesson_block": "Privacy Pools",
-      "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Next Generation: Privacy Pools"
-    },
-    {
-      "id": "q10",
-      "question_type": "multiple_choice",
-      "question_stem": "When discussing privacy-coin forensics, what is the key contrast between Monero and Zcash?",
-      "correct_answer": "Monero hides sender, receiver, and amount by default, while Zcash privacy is optional and depends heavily on shielded-pool use and adoption.",
-      "incorrect_answers": [
-        "Monero privacy depends on users opting into shielded transfers, while Zcash applies sender, receiver, and amount privacy by default.",
-        "Monero mainly hides receiver addresses while leaving amounts transparent, while Zcash mainly hides amounts while leaving receivers transparent.",
-        "Both systems expose mostly transparent transaction graphs unless users route funds through an external mixer or bridge before withdrawal."
-      ],
-      "explanation": "The lesson uses the contrast to show that privacy design and user adoption shape forensic visibility. Optional privacy can leave correlation risks when many users remain transparent.",
-      "difficulty_level": 3,
-      "topic": "forensics",
-      "tags": [
-        "forensics",
-        "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "privacy-coins",
-        "monero",
-        "zcash",
-        "comparison"
-      ],
-      "lesson_block": "Privacy Systems Vary By Design And Adoption",
-      "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Monero (XMR): Privacy by Default; Zcash (ZEC): Optional Privacy"
-    },
-    {
-      "id": "q11",
-      "question_type": "multiple_choice",
-      "question_stem": "A launderer moves funds from one chain to another. Which hop is likely to leave the strongest on-chain linkage?",
-      "correct_answer": "A smart-contract bridge that records lock-and-mint events with correlated amounts and timing.",
-      "incorrect_answers": [
-        "A centralized exchange swap where public linkage relies mainly on deposit and withdrawal timing.",
-        "A DEX route into a privacy wrapper where the observed trail ends near the protocol entry transaction.",
-        "A mixer-assisted withdrawal where small outputs are delayed and spread across unrelated addresses."
-      ],
-      "explanation": "Not all chain hops are equally opaque. Bridge mechanisms can leave explicit lock-and-mint evidence, while privacy coins or off-chain endpoints may force analysts toward weaker correlations or external records.",
+      "explanation": "Confidence rises with independent evidence, not with more clues. A peel chain's pattern is one kind of evidence, and heuristics over the same transactions are one kind too.",
       "difficulty_level": 4,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "chain-hopping",
-        "cross-chain-bridges",
-        "cross-chain-forensics",
-        "scenario"
+        "lesson-synthesis",
+        "confidence-words",
+        "independent-evidence",
+        "misconception"
       ],
-      "lesson_block": "Chain Hopping",
+      "lesson_block": "Same-transaction clues never reach High alone",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Modern Launderer: Chain Hopping; Not All Hops Are Equally Opaque"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Same-transaction clues never reach High alone"
+      }
     },
     {
-      "id": "q12",
+      "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "In a Bitfinex-style investigation, analysts trace peeling chains and cluster addresses, but the identity link comes from exchange records, OSINT, seized cloud data, and recovered keys. What forensic principle does this best illustrate?",
-      "correct_answer": "Graph analysis can generate strong leads, but attribution usually requires endpoint evidence, legal process, and operational-security failures.",
+      "question_stem": "In the worked trace, why do five consecutive hops of one peel chain share a single row?",
+      "correct_answer": "A row is one judgment: following the change down a peel chain is one heuristic, so it is one row at Moderate.",
       "incorrect_answers": [
-        "Once a laundering graph is reconstructed, attribution should rely mainly on clustering confidence rather than endpoint records or subpoenas.",
-        "Endpoint evidence is useful only after on-chain tracing fails, so KYC and OSINT should replace graph analysis in major court cases.",
-        "Recovered private keys matter primarily as a way to improve graph layout, not as evidence connecting control to real-world accounts."
+        "Each hop is a separate judgment; they share one row only to save space, and each hop is Moderate alone.",
+        "Only the first and last hops can be judged, since the hops between them carry no change in the chain.",
+        "A peel chain is a pattern, not a heuristic, so it needs no row of its own and takes no confidence word in a trace."
       ],
-      "explanation": "The case study's conceptual role is to show evidence fusion. Repeated graph patterns mattered, but the case turned on chokepoints, subpoenas, OSINT, seized infrastructure, and human mistakes.",
-      "difficulty_level": 5,
+      "explanation": "One transaction can give two rows, as steps 1 and 2 do, and a whole peel chain can give one, as step 3 does. Each row names its heuristic, how it could be wrong and its confidence.",
+      "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "02-fo-foundations-obfuscation-tracing",
-        "slides",
-        "bitfinex-case-study",
-        "attribution",
-        "osint",
-        "opsec-failure"
+        "lesson-synthesis",
+        "worked",
+        "trace-rows",
+        "application"
       ],
-      "lesson_block": "Case Study Integrates The Lesson",
+      "lesson_block": "A worked trace: four steps, four judgments",
       "source_type": "slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Case Study: The Bitfinex Hack; The Fatal Flaw: KYC Subpoenas; The Takedown and The Cloud Seizure"
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "A worked trace: four steps, four judgments"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction spends one bc1q input into two fresh bc1q outputs, 0.7000 and 0.4997. Which row do you write for the change?",
+      "correct_answer": "Change is output 1, the un-round one; Low, as one clue separates them and the payee may have asked for it.",
+      "incorrect_answers": [
+        "Change is output 1, the un-round one; Moderate, as an un-round beside a round amount is a strong clue.",
+        "Change is output 0, the larger one; Low, since a wallet sends the biggest share of the input back to itself.",
+        "Change undetermined, no word given, since both outputs are fresh and share the inputs' script type."
+      ],
+      "explanation": "Both outputs are fresh and of one type, so only the un-round 0.4997 points to change. One clue alone is Low.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "lesson-synthesis",
+        "practice",
+        "change",
+        "confidence-words"
+      ],
+      "lesson_block": "Answers: three hops, three judgments",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Answers: three hops, three judgments"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction's two outputs, 0.4251 and 0.5745, are both fresh bc1q addresses of the inputs' type, both un-round, and later spent alike. What do you write, and what next?",
+      "correct_answer": "Change undetermined, with no word as no call is made; keep both outputs as leads and trace back from where the money ends.",
+      "incorrect_answers": [
+        "Output 1 is change at Low, since the amounts are un-round; keep only that output and drop the other from the trace.",
+        "Change undetermined at Low, as a call that cannot be made is the weakest one; follow only the larger output, not both.",
+        "Both outputs are change at Moderate, since they are spent alike; follow both, merged as one owner in the trace."
+      ],
+      "explanation": "No clue separates the outputs, so the right row says change undetermined: no call is made and no word is given. Both outputs stay leads, and a trace back from where the money ends is the way through.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "lesson-synthesis",
+        "practice",
+        "undetermined",
+        "bitcoin-fog"
+      ],
+      "lesson_block": "Answers: three hops, three judgments",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Answers: three hops, three judgments"
+      }
     },
     {
       "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A worked trace ends at a deposit whose cluster holds 2 million addresses. Why is that final row only Low?",
+      "correct_answer": "A huge cluster is likely a service, but a false link could have built a super-cluster, so size is just behavior.",
+      "incorrect_answers": [
+        "A cluster of 2 million addresses usually holds CoinJoins, which break co-spending, so the row cannot stand higher.",
+        "The trace ends at a service, and every step that reaches a service is Low, whatever the size of its cluster is.",
+        "Clusters are counted by the exchange, so its figure is one unverified label from one source, which is Low."
+      ],
+      "explanation": "Size is behavior. A cluster this big usually means a service, but a false link can also build one that size. Only attribution, naming the service, can raise the word.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "lesson-synthesis",
+        "review",
+        "clusters",
+        "confidence-words"
+      ],
+      "lesson_block": "Review: every hop, a heuristic and a confidence",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "Review: every hop, a heuristic and a confidence"
+      }
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "Transaction T1 spends two ransom inputs, R1 and R2, into two outputs: output 0 seen before, output 1 a fresh bc1q address with an un-round amount. What are the first two trace rows?",
+      "correct_answer": "Row 1: R1 and R2 are one wallet, Moderate; row 2: change is output 1, Moderate, as its three clues share one transaction.",
+      "incorrect_answers": [
+        "Row 1: R1 and R2 are one wallet, High, as both were signed; row 2: change is output 1, High, as three clues agree.",
+        "Row 1: R1 and R2 are one wallet, Moderate; row 2: change is output 0, Moderate, as an address seen before is the wallet's own.",
+        "Row 1: R1 and R2 are two owners, Low, as a CoinJoin may be at work; row 2: change is output 1, Moderate, from three clues."
+      ],
+      "explanation": "Two inputs spent together are one wallet (co-spend), Moderate, as T1 shows no sign of a CoinJoin. Output 1 is the only fresh address, has the inputs' script type and an un-round amount; three clues from one transaction are one kind of evidence, so Moderate.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "lesson-synthesis",
+        "worked",
+        "trace-rows",
+        "application"
+      ],
+      "lesson_block": "From one raw transaction to two trace rows",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd",
+        "anchor": "From one raw transaction to two trace rows"
+      }
+    },
+    {
+      "id": "q15",
       "question_type": "multiple_choice",
       "question_stem": "A student argues that public blockchains make attribution automatic because anyone can inspect the ledger. Which correction is most accurate?",
       "correct_answer": "Public ledgers make flows visible, but pseudonymous addresses still require clustering and off-chain correlation before identity claims are justified.",
@@ -412,7 +490,7 @@
       "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 77-83 and 453-462, transparency versus pseudonymous attribution"
     },
     {
-      "id": "q14",
+      "id": "q16",
       "question_type": "multiple_choice",
       "question_stem": "An investigator collects a suspicious address list and immediately writes a report, but never documents how the transaction data was collected or hashes the exported evidence. Which adapted forensic lifecycle need is most clearly missing?",
       "correct_answer": "Preservation and chain-of-custody work that maintains integrity, documentation, and reliability of the evidence.",
@@ -438,7 +516,7 @@
       "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 524-535, preservation, hashes, documentation, and chain of custody"
     },
     {
-      "id": "q15",
+      "id": "q17",
       "question_type": "multiple_choice",
       "question_stem": "A blockchain evidence-management system stores hashes and custody events on a tamper-evident ledger. What limitation should an analyst still recognize?",
       "correct_answer": "Tamper evidence can strengthen integrity, but it does not by itself solve privacy, scalability, integration, admissibility, or attribution problems.",
@@ -465,7 +543,7 @@
       "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 95-101, 1009-1038, and 2182-2252, evidence-management benefits and limits"
     },
     {
-      "id": "q16",
+      "id": "q18",
       "question_type": "multiple_choice",
       "question_stem": "A vendor claims its AI tool can replace investigators by automatically labeling suspicious blockchain activity across every chain. Which response is most accurate?",
       "correct_answer": "Automation can help with scale, anomaly detection, and pattern recognition, but it still needs validation, specialized expertise, and human interpretation.",

@@ -86,10 +86,14 @@ slide index), which is never listed here.
   each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
 - Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF,
-  06-EF, 02-FO and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF,
-  02-FO and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
+  06-EF and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF
+  and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
   label. The `specific_source_lesson` strings in the 02-IN, 04-EF and 04-CP banks still name old titles (the check does not
   read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
+
+- `quizes/quiz_json/forensics_02-FO-foundations_obfuscation_tracing-quiz-bank.json` q16 and q17 (carried-over reading
+  questions) test chain-of-custody records and admissibility, which are out of scope, and q15 to q18 trace to no visible
+  slide. Replace or re-aim them at in-scope 02-FO concepts, citing a visible slide. [14 Nov 2026, wave 2C review]
 
 ## Labs
 - The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which

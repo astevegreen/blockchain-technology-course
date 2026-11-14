@@ -172,16 +172,28 @@ The Bitfinex case functions as an end-to-end example. It combines peeling chains
 
 ## Suggested Difficulty Distribution
 
-- Level 1: 1-2 questions for vocabulary needed to follow the lesson, such as UTXO, event log, entity cluster, mixer, or view key.
-- Level 2: 2-3 questions for recognizing basic mechanisms such as CIOH, change detection, ERC-20 transfer logs, fan-in, fan-out, or shielded versus transparent addresses.
-- Level 3: 4-6 questions for explanation and comparison, especially UTXO versus account tracing, heuristic assumptions, Ethereum hidden evidence, mixer countermeasures, and bridge traceability.
-- Level 4: 3-4 questions for scenario transfer, misconception diagnosis, evidence weighting, and attribution-strength judgments.
-- Level 5: 1-2 questions for synthesis across multiple lesson threads, such as the Bitfinex case, chain hopping plus privacy coins, or endpoint evidence versus cryptographic privacy.
+- Level 1: 0 questions for vocabulary needed to follow the lesson, such as UTXO, event log, entity cluster, mixer, or view key.
+- Level 2: 0 questions for recognizing basic mechanisms such as CIOH, change detection, ERC-20 transfer logs, fan-in, fan-out, or shielded versus transparent addresses.
+- Level 3: 9-11 questions for explanation and mechanism, especially co-spending, change clues, peel chains, batches, backward tracing, and the course confidence words.
+- Level 4: 6-7 questions for scenario transfer, misconception diagnosis, and evidence weighting, such as the decoy trail, what lifts Moderate to High, the practice hops and the review.
+- Level 5: 0 questions for synthesis across multiple lesson threads, such as the Bitfinex case, chain hopping plus privacy coins, or endpoint evidence versus cryptographic privacy.
 
 The lesson supports mostly level 3 and level 4 assessment because its main value is reasoning about mechanisms, assumptions, and limits rather than recalling isolated facts.
 
 ## Source Anchors
 
+- `Co-spending links inputs, unless it's a CoinJoin`
+- `One false link merges two actors into one`
+- `Change is a guess from several weak clues`
+- `Check: which output is change, and how sure?`
+- `Follow the remainder; the peels are your leads`
+- `Batched payouts look busy but aren't a peel`
+- `When forward fails, trace backward`
+- `Check: peel chain, batch or decoy?`
+- `Same-transaction clues never reach High alone`
+- `A worked trace: four steps, four judgments`
+- `Answers: three hops, three judgments`
+- `Review: every hop, a heuristic and a confidence`
 - `Recall: UTXO vs. Account Model`
 - `Reminder: Bitcoin's UTXO Model`
 - `Reminder: Ethereum's Account Model`
