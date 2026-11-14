@@ -23,9 +23,6 @@ slide index), which is never listed here.
   (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO; list 14 Nov 2026, from each
   lesson's last rebuild commit]
 
-- `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
-  (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
-  or the review. [13 Nov 2026, 04-EF rebuild]
 - **Closes with the 04-BF rebuild.** `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd:632-725`: the three hidden
   regulation slides ("Off-Chain Controls: KYC and AML", "How KYC/AML Apply to Bitcoin", "Regulatory Pressure Beyond
   Bitcoin") are now taught in 05-FO's part 1 (KYC, the BSA, enforcement against BTC-e, e-gold and Liberty Reserve);

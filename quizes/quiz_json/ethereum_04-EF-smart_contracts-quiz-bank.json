@@ -1,29 +1,27 @@
 {
   "lesson_id": "ethereum_04_ef_smart_contracts",
   "lesson_title": "Smart Contracts: From Concept to Ethereum",
-  "date_generated": "2026-04-26",
+  "date_generated": "2026-11-14",
   "topic": "ethereum",
   "tags": [
     "ethereum",
     "04-ef-smart-contracts",
     "smart-contracts",
-    "evm",
     "solidity",
+    "coin-contract",
     "quiz-bank"
   ],
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "04-EF-smart_contracts",
-    "question_count": 11,
+    "reading_status": "partial",
+    "question_count": 16,
     "source_mix": {
-      "lesson_questions": 8,
-      "reading_questions": 3
+      "lesson_grounded_questions": 12,
+      "reading_grounded_questions": 4
     },
-    "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd",
-    "reading_sources": [
-      "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt",
-      "/tmp/blockchain-course-readings/mastering_ethereum_ch7.html"
-    ]
+    "lesson_source_path": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd",
+    "note": "The lesson names no assigned reading. Reading questions rest on documents the lesson cites (the Solidity documentation, the Contract ABI specification, the ERC-1967 article), and each states a fact that is on a visible slide. Only the visible slides count; the hidden slides get no questions. Coverage: one question for each visible check, worked, practice, answers and review slide, and the slides on deployment, Coin, state, visibility, events, selectors, proxies and Vyper. The cited documents were not re-fetched for this rebuild."
   },
   "hierarchy": {
     "sections": [
@@ -33,28 +31,33 @@
         "enabled": true,
         "lectures": [
           {
-            "id": "lec_smart_contracts_lesson_slides",
-            "title": "Smart Contracts: From Concept to Ethereum - lesson slides",
+            "id": "lec_smart_contracts_lesson",
+            "title": "Smart Contracts: From Concept to Ethereum - lesson synthesis",
             "enabled": true,
             "question_ids": [
               "q1",
               "q2",
+              "q3",
+              "q4",
               "q5",
+              "q6",
               "q7",
-              "q14",
-              "q15",
-              "q16",
-              "q17"
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12"
             ]
           },
           {
-            "id": "lec_smart_contracts_assigned_reading",
-            "title": "Smart Contracts: From Concept to Ethereum - assigned reading",
+            "id": "lec_smart_contracts_reading",
+            "title": "Smart Contracts: From Concept to Ethereum - reading synthesis",
             "enabled": true,
             "question_ids": [
-              "q11",
-              "q12",
-              "q13"
+              "q13",
+              "q14",
+              "q15",
+              "q16"
             ]
           }
         ]
@@ -65,315 +68,423 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A student says a smart contract is mainly a legal agreement uploaded to Ethereum. Which correction best describes what a smart contract actually is?",
-      "correct_answer": "A smart contract is deterministic code plus persistent state that executes under blockchain consensus rules.",
+      "question_stem": "Account 3, which did not deploy Coin, calls mint(Account 3, 1000). What does the chain show afterwards?",
+      "correct_answer": "The require fails with \"not minter\" and the call reverts, so no balance changes; the failed transaction stays on the chain and Account 3 has paid its fee.",
       "incorrect_answers": [
-        "A smart contract is a signed legal agreement whose clauses Ethereum clients interpret during settlement.",
-        "A smart contract is an off-chain service that mirrors blockchain events and submits transactions on demand.",
-        "A smart contract is wallet-side software that signs preset transfers after a user approves a dApp request."
+        "The require fails and the call reverts, so no balance changes; the failed transaction leaves no record on the chain and Account 3 pays no fee.",
+        "The mint succeeds because mint is public, so Account 3's balance rises by 1000 and the chain records the call and the changed balance of Account 3.",
+        "The require fails with \"not minter\", but the call does not revert, so Account 3's balance rises by 1000 while the failed check stays on the chain."
       ],
-      "explanation": "The lesson separates smart contracts from legal contracts. Their technical force comes from deterministic bytecode execution and persistent on-chain state, not from interpretation of intent.",
-      "difficulty_level": 2,
+      "explanation": "mint is public, so anyone may call it, but its require checks msg.sender against minter. A failed require reverts the call: no balance changes, no logs, and the caller still pays the fee. The failed transaction stays on the chain.",
+      "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "smart-contracts",
-        "deterministic-execution",
-        "misconception"
+        "require",
+        "revert",
+        "access-control",
+        "scenario",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Smart Contracts As Deterministic Stateful Programs",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Smart Contracts: Concept and Scope; Smart Contracts As Deterministic Stateful Programs",
-      "source_type": "lesson_slides"
+      "lesson_block": "Check: a stranger calls mint. What happens?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Check: a stranger calls mint. What happens?"
     },
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A Solidity function is declared external view and is not marked payable. A caller attaches ETH to a call to it. What should the analyst expect?",
-      "correct_answer": "The call reverts: a function not marked payable rejects attached ETH, and view means it may read state but can never write it.",
+      "question_stem": "Reading SimpleStorage with the four questions, who can change the stored number, and which line shows it?",
+      "correct_answer": "Anyone: set is public and has no require, so no check gates it.",
       "incorrect_answers": [
-        "The call succeeds and the ETH is credited to the contract, because view functions are allowed to hold balances for callers.",
-        "The call succeeds but the ETH is sent back, because external functions can only be called from outside the contract itself.",
-        "The call reverts only if the ETH exceeds the contract balance, because view functions are checked against stored state."
+        "Only its deployer: set is gated by a require using msg.sender.",
+        "Nobody: stored is private, so set cannot change the number.",
+        "Anyone, but only a larger value, because set checks x first."
       ],
-      "explanation": "The \"Visibility says who may call; payable takes ETH\" slide says payable lets a function receive ETH and nonpayable, the default, makes attached ETH cause a revert. view lets a function read state but not write it, so neither the ETH nor a state change can be accepted.",
+      "explanation": "The worked table answers the second question with Anyone: set is public, with no require. The missing gate is the finding; stored being private does not stop other callers, because set is a public function.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "solidity",
-        "payable",
-        "mutability",
-        "misconception"
-      ],
-      "lesson_block": "Visibility says who may call; payable takes ETH",
-      "source": "lesson",
-      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Visibility says who may call; payable takes ETH",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q5",
-      "question_type": "multiple_choice",
-      "question_stem": "After a Solidity contract is deployed, what best describes the role of the constructor and deployed runtime bytecode?",
-      "correct_answer": "The constructor runs during deployment to initialize state, while the runtime bytecode is what remains at the contract address for later calls.",
-      "incorrect_answers": [
-        "The constructor can be called after deployment to refresh state, while runtime bytecode handles later user transactions after setup.",
-        "The constructor returns fresh runtime bytecode before each call, while deployed code stores the original deployment arguments for later callers.",
-        "The constructor remains at the address as privileged setup logic, while runtime bytecode is fetched only by off-chain clients during reads."
-      ],
-      "explanation": "The lesson's deployment model distinguishes initialization from later execution. Deployment creates a contract account whose persistent state and runtime code are used after the constructor has finished.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "contract-deployment",
-        "constructors",
-        "runtime-bytecode",
-        "mechanism"
-      ],
-      "lesson_block": "Contract Deployment",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Contract Deployment; Deployment and Runtime Bytecode",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q7",
-      "question_type": "multiple_choice",
-      "question_stem": "A contract emits an event whenever a transfer occurs. An on-chain function later tries to read those event logs to calculate the current balance. Why is this design flawed?",
-      "correct_answer": "Events are receipt logs for off-chain consumers, not contract storage that on-chain logic can query as persistent state.",
-      "incorrect_answers": [
-        "Events can be read by later contract calls, but only if the emitting function marks the balance fields as indexed for filtering.",
-        "Events are cheaper than storage variables, so balances derived from logs remain available to on-chain accounting logic later.",
-        "Events update transaction receipts after execution, so later functions can read them through ABI-decoded return data afterward."
-      ],
-      "explanation": "The lesson distinguishes logs from storage. Events are useful for UIs, wallets, indexers, and monitoring, but contract logic should rely on stored state for values it must later read.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "events",
-        "logs",
-        "storage",
-        "misconception"
-      ],
-      "lesson_block": "Events and Logs",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Events and Logs; Interfaces To Off-Chain Systems",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q11",
-      "question_type": "multiple_choice",
-      "question_stem": "A transaction calls Contract A, which calls Contract B. Contract B reverts after Contract A has already updated some state. What is the usual effect if the failure is not handled?",
-      "correct_answer": "The state effects of the call chain revert atomically, but gas already spent is still charged and the attempted transaction is recorded.",
-      "incorrect_answers": [
-        "Only Contract B's storage rolls back, while Contract A's earlier writes stay committed because each contract has a separate transaction record.",
-        "A's state update remains pending until the sender submits a second transaction that decides whether to keep or reverse it later.",
-        "The block records the failed transaction and charges gas, but successful writes before the nested revert remain committed locally."
-      ],
-      "explanation": "The reading stresses transaction atomicity and gas. Failed execution rolls back state effects across the execution path unless failure is caught or handled, but the work already performed still consumes gas.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "reading",
-        "assigned-reading",
-        "transaction-atomicity",
-        "error-handling",
-        "gas",
-        "mechanism",
-        "mastering-ethereum-ch7"
-      ],
-      "lesson_block": "Atomicity, Error Handling, And Gas",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Atomicity, Error Handling, And Gas; Core Reading Takeaways",
-      "source_type": "assigned_reading"
-    },
-    {
-      "id": "q12",
-      "question_type": "multiple_choice",
-      "question_stem": "A developer marks a Solidity variable `private` because it contains information they do not want blockchain observers to see. What is the issue with this approach?",
-      "correct_answer": "`private` limits Solidity-level access from other contracts and derived contracts, but it does not make public-chain data secret.",
-      "incorrect_answers": [
-        "`private` hides the variable from Solidity getters and from block explorers, but validators can still inspect it while executing it.",
-        "`private` encrypts reads from other contracts at runtime, but transaction calldata can still reveal values passed into it during calls.",
-        "`private` keeps other contracts from calling the variable directly, so on its own it is sufficient for user secrets stored on-chain."
-      ],
-      "explanation": "The reading distinguishes visibility from privacy. Solidity visibility controls callability and inheritance access; it does not hide data from observers of a public blockchain.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "reading",
-        "assigned-reading",
-        "visibility",
-        "privacy",
+        "simplestorage",
+        "four-questions",
         "access-control",
-        "misconception",
-        "mastering-ethereum-ch7"
+        "application",
+        "lesson-synthesis"
       ],
-      "lesson_block": "Visibility, Privacy, And Access Control",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Visibility, Privacy, And Access Control; Function visibility and mutability",
-      "source_type": "assigned_reading"
+      "lesson_block": "Worked: SimpleStorage lets anyone overwrite it",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Worked: SimpleStorage lets anyone overwrite it"
     },
     {
-      "id": "q13",
+      "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "A contract accepts an arbitrary address from a user, casts it to an expected contract type, then calls it without additional checks. What is the most relevant risk?",
-      "correct_answer": "The cast assumes an interface but does not prove the address has the expected code or behavior, so the callee may fail or act maliciously.",
+      "question_stem": "In Coin, who may call mint successfully, which line enforces it, and can that ever change?",
+      "correct_answer": "Only the address stored in minter, the deployer; require(msg.sender == minter) enforces it, and no function writes minter again, so it cannot change.",
       "incorrect_answers": [
-        "The cast checks that the target exposes the named functions, but it cannot verify whether those functions enforce the expected policy.",
-        "The cast is safe for view calls but dangerous for state-changing calls, because only writes can execute unexpected callee code.",
-        "The cast binds the target to the compiled interface for future calls, but it bypasses return-data decoding and revert handling checks in the caller."
+        "Only the address stored in owner, the deployer; require(msg.sender == owner) enforces it, and a later call to mint can reassign that owner.",
+        "Any address that names itself as receiver; mint is public, and its require only checks that the balance of the receiver can grow by the amount.",
+        "Only the minter for now; the require enforces it, but the minter can hand the right on to another address by calling mint with a new receiver."
       ],
-      "explanation": "The reading compares contract-calling patterns. Creating a known instance gives stronger assumptions, while casting an arbitrary address and low-level calls rely on assumptions that must be checked and handled defensively.",
+      "explanation": "The constructor sets minter to the deployer, the require in mint compares msg.sender with it, and no other function writes minter. So the answer names a line and says it cannot change.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "coin-contract",
+        "minting",
+        "access-control",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Check: who may mint, and which line says so?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Check: who may mint, and which line says so?"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "Account 2 holds 50 coins and calls send(Account 5, 80) on Coin. What does the chain keep of this call?",
+      "correct_answer": "No Sent event; the chain keeps the failed transaction, its fee and its input, which starts with 0xd0679d34, the selector of send.",
+      "incorrect_answers": [
+        "A Sent event for 80 coins, because the call reaches the emit line before the require checks the balance, and the call keeps nothing else.",
+        "A Sent event for 50 coins, because send moves whatever the caller holds when the amount is too high, and the input starts 0xd0679d34.",
+        "Nothing: a reverted call leaves no transaction, no fee and no input on the chain, as all of its changes are undone together on a revert."
+      ],
+      "explanation": "emit Sent sits after the require, and a reverted call leaves no logs. The transaction itself stays, with its fee and an input that starts with send's selector, so the attempt is evidence the event list does not show.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "04-ef-smart-contracts",
-        "reading",
-        "assigned-reading",
-        "contract-to-contract-calls",
-        "address-casting",
-        "low-level-calls",
-        "trust-boundaries",
-        "mastering-ethereum-ch7"
-      ],
-      "lesson_block": "Calls, Trust Boundaries, And Context",
-      "source": "reading",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Calling Other Contracts; Creating a new instance; Addressing an existing instance; Raw call, delegatecall, and staticcall",
-      "source_type": "assigned_reading"
-    },
-    {
-      "id": "q14",
-      "question_type": "multiple_choice",
-      "question_stem": "An analyst totals every coin the Coin contract has created by adding up its Sent events. What does this approach miss?",
-      "correct_answer": "Every mint: mint raises a balance but emits no event, so a mint shows only in the call and the changed balance.",
-      "incorrect_answers": [
-        "Only mints over the cap: mint emits Sent only for amounts that stay inside the contract's fixed maximum token supply.",
-        "Nothing: mint calls send to deliver the new coins, so each mint leaves a Sent event from the minter's address.",
-        "Only mints by others: mint emits Sent unless the caller is the stored minter, whose mints stay out of logs."
-      ],
-      "explanation": "The \"Check: who may mint, and which line says so?\" slide asks what record a mint leaves. mint changes balances but emits nothing, and the contract has no supply cap, so a reader who watches only Sent events misses every mint.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
         "coin-contract",
         "events",
-        "minting",
-        "contract-reading",
-        "misconception"
-      ],
-      "lesson_block": "Check: who may mint, and which line says so?",
-      "source": "lesson",
-      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Check: who may mint, and which line says so?",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q15",
-      "question_type": "multiple_choice",
-      "question_stem": "A transaction to the Coin contract left no event, and its input data begins with four bytes. What do those four bytes tell the analyst?",
-      "correct_answer": "Which function was called: they are the first 4 bytes of the keccak256 hash of its name and argument types.",
-      "incorrect_answers": [
-        "Where the function sits in memory: they are the code offset the EVM jumps to when the call starts to execute.",
-        "Which function was called: they spell out the function's name in ASCII, cut short to its first four letters.",
-        "Who sent the call: they are the first 4 bytes of the caller's address, which the mint function checks against minter."
-      ],
-      "explanation": "The ABI, Encoding, and Function Selectors slide defines the selector as the first 4 bytes of keccak256 of the function signature. It is a dispatch code, not a memory address, and the input carries only those 4 bytes, not the function's name, so a direct call to mint shows up in the transaction even with no event.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "abi",
+        "revert",
         "function-selectors",
-        "calldata",
-        "mechanism"
+        "scenario",
+        "lesson-synthesis"
       ],
-      "lesson_block": "ABI, Encoding, and Function Selectors",
-      "source": "lesson",
-      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: ABI, Encoding, and Function Selectors",
-      "source_type": "lesson_slides"
+      "lesson_block": "Check: a send reverts. Is there a Sent event?",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Check: a send reverts. Is there a Sent event?"
     },
     {
-      "id": "q16",
+      "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "An analyst is given a token address that turns out to be an ERC-1967 proxy. Where are the token's rules, and what else belongs in the characterization?",
-      "correct_answer": "In the implementation contract named in the proxy's fixed storage slot, and who holds the right to upgrade it.",
+      "question_stem": "A proxy's ERC-1967 implementation slot and its latest Upgraded log name the same implementation. How should the analyst state that finding?",
+      "correct_answer": "With high confidence, because two records, the slot and the latest Upgraded log, agree.",
       "incorrect_answers": [
-        "In the proxy's own source code, since delegatecall copies the implementation's logic into it at each upgrade.",
-        "In the most recent Upgraded event alone, since a proxy cannot swap its logic without emitting that event first.",
-        "In the proxy's storage slot itself, since ERC-1967 keeps the token's rules there instead of an address."
+        "With moderate confidence, because an address read from a slot is merely a lead.",
+        "With low confidence until the admin slot is read, because the slot names only who may upgrade.",
+        "With moderate confidence, because an Upgraded log suggests a swap and the slot can lag it."
       ],
-      "explanation": "The \"A proxy lets the code change; ask who upgrades\" slide says the proxy holds the state and balances while a separate implementation holds the code, run through delegatecall. ERC-1967 fixes the slot that holds the implementation's address and says each change should emit Upgraded, which is not a must. Whoever can upgrade can change every rule, so the upgrade right belongs in the characterization.",
+      "explanation": "The worked slide says that when the slot and the latest Upgraded log name the same implementation, the analyst says so with high confidence; when they differ, report both and say which you trust.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "04-ef-smart-contracts",
-        "lesson",
-        "slides",
+        "erc-1967",
+        "confidence",
+        "proxy-patterns",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Worked: the ERC-1967 slot names the code",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Worked: the ERC-1967 slot names the code"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "In the practice, the agent's address for Coin is an ERC-1967 proxy. What do you read first, and what question do you add?",
+      "correct_answer": "The implementation slot, then its source; add who can upgrade.",
+      "incorrect_answers": [
+        "The proxy's own source, then its events; add who deployed it.",
+        "The proxy's own source, then its balances; add how many coins exist.",
+        "The Upgraded logs alone, then the minter; add who may mint."
+      ],
+      "explanation": "The answers slide says to read the implementation slot first, then the source at that address, and to add a sixth question: who can upgrade, from the admin slot or the upgrade function.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "practice",
+        "erc-1967",
         "proxy-patterns",
         "upgradeability",
-        "erc-1967",
-        "delegatecall",
-        "scenario"
+        "application",
+        "lesson-synthesis"
       ],
-      "lesson_block": "A proxy lets the code change; ask who upgrades",
-      "source": "lesson",
-      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: A proxy lets the code change; ask who upgrades",
-      "source_type": "lesson_slides"
+      "lesson_block": "Practice: four questions on Coin, then upgrades",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Practice: four questions on Coin, then upgrades"
     },
     {
-      "id": "q17",
+      "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "An explorer shows verified source with def, the decorators @external and @view, self., and no curly braces. What is the analyst looking at?",
-      "correct_answer": "Vyper compiled for the EVM: the same four reading questions apply, and its transactions and logs look like Solidity's.",
+      "question_stem": "Does Coin cap how many coins the minter can create?",
+      "correct_answer": "No: mint checks no total or maximum; only Solidity 0.8's overflow check stops a balance past the largest uint256.",
       "incorrect_answers": [
-        "Rust for Solana: its decorators mark the program's instructions, so it must be read under Solana's account model.",
-        "Python run off-chain by an indexer: the contract's real logic sits in a separate Solidity file at that address.",
-        "Vyper compiled for its own chain: its transactions and logs differ, so EVM tools cannot read what it records."
+        "Yes: mint checks a total supply that the constructor sets, so new coins stop at that figure, which the minter cannot pass.",
+        "No: mint has no cap, and Solidity 0.8's overflow check lets a balance wrap round to zero past the largest uint256 value.",
+        "Yes: the minter's own balance caps each mint, as mint adds only coins that the minter already holds to the receiver."
       ],
-      "explanation": "The \"Vyper looks like Python but runs on the same EVM\" slide lists def, decorators such as @external and @view, self., and no curly braces as Vyper's clues on sight. Vyper compiles for the same EVM as Solidity, so its on-chain activity looks the same and the four questions still apply. Rust on Solana shows fn, pub and #[...] attributes instead.",
+      "explanation": "The answers slide says there is no cap: nothing in mint checks a total or a maximum. The only stop is Solidity 0.8's overflow check, which reverts a mint that would push one balance past the largest uint256.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "coin-contract",
+        "minting",
+        "limits",
+        "overflow",
+        "application",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Answers: what Coin lets each caller do",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Answers: what Coin lets each caller do"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A token shows only Sent events. Has nobody minted?",
+      "correct_answer": "No: events show only what the code emits, so read mint and look for calls whose input starts 0x40c10f19.",
+      "incorrect_answers": [
+        "Yes: every balance change is logged, so a mint that left no log never happened and Sent events are complete.",
+        "No: mints go in a second event list that an explorer shows only for contracts whose source nobody has verified.",
+        "Yes: explorers add a mint record to the event list whenever the code is silent about it, in most real tokens."
+      ],
+      "explanation": "The review answer is no. A log exists only where the code says emit, and Coin's mint emits nothing. The mints show as calls whose input starts with mint's selector and as changed balances.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "events",
+        "misconception",
+        "minting",
+        "function-selectors",
+        "review",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Review: four questions turn code into statements",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Review: four questions turn code into statements"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A deployment transaction creates a contract. What happens to the constructor and to the runtime bytecode?",
+      "correct_answer": "The constructor runs once during deployment and is not kept; the runtime bytecode and the first storage values stay at the new address.",
+      "incorrect_answers": [
+        "The constructor runs again on each call to set up its state, and the runtime bytecode stays at the new address for the later calls to use.",
+        "The constructor stays at the new address with the runtime bytecode, and the deployment transaction names that address in its To field.",
+        "The constructor runs once during deployment and is not kept; the new address holds Solidity source that an explorer reads when it is verified."
+      ],
+      "explanation": "The slide says the EVM runs the creation code once, including the constructor, and the result is a new contract address holding the runtime bytecode and its first storage values. The constructor does not stay on-chain, and the chain stores bytecode, not Solidity.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "contract-deployment",
+        "constructors",
+        "runtime-bytecode",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Deploying turns compiled code into a contract",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Deploying turns compiled code into a contract"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "The selector for Coin's mint comes from the text mint(address,uint256), although the code says uint. Why?",
+      "correct_answer": "For the selector, uint has to be written as uint256, its long name, in the text.",
+      "incorrect_answers": [
+        "The ABI pads every argument to 32 bytes, so uint counts as uint256 first.",
+        "The 4 bytes cover the argument types only, so the name is left out of the text.",
+        "The signature database keeps the long name, so a short name finds no match."
+      ],
+      "explanation": "The slide says uint is hashed as uint256: for the selector, uint256 and int256 have to be used. The selector is the first 4 bytes of the keccak256 hash of that text.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "function-selectors",
+        "abi",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "A call's first 4 bytes name the function",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: A call's first 4 bytes name the function"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "In Coin, can the minter take coins out of someone else's balance?",
+      "correct_answer": "No: the only lines that lower a balance are in send, and they lower balances[msg.sender], the caller's own.",
+      "incorrect_answers": [
+        "Yes: mint can lower any address's balance, because the minter's require has already proved who is calling.",
+        "No: send lowers balances[receiver], so only coins that were sent to an address can leave it, never the caller's.",
+        "Yes: send takes an amount from any address that the caller names, when the caller is the stored minter."
+      ],
+      "explanation": "In the Coin listing, send subtracts from msg.sender and adds to the receiver. mint only adds. So send only ever moves the caller's own coins.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "coin-contract",
+        "four-questions",
+        "msg-sender",
+        "mechanism",
+        "lesson-synthesis"
+      ],
+      "lesson_block": "Coin: read the whole contract",
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Coin: read the whole contract"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "An explorer shows verified source with def, decorators such as @external and @view, self. and no curly braces. What is the analyst looking at?",
+      "correct_answer": "Vyper, which compiles for the same EVM as Solidity, so the four questions apply.",
+      "incorrect_answers": [
+        "Rust for Solana, whose accounts are listed per call, so the questions need new ones.",
+        "Python run off-chain by an indexer, so the logic sits in Solidity elsewhere.",
+        "Vyper, which compiles for its own chain, so EVM tools cannot read its records."
+      ],
+      "explanation": "The Vyper slide lists def, decorators such as @external and @view, self., and no curly braces as the clues on sight. Vyper compiles for the same EVM as Solidity, so the same four questions apply. Rust on Solana shows fn, pub and #[...] attributes.",
       "difficulty_level": 2,
       "topic": "ethereum",
       "tags": [
         "ethereum",
         "04-ef-smart-contracts",
-        "lesson",
-        "slides",
         "vyper",
-        "rust",
-        "solana",
+        "recognition",
         "contract-languages",
-        "recognition"
+        "lesson-synthesis"
       ],
       "lesson_block": "Vyper looks like Python but runs on the same EVM",
-      "source": "lesson",
-      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Vyper looks like Python but runs on the same EVM",
-      "source_type": "lesson_slides"
+      "source_type": "lesson_qmd",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Vyper looks like Python but runs on the same EVM"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A developer marks a Solidity variable private, expecting chain observers cannot read it. What does the Solidity documentation say about this?",
+      "correct_answer": "private stops other contracts from reading the variable, but anyone outside the blockchain can still see all contract state.",
+      "incorrect_answers": [
+        "private stops other contracts and explorers from reading the variable, but the nodes that hold storage can still see it.",
+        "private encrypts the variable in storage, but a transaction that passes its value into a call can still show it to observers.",
+        "private stops other contracts from reading the variable, and that makes it safe to hold secrets observers must not see."
+      ],
+      "explanation": "The slide cites the Solidity documentation: private limits access from other contracts, but all state is visible to the whole world outside of the blockchain.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "visibility",
+        "privacy",
+        "misconception",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "State is numbers, addresses and mappings",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: State is numbers, addresses and mappings",
+      "specific_source_reading": "Solidity documentation, Contracts: visibility and getters (the slide quotes its statement that all state is visible outside the blockchain). Not re-fetched: reading status partial."
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "A Solidity function is not marked payable. What does the Solidity documentation say happens to ETH sent with a call to it?",
+      "correct_answer": "It is rejected automatically, and the call reverts.",
+      "incorrect_answers": [
+        "It is kept by the contract until the owner takes it out.",
+        "It is sent back once the function has run its course.",
+        "It is accepted but locked until a payable call comes."
+      ],
+      "explanation": "The slide cites the Solidity documentation: a function without payable automatically rejects all Ether sent to it, and the ABI specification says the call reverts.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "payable",
+        "mutability",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Visibility says who may call; payable takes ETH",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Visibility says who may call; payable takes ETH",
+      "specific_source_reading": "Solidity documentation, Contracts (payable functions) and the Contract ABI specification. Not re-fetched: reading status partial."
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A user calls a proxy, and the proxy runs its implementation with delegatecall. Whose storage does the implementation's code act on?",
+      "correct_answer": "The proxy's own storage, so the state and balances stay at the proxy address.",
+      "incorrect_answers": [
+        "The implementation's own storage, so the state and balances stay with it.",
+        "A copy of the implementation's storage, which the proxy makes at each upgrade.",
+        "Both storages together, as delegatecall writes each change to both of them."
+      ],
+      "explanation": "The slide cites the ERC-1967 article and the Solidity documentation: the proxy address holds the state and balances, and delegatecall runs the implementation's code on the proxy's own storage.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "delegatecall",
+        "proxy-patterns",
+        "erc-1967",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "A proxy lets the code change; ask who upgrades",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: A proxy lets the code change; ask who upgrades",
+      "specific_source_reading": "Palladino, ERC-1967 proxy storage slots; Solidity documentation on delegatecall. Not re-fetched: reading status partial."
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "In Coin's Sent log, what does topic0 hold, according to the ABI specification?",
+      "correct_answer": "The keccak256 hash of the event's name and types, Sent(address,address,uint256).",
+      "incorrect_answers": [
+        "The address of the contract that wrote the log entry, so tools can find Coin's logs.",
+        "The first 4 bytes of that hash, the same selector that a function call uses.",
+        "The values from, to and amount, packed together into one 32-byte log topic."
+      ],
+      "explanation": "The events slide, citing the Solidity documentation and the ABI specification, says topic0 is the keccak256 hash of the event's name and types. The emitter is a separate part of the log, and the values sit in the data.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "events",
+        "logs",
+        "topics",
+        "reading",
+        "reading-synthesis"
+      ],
+      "lesson_block": "Events record only what the author chose to emit",
+      "source_type": "reading_synthesis",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Events record only what the author chose to emit",
+      "specific_source_reading": "Solidity documentation, Contracts (events) and the Contract ABI specification (events). Not re-fetched: reading status partial."
     }
   ]
 }

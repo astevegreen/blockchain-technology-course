@@ -6,7 +6,7 @@
 - `output_path`: `lesson_synthesis/ethereum_04-EF-smart_contracts-reading-synthesis.md`
 - `module`: `ethereum`
 - `lesson_file_stem`: `04-EF-smart_contracts`
-- `reading_status`: `acquired`
+- `reading_status`: `partial`
 
 ## Assigned Reading
 
@@ -258,3 +258,12 @@ Storage access is expensive relative to memory, calldata, and stack values. Dyna
 - Does the synthesis distinguish reading contribution from lesson content? Yes.
 - Are tags normalized and useful for future quiz pooling? Yes.
 - Are acquisition limitations or ambiguities documented? Yes.
+
+## Update for the rebuilt lesson (reading status partial)
+
+The rebuilt lesson no longer cites Mastering Ethereum, Chapter 7, so the section above is stale and is not used for quiz questions. The rebuilt lesson cites these documents instead. They were NOT re-fetched for this update (unverified); the quiz bank uses only the claims the lesson's visible slides state from them.
+
+- Solidity documentation, "Introduction to Smart Contracts" and "Contracts" (visibility, getters, payable functions, events, delegatecall) - unverified.
+- Solidity Contract ABI Specification (function selectors, event topic0, the uint to uint256 rule) - unverified.
+- Palladino, ERC-1967 proxy storage slots (implementation slot, Upgraded event) - unverified.
+- Vyper documentation and Vyper by Example (recognition clues) - unverified.
