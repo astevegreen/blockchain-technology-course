@@ -79,10 +79,6 @@ slide index), which is never listed here.
   Bitcoin Core keeps it in memory, not on disk; Bitcoin Core 0.14.0 (Mar 2017) saves the mempool to `mempool.dat` on shutdown.
   Run the `source` skill to date and narrow the claim. [14 Nov 2026, 02-IN quiz rebuild]
 
-- `quizes/quiz_json/forensics_02-FO-foundations_obfuscation_tracing-quiz-bank.json` q16 and q17 (carried-over reading
-  questions) test chain-of-custody records and admissibility, which are out of scope, and q15 to q18 trace to no visible
-  slide. Replace or re-aim them at in-scope 02-FO concepts, citing a visible slide. [14 Nov 2026, wave 2C review]
-
 ## Labs
 - The mempool dashboard's websocket fix is in `dynamic-labs/bitcoin/mempool/configure-mempool-base-path.sh`, which
   reaches the bitcoin, final-trace, wallet and hide-and-trace labs only when the owner next rebuilds the base image
