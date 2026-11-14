@@ -57,9 +57,6 @@ slide index), which is never listed here.
   01-PC's bank and drop the n = 3t + 1 ones. 01-PC's "Permissioned: the operator decides
   who writes" now teaches Raft (runs while a majority stays up) and PBFT (runs while under a third lie), though not
   the n = 3t + 1 formula. [13 Nov 2026, 01-CM rebuild; 01-PC rebuild]
-- The 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`): its proof-of-work
-  question rests on notes only, and it has no questions on the rebuild's checks, worked slide, practice and review.
-  [13 Nov 2026, 02-IN rebuild review]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
   trace to 05-EF slides hidden on 31 Oct 2026 (q8 and q9 read "No slide now: ..."); the slides rebuilt on 13 Nov 2026
   (the two checks, the Terra slide, the practice and review) have few questions.
@@ -83,8 +80,11 @@ slide index), which is never listed here.
 - Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF,
   06-EF and 04-CP banks (also 01-CM and 05-EF, whose waves regenerate them). Wave 2 has no session for the 06-EF
   and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
-  label. The `specific_source_lesson` strings in the 02-IN, 04-EF and 04-CP banks still name old titles (the check does not
+  label. The `specific_source_lesson` strings in the 04-EF and 04-CP banks still name old titles (the check does not
   read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
+- 02-IN's mempool slide quotes the Bitcoin.org guide ("When a peer shuts down, its memory pool is lost", undated) and its notes say
+  Bitcoin Core keeps it in memory, not on disk; Bitcoin Core 0.14.0 (Mar 2017) saves the mempool to `mempool.dat` on shutdown.
+  Run the `source` skill to date and narrow the claim. [14 Nov 2026, 02-IN quiz rebuild]
 
 - `quizes/quiz_json/forensics_02-FO-foundations_obfuscation_tracing-quiz-bank.json` q16 and q17 (carried-over reading
   questions) test chain-of-custody records and admissibility, which are out of scope, and q15 to q18 trace to no visible
