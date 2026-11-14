@@ -43,6 +43,22 @@ slide index), which is never listed here.
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
 - `docs/lab-cards/is-it-final-yet.md:9` and `:90` name the old 01-EF title "Pending, then included, then final"; it
   is now "Pending, included, then final 15 minutes later" (the old anchor still resolves). [13 Nov 2026, 01-EF rebuild review]
+- The 04-CP rebuild moved the slide "A Tron address is an Ethereum address plus 41" (Tron's own worked example,
+  `tron_accounts_2026`) out of 04-CP, which now has it hidden. `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd:91`
+  has one derivation bullet; take the slide or its example there at 01-PC's rework. [13 Nov 2026, 04-CP rebuild]
+- The 04-CP rebuild moved Bitcoin's address-type table (prefixes 1, 3, bc1q, bc1p) and the Taproot/Schnorr point out
+  of 04-CP (hidden there as "Bitcoin address types by prefix"); `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`
+  should teach both. Its line 94 says "as 04-CP showed": use the lesson's name; its line 123 (notes) says the slide
+  "extends day 1's address-prefix table", which day 1 no longer shows. [13 Nov 2026, 04-CP rebuild]
+- `blockchain-course/lessons/conclusion/04-AS-final_technical_review.qmd:389` and `:440` link to 04-CP anchors
+  (`#/digital-signature-workflow`, `#/public-keys-as-blockchain-addresses`) that no visible slide has.
+  [13 Nov 2026, 04-CP rebuild]
+- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:605`
+  lists "pseudonymous" among 04-CP's terms; the rebuilt lesson teaches it inside "A signature authorizes; it doesn't
+  identify", not as its own slide. [13 Nov 2026, 04-CP rebuild]
+- `quizes/quiz_json/daily_d2_review_of_day1-quiz-bank.json:255` reads the hidden slide "A Tron address is an Ethereum
+  address plus 41"; and the 04-CP questions have none on the rebuild's four checks, the two worked slides, the
+  signed fields (nonce, chain ID), the practice or the review. [13 Nov 2026, 04-CP rebuild]
 - Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
   breaks each" (the old anchor still resolves): `quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json:209`
   and `:258`, `quizes/quiz_json/weekone_check-quiz-bank.json:115` and `:118`. The 02-IN bank's proof-of-work
