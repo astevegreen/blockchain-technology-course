@@ -173,6 +173,14 @@ slide index), which is never listed here.
   through the EveryCRSReport mirror, `sec_custodybasics_2025` in a browser. Re-read both by hand before the first
   class. [12 Nov 2026, swapping homepage citations (R4)]
 
+- `quizes/quiz_json/forensics_13-FO-state_actors_north_korea-quiz-bank.json` has no questions on the rebuilt 13-FO's
+  new slides: the check (who may say "Lazarus"), the worked Bybit five rows, the Drift answers and their confidence
+  word, and the review. Its stale bits too: two `specific_source.anchor` titles name the old Bybit and Drift
+  headings, q13's explanation calls the analyst move "the practice slide's model answer" (now on the Answers slide),
+  and q1 anchors to the opening, whose table it drew on is gone. [13 Nov 2026, 13-FO rebuild]
+- `docs/build-spec.md:89`: the "Lessons by day" table puts state actors first on day 9, but decision D runs 12-FO →
+  13-FO → 14-FO (13-FO now links back to 12-FO's Ronin on the Diamond); reorder the row. [13 Nov 2026, 13-FO rebuild]
+
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
