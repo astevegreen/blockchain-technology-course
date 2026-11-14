@@ -1,17 +1,10 @@
 # Duplicate and Editorial Notes
 
-## Decentralized application
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Most users reach the chain through a wallet: An application that combines a user interface, wallet interaction, and one or more on-chain smart contracts.
-- `01-AS` / What Does a User Actually Interact With?: An application whose interface connects users to smart contracts and supporting blockchain infrastructure.
-
 ## Smart contract
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / By day 10 you can do nine things: Program logic deployed to a blockchain that can execute rules or update state according to platform conditions.
 - `01-EF` / A contract is code plus storage at an address: An on-chain program that can hold value, update state, and enforce rules automatically when called.
-- `04-EF` / Smart Contracts: Concept and Scope: A program plus persistent state at a blockchain address that executes automatically when it receives a transaction or call.
+- `04-EF` / A contract's code decides what each caller can do: A program plus persistent state at a blockchain address that executes automatically when it receives a transaction or call.
 - `01-AS` / What Does a User Actually Interact With?: A blockchain-based program that executes transaction logic such as swaps, mints, payouts, or access rules.
 - `04-AS` / Smart Contracts: What They Are: Code stored on-chain and executed by the network to hold state, enforce rules, or expose callable functions.
 
@@ -29,13 +22,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-IN` / Design Trade‑Offs: Efficiency vs. Autonomy: Holding and controlling one's own assets instead of relying on a custodian such as a bank or exchange.
 - `01-BF` / Limitations and Trade‑Offs: Direct user control over private keys and funds without relying on a custodian to manage access.
-- `01-FO` / Decentralized Exchanges (DEXs): A custody model where users retain control of their own private keys instead of depositing assets with an intermediary.
 - `01-AS` / Custody Models: An arrangement where the user personally controls the private keys needed to move assets.
 
 ## Minting
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `05-EF` / Coin or Token? Start With the Balance Record: Creating new tokens under a contract's rules; ERC-20 and ERC-721 record a mint as a Transfer from address zero.
+- `05-EF` / Coin or token? Start with the balance record: Creating new tokens under a contract's rules; ERC-20 and ERC-721 record a mint as a Transfer from address zero.
 - `06-EF` / What Is Minting?: A state-writing transaction or contract operation that creates a new token ID or balance and assigns an initial owner.
 - `01-AS` / What Users Actually Do: Creating a new token or NFT record through a blockchain transaction or smart contract.
 
@@ -82,7 +74,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Oracle
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / A contract sees only what is on chain: An external system that brings off-chain facts on-chain so smart contracts can use them deterministically.
+- `01-EF` / One program on every node, seeing only the chain: An external system that brings off-chain facts on-chain so smart contracts can use them deterministically.
 - `06-EF` / Centralization Chokepoints: A system that supplies off-chain data to smart contracts under its own trust, aggregation, and security assumptions.
 - `01-AS` / Oracles: Connecting to the Real World: A mechanism that publishes external data on-chain so smart contracts can read and react to it.
 - `04-AS` / Oracles and Off-Chain Dependencies: A mechanism that brings prices, events, or other off-chain facts into smart-contract logic.
@@ -154,7 +146,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Bitcoin
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / By day 10 you can do nine things: The first widely adopted blockchain system and a reference point for understanding how blockchain designs became visible to the public.
 - `02-IN` / The chain shows every payment, but no names: A public blockchain whose record of every payment goes back to its first block in 2009; its coin, BTC, shares its name.
 - `03-IN` / Framing: A decentralized digital money system that combined cryptography, peer-to-peer networking, and Proof-of-Work to agree on transaction history without a trusted leader.
 - `04-IN` / The Bitcoin Standard: A Digital Return to "Hard Money": A decentralized digital monetary system framed in this lesson as a rule-bound response to fiat trust, control, and inflation concerns.
@@ -234,7 +225,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-CM` / Proof of Work: Purpose and Agenda: A consensus mechanism that makes block proposal influence depend on costly computation that anyone can cheaply verify.
 - `03-CM` / Orientation: Proof of Work vs Proof of Stake: A consensus approach where security comes from costly computation that attackers must redo to rewrite history.
 - `01-BF` / Lessons from Precursors: A mechanism where miners must perform costly computation to propose blocks that other nodes can cheaply verify.
-- `01-EF` / Pending, then included, then final: A consensus model where block production is secured by miners expending energy and hardware work.
+- `01-EF` / Pending, included, then final 15 minutes later: A consensus model where block production is secured by miners expending energy and hardware work.
 - `04-AS` / Proof of Work: A consensus approach where block production requires costly computation but proposed work is cheap for others to verify.
 
 ## Append-only ledger
@@ -252,14 +243,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Digital signature
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / Week 1 teaches how it works, week 2 traces: A cryptographic proof that a message or transaction was authorized by the holder of a corresponding private key.
 - `02-IN` / Every payment takes the same five steps: A cryptographic proof that the holder of a private key authorized a message or transaction.
 - `05-IN` / Strategies for Handling Suspicion: A cryptographic proof that a message was authorized by the holder of a corresponding private key.
 - `01-CP` / What Is Cryptography?: A cryptographic mechanism that lets others verify that a message or transaction was authorized by the relevant key holder.
 - `04-CP` / A signature binds the key to these exact bytes: A value made with a private key over a transaction's hash that anyone can check with the matching public key; change one byte and it no longer verifies.
 - `01-BF` / Bitcoin, Simplified: A cryptographic proof that the holder of a private key authorized a transaction or transfer of ownership.
 - `02-BF` / Every output is locked by a small script: Cryptographic evidence created with a private key to prove that a spend was authorized without revealing the private key.
-- `03-EF` / A pending transaction already shows the trade: Cryptographic evidence that the holder of an account's private key authorized a specific transaction payload.
+- `03-EF` / A router call names the path and the minimum out: Cryptographic evidence that the holder of an account's private key authorized a specific transaction payload.
 - `04-AS` / Asymmetric Crypto and Digital Signatures: A cryptographic proof that the holder of a private key authorized a specific message or transaction.
 
 ## Public ledger
@@ -315,7 +305,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Miner
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `02-IN` / Bitcoin spends whole coins and makes change: A participant that packs waiting transactions into blocks and is paid the block subsidy plus the fees through the block's coinbase transaction.
+- `02-IN` / Bitcoin keeps no balances, only unspent coins: A participant that packs waiting transactions into blocks and is paid the block subsidy plus the fees through the block's coinbase transaction.
 - `01-BF` / Primitive 3: Consensus via Proof-of-Work: A participant that assembles candidate blocks and searches for proof-of-work that will make a block acceptable to the network.
 - `03-BF` / Bitcoin’s Peer-to-Peer Network: A participant that performs proof of work and proposes new blocks for the Bitcoin network.
 
@@ -352,7 +342,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-IN` / The Institutional Counterpoint: The BIS Critique: A settlement model where confidence that a transaction will not be reversed increases over time rather than becoming immediately absolute.
 - `04-DS` / Permissionless Ledgers: A finality model where confidence in an entry grows as more later work or votes build on top of it.
 - `01-CM` / Open chains buy openness with slower finality: Finality where confidence increases as more blocks build on a history rather than becoming absolute immediately.
-- `01-PC` / 27 elected producers; final after 19 confirm: A finality model where confidence increases over time but reordering remains theoretically possible.
 - `01-BF` / How Double-Spending is Solved: Settlement confidence that increases as more blocks are added, without becoming an instant absolute guarantee.
 - `04-AS` / Difficulty, Work, and Probabilistic Finality: A finality model where confidence increases as more work accumulates after a block, but reversal is never logically impossible.
 
@@ -381,7 +370,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-CM` / Security Model and Economics: Newly issued coins paid to the miner of a valid block as part of the block reward.
 - `01-BF` / Monetary Policy: The newly issued bitcoin portion of the block reward paid to the miner of a valid block.
-- `02-BF` / Coinbase pays the miner: subsidy plus fees: The newly issued bitcoin a miner can claim in the coinbase transaction when creating a valid block.
+- `02-BF` / A trace ending at a coinbase reached new coins: The newly issued bitcoin a miner can claim in the coinbase transaction when creating a valid block.
 - `04-AS` / Bitcoin Monetary Policy and Difficulty: New bitcoin issued to the miner of a valid block according to Bitcoin's schedule.
 
 ## Halving
@@ -441,10 +430,9 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-IN` / The chain shows every payment, but no names: A privacy model where public addresses appear on-chain instead of real names, but activity can still be linked and analyzed.
 - `03-IN` / Privacy as a Prerequisite for Open Society: The condition of acting through a persistent identifier that is not automatically tied to a legal identity.
-- `04-CP` / Pseudonymous is not anonymous: A privacy model where activity is linked to a key-derived identifier rather than directly to a real-world identity.
+- `04-CP` / A signature authorizes; it doesn't identify: A privacy model where activity is linked to a key-derived identifier rather than directly to a real-world identity.
 - `01-BF` / Skepticism: The property of using identifiers not directly tied to legal identity, while activity remains visible on the public ledger.
 - `04-BF` / Mitigating Network Deanonymization: A privacy property where activity is linked to addresses or identifiers that are not automatically legal names.
-- `01-FO` / Challenges in Forensic Analysis: A privacy property where activity is tied to persistent identifiers such as addresses without automatically revealing a legal identity.
 
 ## Decentralization
 
@@ -528,7 +516,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-DS` / Permissioned vs. Permissionless: Comparison: A finality model where a protocol step or ordering service declares an entry final once required conditions are met.
 - `01-CM` / Open chains buy openness with slower finality: Finality where a committed value is final immediately under the protocol assumptions rather than becoming safer gradually.
-- `01-PC` / 27 elected producers; final after 19 confirm: A finality model where a transaction is final once required signatures and quorum rules are satisfied.
 
 ## Slot
 
@@ -579,7 +566,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Cryptography
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `02-IN` / Four beliefs to correct when you brief: The mathematical toolkit blockchains use to prove authorization, protect integrity, and make tampering evident.
+- `02-IN` / Review: four beliefs, and what breaks each: The mathematical toolkit blockchains use to prove authorization, protect integrity, and make tampering evident.
 - `01-CP` / Cryptography: From Obscurity to Mathematical Security: The study of mathematical techniques for securing information and proving authenticity when adversaries may observe, alter, or impersonate activity.
 - `04-AS` / The Blockchain Stack at a Glance: The mathematical tools blockchains use for integrity, commitments, authorization, and efficient verification.
 
@@ -658,7 +645,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-CP` / Example: The Double-Spend Problem: A consensus approach that uses staked value and protocol rules to help select validators and discourage rewriting history.
 - `04-DS` / Permissionless Ledgers: A Sybil-resistance mechanism where participants must put economic stake at risk to earn influence in ledger validation.
 - `03-CM` / Orientation: Proof of Work vs Proof of Stake: A consensus approach where validators lock capital and risk penalties while proposing, voting on, and finalizing blocks.
-- `01-EF` / Pending, then included, then final: A consensus model where validators stake ETH and risk penalties while proposing and attesting to blocks.
+- `01-EF` / Pending, included, then final 15 minutes later: A consensus model where validators stake ETH and risk penalties while proposing and attesting to blocks.
 - `02-EF` / The Merge: Beacon Chain to PoS: Ethereum's consensus approach where validators stake ETH and risk rewards or penalties while proposing, attesting to, and finalizing blocks.
 - `04-AS` / Proof of Stake: A consensus approach where validators use bonded stake, votes, and penalties rather than energy-intensive work to secure the chain.
 
@@ -738,16 +725,15 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Ethereum
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / By day 10 you can do nine things: A blockchain platform emphasized in the course for smart contracts, tokens, and application-oriented design.
 - `02-IN` / A blockchain is a record, not a currency: A blockchain that keeps accounts with balances and records ETH as well as anyone's ERC-20 tokens.
-- `01-EF` / Ethereum keeps accounts, not coins: A general-purpose blockchain platform designed to run shared application logic, smart contracts, and decentralized applications across many nodes.
+- `01-EF` / A key or code controls each account: A general-purpose blockchain platform designed to run shared application logic, smart contracts, and decentralized applications across many nodes.
 - `04-AS` / Ethereum's Goals: A general-purpose blockchain platform for executing smart contracts and maintaining programmable shared state.
 
 ## Deterministic execution
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Every node runs the same program: the EVM: Execution where the same input and prior state always produce the same result on every node.
-- `04-EF` / Smart Contracts: Concept and Scope: Execution where the same inputs and prior state produce the same output and state transition on every validating node.
+- `01-EF` / One program on every node, seeing only the chain: Execution where the same input and prior state always produce the same result on every node.
+- `04-EF` / A contract's code decides what each caller can do: Execution where the same inputs and prior state produce the same output and state transition on every validating node.
 
 ## Ethereum Improvement Proposal
 
@@ -758,22 +744,22 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Ethereum Virtual Machine
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Ethereum keeps accounts, not coins: The stack-based virtual machine that every Ethereum node uses to execute contract bytecode and reproduce state transitions.
-- `04-EF` / Smart Contracts: Concept and Scope: The deterministic execution environment that runs compiled contract bytecode and computes Ethereum state transitions.
+- `01-EF` / A key or code controls each account: The stack-based virtual machine that every Ethereum node uses to execute contract bytecode and reproduce state transitions.
+- `04-EF` / A contract's code decides what each caller can do: The deterministic execution environment that runs compiled contract bytecode and computes Ethereum state transitions.
 - `04-AS` / EVM, Gas, and Global State: The deterministic execution environment that runs Ethereum contract logic against shared state.
 
 ## Bytecode
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Every node runs the same program: the EVM: The low-level instructions produced from smart contract languages and executed by the EVM.
+- `01-EF` / One program on every node, seeing only the chain: The low-level instructions produced from smart contract languages and executed by the EVM.
 - `02-EF` / Security Risk: Smart Contract Code Reuse: The compiled on-chain instructions executed by the Ethereum Virtual Machine for a smart contract.
-- `04-EF` / Smart Contracts: Concept and Scope: The low-level instructions produced by compilation and executed by the EVM rather than the human-readable Solidity source.
+- `04-EF` / A contract's code decides what each caller can do: The low-level instructions produced by compilation and executed by the EVM rather than the human-readable Solidity source.
 
 ## Gas metering
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Every node runs the same program: the EVM: The EVM rule that charges gas for operations so contract execution consumes bounded network resources.
-- `04-EF` / From Bitcoin Script to Solidity: Ethereum's mechanism for charging execution costs and stopping computation when the supplied gas runs out.
+- `01-EF` / One program on every node, seeing only the chain: The EVM rule that charges gas for operations so contract execution consumes bounded network resources.
+- `04-EF` / A contract's code decides what each caller can do: Ethereum's mechanism for charging execution costs and stopping computation when the supplied gas runs out.
 
 ## Gas (Ethereum)
 
@@ -784,7 +770,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Base fee
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Gas prices the work; a failed call still pays: The protocol-determined part of an Ethereum transaction fee that is burned under EIP-1559.
+- `01-EF` / Worked: block 3's fee, most of it burned: The protocol-determined part of an Ethereum transaction fee that is burned under EIP-1559.
 - `03-EF` / Fees set the queue: base fee burned, tip paid: The protocol-set per-gas fee that adjusts with block demand and is burned rather than paid to the proposer.
 - `04-AS` / EVM, Gas, and Global State: The protocol-determined portion of an Ethereum transaction fee that is burned rather than paid to the proposer.
 
@@ -800,13 +786,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-EF` / A key or code controls each account: An Ethereum account that holds code and storage and runs only when activated by a transaction or contract call.
 - `02-EF` / The Ethereum Operational Framework: An Ethereum account controlled by on-chain code that executes according to protocol rules.
-- `04-EF` / Smart Contracts: Concept and Scope: An Ethereum account that holds code and storage and executes only when invoked by a transaction or message call.
+- `04-EF` / A contract's code decides what each caller can do: An Ethereum account that holds code and storage and executes only when invoked by a transaction or message call.
 - `04-AS` / EOAs vs Contract Accounts: An Ethereum account that holds code and storage and executes only when called.
 
 ## Global state
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Ethereum keeps accounts, not coins: The shared Ethereum record of account balances, nonces, code, and storage after accepted transactions are applied.
+- `01-EF` / A key or code controls each account: The shared Ethereum record of account balances, nonces, code, and storage after accepted transactions are applied.
 - `04-AS` / EVM, Gas, and Global State: Ethereum's shared record of accounts, balances, contract code, storage, and other current state.
 
 ## Nonce (Ethereum)
@@ -824,87 +810,74 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## UTXO model (Bitcoin)
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Bitcoin spends outputs; Ethereum edits balances: An accounting model where value is tracked as discrete unspent outputs that transactions consume and create.
+- `01-EF` / Ethereum edits balances; Bitcoin spends outputs: An accounting model where value is tracked as discrete unspent outputs that transactions consume and create.
 - `02-FO` / A peel chain: a small peel, the rest rolls on: A ledger model where transactions consume old outputs and create new outputs, making each coin fragment traceable through its spending history.
 - `04-AS` / Bitcoin Transactions and the UTXO Model: A transaction model where spendable value exists as discrete unspent outputs that transactions consume and create.
 
 ## Account model (Ethereum)
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Ethereum keeps accounts, not coins: An accounting and execution model where balances, code, and storage are attached to accounts and updated directly.
+- `01-EF` / A key or code controls each account: An accounting and execution model where balances, code, and storage are attached to accounts and updated directly.
 - `04-AS` / Accounts vs UTXOs: A transaction model where balances and contract state are stored directly in named account state entries.
 
 ## The Merge
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Pending, then included, then final: The September 15, 2022 Ethereum upgrade that moved block production from Proof of Work to Proof of Stake while preserving existing state.
+- `01-EF` / Pending, included, then final 15 minutes later: The September 15, 2022 Ethereum upgrade that moved block production from Proof of Work to Proof of Stake while preserving existing state.
 - `02-EF` / The Merge: Beacon Chain to PoS: Ethereum's transition to a two-layer design where Proof of Stake consensus from the Beacon Chain secures execution-layer activity.
 - `04-AS` / The Merge and Two-Layer Ethereum: Ethereum's transition from Proof of Work mining to Proof of Stake validator consensus.
 
 ## Validator (Ethereum)
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Pending, then included, then final: A Proof-of-Stake participant that helps propose, check, attest to, and finalize blocks using staked ETH.
+- `01-EF` / Pending, included, then final 15 minutes later: A Proof-of-Stake participant that helps propose, check, attest to, and finalize blocks using staked ETH.
 - `02-EF` / PoS Overview: Validators, Committees, and Clients: A staked participant assigned consensus duties such as proposing blocks, attesting, and participating in finality.
 - `03-EF` / Searchers, builders and relays set the order: An Ethereum participant whose duty is to propose blocks.
 
 ## Attestation (Ethereum)
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Pending, then included, then final: A validator vote that supports blocks or checkpoints in Ethereum's Proof-of-Stake consensus process.
+- `01-EF` / Pending, included, then final 15 minutes later: A validator vote that supports blocks or checkpoints in Ethereum's Proof-of-Stake consensus process.
 - `02-EF` / PoS Overview: Validators, Committees, and Clients: A validator's signed vote about the block or checkpoint it believes should be supported.
 
 ## Mempool (Ethereum)
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Pending, then included, then final: The set of pending transactions relayed through the network before a validator includes them in a block.
+- `01-EF` / Pending, included, then final 15 minutes later: The set of pending transactions relayed through the network before a validator includes them in a block.
 - `03-EF` / A DEX trade is visible before it lands: A node's local collection of pending Ethereum transactions that may be selected for future block inclusion.
 
 ## Revert
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Gas prices the work; a failed call still pays: The rollback of state changes from a failed EVM execution while gas already spent remains charged.
+- `01-EF` / Worked: block 3's fee, most of it burned: The rollback of state changes from a failed EVM execution while gas already spent remains charged.
 - `03-EF` / A DEX swaps against a pool, not a person: A contract refusing a call, so the intended change does not happen.
-- `04-EF` / Visibility, Mutability, and Payable: A failure outcome that rolls back state changes for the current frame and may unwind the whole transaction if not handled.
+- `04-EF` / Visibility says who may call; payable takes ETH: A failure outcome that rolls back state changes for the current frame and may unwind the whole transaction if not handled.
 
 ## Persistent state
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-EF` / A contract is code plus storage at an address: Contract data that remains in Ethereum state after execution and can affect future calls.
-- `04-EF` / Smart Contracts: Concept and Scope: Data stored by a contract that remains available after one transaction finishes and can be read or updated by later calls.
+- `04-EF` / A contract's code decides what each caller can do: Data stored by a contract that remains available after one transaction finishes and can be read or updated by later calls.
 
 ## Solidity
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Every node runs the same program: the EVM: A smart contract programming language that compiles into EVM bytecode.
-- `04-EF` / From Bitcoin Script to Solidity: A high-level smart contract language that compiles into EVM bytecode for deployment on Ethereum-compatible chains.
+- `01-EF` / One program on every node, seeing only the chain: A smart contract programming language that compiles into EVM bytecode.
+- `04-EF` / A contract's code decides what each caller can do: A high-level smart contract language that compiles into EVM bytecode for deployment on Ethereum-compatible chains.
 
 ## Wallet
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / Week 1 teaches how it works, week 2 traces: Software or hardware that manages blockchain keys and helps users create or authorize transactions.
 - `02-BF` / A trace is read one transaction at a time: Software or hardware that manages keys, signs transactions, tracks spendable UTXOs, and applies spending policy for a user.
-- `01-EF` / Pending, then included, then final: Software that holds or manages keys, signs transactions, and connects users to Ethereum applications.
+- `01-EF` / Pending, included, then final 15 minutes later: Software that holds or manages keys, signs transactions, and connects users to Ethereum applications.
 - `04-AS` / Keys, Wallets, Addresses, and Ownership: Software or hardware that manages keys, addresses, and signing operations for blockchain use.
-
-## Layer 2
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-EF` / Most users reach the chain through a wallet: A separate execution environment built on top of a Layer 1 that processes transactions off the main chain and posts data or proofs back.
-- `04-AS` / Layer 2s, Rollups, and Blobs: A system that moves execution or aggregation away from Ethereum Layer 1 while relying on it for settlement or data availability.
 
 ## Transaction receipt
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-EF` / The receipt says what actually happened: What a node returns for a transaction once it is in a block: its status (1 success, 0 failure), gas used, effective gas price, logs and any new contract address.
 - `03-EF` / A DEX trade is visible before it lands: The record produced after Ethereum transaction execution that reports status, gas used, and emitted logs.
-- `04-EF` / Events and Logs: The transaction result record that includes status, gas use, and emitted logs.
-
-## Know Your Customer
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-FO` / Decentralized Exchanges (DEXs): A compliance process that verifies a customer's real-world identity before allowing access to regulated financial services.
-- `02-AS` / CBDCs vs Cryptocurrencies: Identity verification requirements used by regulated financial institutions or wallet providers before serving users.
+- `04-EF` / Events record only what the author chose to emit: The transaction result record that includes status, gas use, and emitted logs.
 
 ## Mixer
 
@@ -914,50 +887,11 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-FO` / A darknet market is a shop and a cash-out: A service that mixes coins to break the link between payer and payee.
 - `04-AS` / Obfuscation and Countermeasures: A service or protocol that pools deposits and withdrawals to weaken direct links between sources and destinations.
 
-## Chain hopping
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-FO` / Decentralized Exchanges (DEXs): Moving assets across different blockchains to force investigators into a new ledger, asset format, or tracing environment.
-- `04-AS` / Obfuscation and Countermeasures: The movement of funds across different blockchains to increase tracing complexity.
-
-## CoinJoin
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-BF` / Mitigating Network Deanonymization: A collaborative transaction technique that combines multiple users' inputs and outputs to make ownership links harder to trace.
-- `01-FO` / Challenges in Forensic Analysis: A collaborative transaction technique that combines inputs and outputs from multiple users to weaken ownership links in the transaction graph.
-- `02-FO` / Co-spending links inputs, unless it's a CoinJoin: A transaction that combines several users' inputs, built to defeat the co-spend heuristic.
-- `04-AS` / Obfuscation and Countermeasures: A collaborative transaction technique that combines multiple users' inputs and outputs to make ownership links harder to infer.
-
-## Common-input-ownership heuristic
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-FO` / Challenges in Forensic Analysis: A tracing rule of thumb that assumes inputs spent together in one transaction are likely controlled by the same entity.
-- `02-FO` / Every hop in your trace names its heuristic: A clustering heuristic, called co-spending in the lesson, that treats all inputs to one Bitcoin transaction as controlled by the same user.
-
-## Heuristic
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-FO` / Challenges in Forensic Analysis: An evidence-based rule of thumb used to infer likely relationships or behavior when direct proof is unavailable.
-- `04-AS` / Graph Thinking and Heuristics: An evidence-guided rule of thumb that generates investigative leads without proving identity by itself.
-
-## Privacy coin
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `03-IN` / Why This History Matters: A cryptocurrency designed to provide stronger transaction privacy than transparent ledgers such as Bitcoin.
-- `01-FO` / Challenges in Forensic Analysis: A cryptocurrency that uses privacy-focused cryptography to hide some combination of sender, receiver, and transaction amount.
-- `04-AS` / Privacy Coins: A cryptocurrency design that intentionally hides or degrades observable transaction links, amounts, or participants.
-
 ## Sanctions
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-FO` / A label is only as good as its source: Legal restrictions that bar interaction with designated entities, actors, contracts, or infrastructure.
 - `03-AS` / Royal Funds Frozen!: State or coalition-imposed restrictions that limit an actor's access to assets, transactions, services, or markets.
-
-## Decentralized exchange
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `03-EF` / A DEX trade is visible before it lands: An on-chain marketplace where users trade tokens through smart contracts rather than a centralized exchange operator.
-- `01-FO` / Decentralized Exchanges (DEXs): A blockchain-based exchange where smart contracts allow users to swap crypto assets without a centralized custodian or account system.
 
 ## Attribution
 
@@ -966,17 +900,11 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-FO` / One false link merges two actors into one: The process of linking a pseudonymous on-chain cluster to a real-world person, organization, or service.
 - `04-AS` / Attribution: The process of linking on-chain behavior or clusters to real-world people, organizations, or services.
 
-## Darknet market
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-FO` / Challenges in Forensic Analysis: An online illicit marketplace accessed through privacy-focused infrastructure such as Tor.
-- `03-FO` / A darknet market is a shop and a cash-out: An online market for illegal goods and services on sites reached with software that hides its users, paid almost exclusively in virtual currency.
-
 ## Hot wallet
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `05-CP` / Case Study: CryptoDefense — Keys Left in Plain Sight: A cryptocurrency wallet whose private keys are kept on an internet-connected system for operational use.
-- `01-FO` / BTC-e: Weak KYC Made the Cluster Actionable: An online wallet controlled by a service and used for active deposits, withdrawals, or operational liquidity.
+- `01-FO` / BTC-e: weak KYC made the cluster actionable: An online wallet controlled by a service and used for active deposits, withdrawals, or operational liquidity.
 
 ## Blockchain
 
@@ -995,12 +923,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-IN` / Start by saying what cases you work: A proposed change to blockchain state, such as transferring value or invoking a contract, that must be validated by the network.
 - `02-IN` / A blockchain is blocks, each linked to the last: A signed message that moves value on a chain; on Bitcoin it spends earlier outputs whole and creates new ones, and its hash is its transaction ID.
-
-## Token
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-IN` / Week 1 teaches how it works, week 2 traces: A blockchain-based representation of value, rights, or other state managed by platform rules or smart contracts.
-- `06-EF` / What Is a Token?: A programmable claim on a shared ledger whose identifier, owner, and transfer history are enforced by contract logic.
 
 ## Permissioned ledger
 
@@ -1048,7 +970,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Tron
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-PC` / Tron works like Ethereum, with T-addresses: A public account chain that works like Ethereum (balances per address, tokens as contracts, transfers as logs); its addresses start with T, and it charges fees in Energy and Bandwidth.
+- `01-PC` / What carries over: T-addresses and 19 of 27: A public account chain that works like Ethereum (balances per address, tokens as contracts, transfers as logs); its addresses start with T, and it charges fees in Energy and Bandwidth.
 - `02-AS` / Major Stablecoins and Use Cases: A public blockchain on which USDT is dominant for emerging-market payments.
 
 ## USDT
@@ -1064,13 +986,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-PC` / USDT on Tron: same freeze, same owner rule: An issuer-controlled function that puts an address on a token contract's blacklist so it cannot send that token.
 - `05-EF` / The issuer sits above an open network: An issuer-controlled function that puts an address on a token contract's blacklist so it cannot send that token; in USDT the address can still receive, while USDC blocks a listed sender or receiver.
 - `02-AS` / Major Stablecoins and Use Cases: An issuer-controlled function that prevents specified blockchain addresses from moving a stablecoin token.
-
-## AddedBlackList
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `01-PC` / A freeze is true only as of the read: The event USDT's contract emits when an address is blacklisted; a later RemovedBlackList undoes it.
-- `05-EF` / What a USDT freeze leaves on chain: The event the USDT contract emits when its owner-only addBlackList function freezes an address; the block it is in dates the freeze, and RemovedBlackList records an unfreeze.
-- `14-FO` / A freeze is a source: read it narrowly: The event USDT's contract on Tron emits when its addBlackList function freezes an address. It lets you read who was frozen, and when, yourself.
 
 ## Central bank digital currency
 
@@ -1391,6 +1306,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-FO` / A peel chain: a small peel, the rest rolls on: A repeated UTXO pattern where small amounts are peeled off to destinations while most funds continue to a new change address.
 - `04-AS` / Graph Thinking and Heuristics: A transaction pattern where value is repeatedly split so one portion moves onward while another appears as change or output.
 
+## CoinJoin
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `04-BF` / Mitigating Network Deanonymization: A collaborative transaction technique that combines multiple users' inputs and outputs to make ownership links harder to trace.
+- `02-FO` / Co-spending links inputs, unless it's a CoinJoin: A transaction that combines several users' inputs, built to defeat the co-spend heuristic.
+- `04-AS` / Obfuscation and Countermeasures: A collaborative transaction technique that combines multiple users' inputs and outputs to make ownership links harder to infer.
+
 ## Cryptographic hash
 
 Multiple definitions were proposed. Kept the earliest course appearance.
@@ -1415,7 +1337,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-IN` / A blockchain is blocks, each linked to the last: The practical resistance of accepted blockchain history to unnoticed revision because later blocks depend on earlier hashes.
 - `04-DS` / Immutability Source: The practical property that changing accepted ledger history is detectable, ineffective without agreement, or costly under the system's rules.
 - `04-BF` / Emergency Response to the Overflow Bug: The expectation that confirmed blockchain history should not be changed after the fact.
-- `04-EF` / Upgradeability and Proxy Patterns: The default property that deployed contract code cannot be directly patched in place.
+- `04-EF` / A proxy lets the code change; ask who upgrades: The default property that deployed contract code cannot be directly patched in place.
 
 ## Membership Service Provider
 
@@ -1496,13 +1418,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-BF` / Introduction to Bitcoin Script: Bitcoin's stack-based scripting language for defining and validating the conditions required to spend transaction outputs.
-- `04-EF` / From Bitcoin Script to Solidity: Bitcoin's constrained stack-based language for defining the conditions required to spend a specific UTXO.
+- `04-EF` / A contract's code decides what each caller can do: Bitcoin's constrained stack-based language for defining the conditions required to spend a specific UTXO.
 
 ## Unspent transaction output
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-BF` / Introduction to Bitcoin Script: A transaction output that has not yet been spent and can be consumed only by satisfying its attached spending conditions.
-- `04-EF` / From Bitcoin Script to Solidity: A discrete output from a prior transaction that has not yet been spent and can be consumed by a later transaction.
+- `04-EF` / A contract's code decides what each caller can do: A discrete output from a prior transaction that has not yet been spent and can be consumed by a later transaction.
 
 ## Validator (Proof of Stake)
 
@@ -1609,6 +1531,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-IN` / Promises vs. Reality: Analysis of blockchain transactions, addresses, and patterns to connect on-chain activity with real-world actors or behavior.
 - `04-AS` / Graph Thinking and Heuristics: The analysis of ledger activity, transaction structure, and off-chain evidence to trace flows and support attribution.
 
+## Privacy coin
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `03-IN` / Why This History Matters: A cryptocurrency designed to provide stronger transaction privacy than transparent ledgers such as Bitcoin.
+- `04-AS` / Privacy Coins: A cryptocurrency design that intentionally hides or degrades observable transaction links, amounts, or participants.
+
 ## Ledger
 
 Multiple definitions were proposed. Kept the earliest course appearance.
@@ -1636,7 +1564,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Reentrancy
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-EF` / From Bitcoin Script to Solidity: A vulnerability pattern where an external call lets another contract call back into the original contract before the first execution finishes safely.
+- `04-EF` / A contract's code decides what each caller can do: A vulnerability pattern where an external call lets another contract call back into the original contract before the first execution finishes safely.
 - `04-AS` / Smart Contract Risks and Security: A vulnerability pattern where an external call lets untrusted code call back before the original contract updates its state.
 
 ## ZK rollup
@@ -1707,14 +1635,14 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Shor's algorithm
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-CP` / Quantum threatens the curve, not yet the coins: A quantum algorithm that would break ECDSA, working out a private key from a public key, on a large enough quantum computer.
+- `04-CP` / Keys fail through people and bad randomness: A quantum algorithm that would break ECDSA, working out a private key from a public key, on a large enough quantum computer.
 - `05-CP` / Shor’s Algorithm (1994): Breaking RSA and ECC: A quantum algorithm that can efficiently factor large integers and solve discrete logarithms on a sufficiently capable quantum computer.
 - `05-AS` / Cryptographically Relevant Quantum Threat: A quantum algorithm that could break several public-key cryptographic assumptions if run on a sufficiently powerful quantum computer.
 
 ## Post-quantum cryptography
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-CP` / Quantum threatens the curve, not yet the coins: Cryptography designed to replace schemes that a large quantum computer could break.
+- `04-CP` / Keys fail through people and bad randomness: Cryptography designed to replace schemes that a large quantum computer could break.
 - `05-CP` / Shor’s Algorithm (1994): Breaking RSA and ECC: Cryptography designed to resist known attacks from both classical computers and future quantum computers.
 - `05-AS` / What Can Be Done: Cryptographic methods designed to remain secure against attacks from powerful quantum computers.
 
@@ -1734,13 +1662,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-DS` / From Logs to Ledgers: A time-ordered record of events or actions that preserves history by adding new entries rather than rewriting old ones.
-- `04-EF` / Events and Logs: An append-only record emitted during a transaction and stored in the transaction receipt for off-chain systems to read.
+- `04-EF` / Events record only what the author chose to emit: An append-only record emitted during a transaction and stored in the transaction receipt for off-chain systems to read.
 
 ## Access control
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `04-DS` / Transparency vs. Privacy: Rules that determine who may read data, propose transactions, endorse updates, order entries, or administer the ledger.
-- `04-EF` / Example: SimpleStorage (Code): Contract logic that restricts which callers may execute privileged functions or change protected state.
+- `04-EF` / Worked: SimpleStorage lets anyone overwrite it: Contract logic that restricts which callers may execute privileged functions or change protected state.
 
 ## Zero-Knowledge Proof
 
@@ -1757,7 +1685,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Minter
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `04-EF` / Example: Coin (Code, Part 1): An authorized account that can create new token-like units in the example contract.
+- `04-EF` / Coin: read the whole contract: An authorized account that can create new token-like units in the example contract.
 - `06-EF` / What Is Minting?: The address or contract role allowed to create new tokens under a token contract's rules.
 
 ## Deposit address
@@ -1833,7 +1761,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Confidence word
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `05-BF` / What each wallet type leaves the analyst: The word on the course's scale that an assessment states to say how sure it is; an inference from chain behaviour alone, such as calling a wallet cold, is low confidence.
+- `05-BF` / Each wallet type leaves different evidence: The word on the course's scale that an assessment states to say how sure it is; an inference from chain behaviour alone, such as calling a wallet cold, is low confidence.
 - `11-FO` / How sure: what a code read rests on: High, Moderate or Low, attached to an assessment to say how sure you are. It follows how many independent kinds of evidence agree, never a percentage.
 
 ## Token ID
@@ -1847,6 +1775,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `05-EF` / An NFT is a token ID with one owner: An optional ERC-721 function that returns where a token's metadata is, often off chain, for example on IPFS.
 - `06-EF` / What Tokens Don't Guarantee: A contract-returned pointer to the metadata file associated with a token.
+
+## AddedBlackList
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `05-EF` / What a USDT freeze leaves on chain: The event the USDT contract emits when its owner-only addBlackList function freezes an address; the block it is in dates the freeze, and RemovedBlackList records an unfreeze.
+- `14-FO` / A freeze is a source: read it narrowly: The event USDT's contract on Tron emits when its addBlackList function freezes an address. It lets you read who was frozen, and when, yourself.
 
 ## Huione Group
 
@@ -1863,7 +1797,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Delisting
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `05-FO` / Tornado Cash: sanctioned 2022, delisted 2025: Treasury lifting sanctions it had placed on a person or entity, removing it from the list.
+- `05-FO` / Date every sanctions claim: Tornado Cash: Treasury lifting sanctions it had placed on a person or entity, removing it from the list.
 - `13-FO` / One playbook across North Korea's cases: Removing a name from a sanctions list. Tornado Cash was designated in August 2022 and delisted on 21 March 2025, so say both dates when you call it sanctioned.
 
 ## Bitcoin Fog
@@ -1887,7 +1821,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Thin market
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `07-EF` / Arbitrage holds a deep pool near the market: A pool with small reserves, where one trade moves the price a lot, so its price is one trade's word rather than the market's.
+- `07-EF` / A thin market moves on a small sale: A pool with small reserves, where one trade moves the price a lot, so its price is one trade's word rather than the market's.
 - `10-FO` / bZx, Feb 2020: borrow, move a price, borrow: An exchange pool whose price a trade of an attacker's size can move far, as the bZx trades did.
 
 ## Bybit hack

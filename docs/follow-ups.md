@@ -64,6 +64,12 @@ slide index), which is never listed here.
   not carried into 08-EF, which teaches bridge types, not flows; it fits day 8's cross-chain trace or day 9. Its
   sources `salisu_blockchainforensicsmodern_2023` and `lin_tracktraceautomatically_2025` went with it.
   [13 Nov 2026, 08-EF rebuild]
+- The glossary dropped twelve terms because no visible slide names them any more: XSema, Automated provenance
+  extraction, Timing window, Fee-adjusted amount matching, Unified provenance graph, Off-chain blind spot and
+  Attribution uncertainty (01-FO's hidden Challenges and Future of Forensics slides), First principles (01-IN),
+  Permissionless finance, Correlation, Forensic analysis and Blockchain vulnerability. Restore the first seven to
+  `glossary/lesson_terms/` (from git history before this run) when the laundering-flow material above gets a home.
+  [13 Nov 2026, glossary run after the lesson rebuilds]
 - `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json:92`: `lesson_block` names "A pending
   transaction already shows the trade", now merged into "A router call names the path and the minimum out" (old
   anchor kept); the bank has no questions on the rebuilt 03-EF's checks, the paymaster slide, the bundler practice or

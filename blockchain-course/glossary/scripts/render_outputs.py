@@ -29,6 +29,8 @@ def copy_required_inputs(tmp: Path) -> None:
     for name in ("_quarto.yml", "index.qmd", "styles.css"):
         shutil.copy2(ROOT / name, tmp / name)
     shutil.copy2(ROOT / "scripts" / "patch_quarto_output.py", tmp / "scripts" / "patch_quarto_output.py")
+    # _quarto.yml runs the project filters on every page, so the temp project needs them too.
+    shutil.copytree(ROOT / "filters", tmp / "filters")
     for name in ("index.qmd", "glossary.css", "terms.json"):
         shutil.copy2(GLOSSARY / name, tmp / "glossary" / name)
     axe_source = ROOT / "assets" / "vendor" / "axe-core" / "4.10.3" / "axe.min.js"
