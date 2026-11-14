@@ -15,39 +15,44 @@ format:
 
 ## Two puzzles: unread code, circular sales {.smaller}
 
-**Bottom line:** two things an agent will bring you. First, a contract with no published source: what does it do? Second, an NFT that sold for a record price: was it a real sale? Both have answers on chain, and both answers come with a confidence word.
+::: {style="font-size: .85em;"}
 
-::: {style="font-size: .8em;"}
+**The case:** the agent brings two items. First, the contract that drained the pool in the last lesson's reentrancy check: its source was never published, so what does it do, and who can make it do it? Second, CryptoPunk #9998, recorded as sold for 124,457 ETH, about \$532 million, on 28 October 2021 [@copeland_cryptopunk532million_2021]. Was that a real sale?
 
-| Question | The answer tells you |
-| --- | --- |
-| What does the chain store for a contract? | Why source code may not exist |
-| What does "verified" mean? | Who matched the source, and how closely |
-| What is a 4-byte selector? | Which function a transaction called |
-| What does a signature lookup give you? | A name someone registered, not proof |
-| What can a decompiler recover? | Structure, not names or intent |
-| What is wash trading? | The seller on both sides |
-| What does it look like on chain? | Loops, shared funding, volume farming |
-| How sure can you be? | The confidence word, and why |
+**The last lesson left off** with reading the trace to say which attack emptied a pool. Here the attacker's contract itself is read, and then a sale that went in a circle, in three parts:
+
+1. **What the chain stores:** bytecode, verified source, and the 4-byte selector that names a function.
+2. **Reading code you cannot see:** what a decompiler gives back, and how sure a code read can be.
+3. **Wash trading:** the seller on both sides, the loop, the buyer's money, and the look-alikes.
+
+**By the end:** given a contract with no published source and a call to it, say what the selector and the decompiled code show, and how sure you are (High, Moderate or Low). Given an NFT's sale history, say whether it shows a wash trade, which kinds of evidence say so, and how sure you are.
+
+**The point to earn:** a function's name and a sale's price are both claims. The code and the buyer's money are the evidence [@solidityteam_abispecification_2026; @chainalysis_nftwashtrading_2022].
 
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 8's third lesson: two analyst skills that close the day's lectures before the lab. It matters here because outcome 5 asks students to recognize when only bytecode exists and what a decompiler can and can't recover, and Role Concept 13 asks them to characterize NFT wash trading. Emphasize that students read, they do not write: the one contract read is at the start of the day 8 lab. Allow about 50 minutes, half for each part.
+This slide opens day 8's third lesson with two items an agent brings: a contract with no source, and an NFT sale at a record price. It matters here because 10-FO ended by naming the attack from the trace, and the next questions are what the attacker's contract does and whether a recorded price was a real sale. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- Part 1, bytecode (Role Concept 19, reading level): what the chain holds, verified source, selectors, decompilers.
-- Part 2, NFT wash trading (Role Concept 13): what it is, why people do it, what it looks like, look-alikes.
-- Both parts end in a confidence statement in the course's words (High, Moderate, Low).
+- Students know from 10-FO that a contract called the pool's withdraw inside itself and took more than it put in. That contract has no published source; parts 1 and 2 read it from the chain's side, its selector and its decompiled code.
+- They know from 04-EF how a contract is deployed and how its functions are called by selector; this lesson recalls that rather than reteaching it.
+- They know NFTs and token IDs from week 1's NFT lab. Part 3 follows CryptoPunk #9998, whose 124,457 ETH sale was paid with a flash loan, the same kind of loan as 10-FO's attacks, and given back in the same transaction.
+- The point ties the halves together. A selector lookup gives the name the author chose; a recorded sale gives the price the parties chose. In both, the analyst reads what the chain shows happened.
+- Students read code; they do not write it. The one real contract read is in this afternoon's lab.
 
 **Walkthrough**
-1. Read the bottom line aloud.
-2. Walk the table; each row is one or two slides.
+1. Read the case and leave both questions open; the lesson answers them.
+2. Read the link back to 10-FO, then name the three parts.
+3. Read the objective aloud. Parts 1 and 2 end with a check every student answers; part 3 ends with the practice, and the close asks the objective again.
+4. Time plan, 50 minutes: opening 3, part 1 12 (check 3), part 2 11 (check 3), part 3 17, practice 3, answers 2 and review 2. The micro-lab and the five-minute Volume from nowhere lab are outside the plan: run them only with time in hand.
 
 **Sources**
-None
+- @copeland_cryptopunk532million_2021
+- @solidityteam_abispecification_2026
+- @chainalysis_nftwashtrading_2022
 
 :::
 
@@ -57,7 +62,7 @@ None
 
 | What exists | Where | Who can read it |
 | --- | --- | --- |
-| **Runtime bytecode** | On chain, at the contract address (04-EF's deployment slide) [@ethereum.org_smartcontractsdeveloper_2025] | Anyone, as hex |
+| **Runtime bytecode** | On chain, at the contract address, put there at deployment [@ethereum.org_smartcontractsdeveloper_2025] | Anyone, as hex |
 | **Source code** | With the author; on a verification service only if someone uploads it | Anyone, once it is published |
 | **Decompiled code** | Produced by a tool from the bytecode | Anyone with the tool; it is a reconstruction |
 
@@ -219,6 +224,45 @@ This slide teaches how an analyst looks up a selector and how far to trust the r
 
 :::
 
+## Check: what does this selector tell you? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+The transaction that drained the pool was sent to the attacker's contract. Its input data is four bytes and nothing more: `0x9e5faafc`. A signature database lists one signature for it, `attack()`. (The case is made up; the selector is real.)
+
+**Write one line:** what do these four bytes tell you, and what do they not?
+
+::: {.fragment}
+**Answer:** they tell you which function was called, and that it took no arguments, since the input holds only the selector. That is a fact and takes no confidence word [@solidityteam_abispecification_2026]. The name `attack()` is what someone registered for those bytes, a lead, not proof [@fourbyte_signaturedatabase_2026]. What the call did is in the trace: the nested withdraws of the last lesson.
+
+**Part 1 in one line:** the chain holds bytecode and the call's selector; verified source and a lookup add names, and only verified source is matched to the code [@sourcify_exactmatch_2026].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 1 with a check every student answers, on the running case: the call that drained the pool. It matters here because a selector is the first thing an analyst reads in a call to a contract with no source, and the lookup's name is the first thing an agent will quote back. Emphasize the split: the bytes are a fact; the name is a lead.
+
+**Key Points**
+- Expected answer: the selector says which function ran; a call with nothing after the selector passed no arguments, since arguments follow it in 32-byte words (the selector slide).
+- `0x9e5faafc` is the selector of `attack()`; it was computed with Keccak-256 for this slide, and the same check gave the specification's own example.
+- An author can call any function anything. The evidence of what it did is the trace students read in 10-FO, and part 2 reads the code behind it.
+- A student who writes "the contract attacked the pool because the function is called attack" has taken the lead for the proof; take that answer first.
+
+**Walkthrough**
+1. Give students a minute to write their line.
+2. Ask two students, one who named the function and one who said what it does not show, then reveal the answer.
+3. Read part 1 in one line, then move to part 2: what is behind the selector.
+
+**Sources**
+- @solidityteam_abispecification_2026
+- @fourbyte_signaturedatabase_2026
+- @sourcify_exactmatch_2026
+
+:::
+
 ## A decompiler rebuilds structure, not intent {.smaller}
 
 **Bottom line:** a decompiler turns bytecode back into something like code: functions by selector, storage reads and writes, calls and conditions. The names, comments and the author's purpose were never in the bytecode, so no tool can recover them.
@@ -264,36 +308,42 @@ This slide sets out what a decompiler can and can't recover (outcome 5; Role Con
 
 ## Decompiled code, as an analyst reads it {.smaller}
 
-**Bottom line:** illustrative output, written for this slide in the style decompilers print. Read it for what the bytecode does, and mark what the tool supplied.
+**Bottom line:** the running case's contract, decompiled. The output is illustrative, written for this slide in the style decompilers print. Read it for what the bytecode does, and mark what the tool supplied.
 
 :::: {.columns}
-::: {.column width="55%"}
+::: {.column width="42%"}
 
 ```{.text}
 // Illustrative, not a real tool's output
-function Unresolved_a9059cbb(address arg0,
-                             uint256 arg1) {
+function Unresolved_9e5faafc() {
     require(msg.sender == storage[1]);
-    require(storage_map_a[arg0] >= arg1);
-    storage_map_a[arg0] -= arg1;
-    storage_map_a[storage[2]] += arg1;
-    emit Transfer(arg0, storage[2], arg1);
+    call(storage[0], 0x3ccfd60b);
+    call(storage[2], value: this.balance);
+}
+function fallback() payable {
+    if (balance(storage[0]) > msg.value)
+        call(storage[0], 0x3ccfd60b);
 }
 ```
 
 :::
-::: {.column width="45%"}
+::: {.column width="58%"}
+
+::::: {style="font-size: .8em;"}
 
 | What you see | What it means |
 | --- | --- |
-| `a9059cbb` | Selector; a lookup says `transfer` |
-| `arg0`, `arg1` | Names the tool made up |
-| `storage[1]` | A slot; you don't know what it holds without reading it |
-| The body | Moves `arg0`'s tokens to a fixed address, for one caller only |
+| `9e5faafc` | The selector the call used; a lookup says `attack()` |
+| `storage[1]` | The one address allowed to call it; read the slot to learn whose |
+| `0x3ccfd60b` | A call to the contract in `storage[0]`; a lookup says `withdraw()` |
+| `fallback` | Runs when ETH arrives, and calls `withdraw()` again |
+| `storage[2]` | Where the ETH ends up |
 
-: {tbl-colwidths="[38,62]"}
+: {tbl-colwidths="[28,72]"}
 
-**Ask:** what would a standard `transfer` do instead?
+**Ask:** which line keeps the loop going?
+
+:::::
 
 :::
 ::::
@@ -301,21 +351,23 @@ function Unresolved_a9059cbb(address arg0,
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows students what decompiled code looks like and how to read it at the analyst's level (Role Concept 19: interpret, not write). It matters here because the D8 lab's contract read uses the same skill on a real contract. Emphasize that the illustration is made up: it shows the shape, not a real tool's exact output.
+This slide reads the running case's contract as decompiled code, at the analyst's level (Role Concept 19: interpret, not write). It matters here because the previous slide said what a decompiler recovers, and the check slide named the function that was called; this is the code behind that selector. Emphasize that the illustration is made up: it shows the shape, not a real tool's exact output.
 
 **Key Points**
-- The selector `0xa9059cbb` is `transfer(address,uint256)` (the selector slide), but this body does not do what a standard `transfer` does: it moves someone else's tokens to a fixed address, and only one caller may use it.
-- That is the lookup slide's point: the name is a claim; the code and the logs are the evidence.
-- To learn what `storage[1]` and `storage[2]` hold, read those storage slots on chain (any node, or the lab's tools).
-- What to write: "the function lets one address move any holder's tokens to a fixed address" (from the code). Moderate from the decompiled read alone, and still Moderate when the logs agree, since the decompiler can misread; High with verified source and the logs (the confidence slide). One word each time, never a range.
+- The first function is the one the call reached: `0x9e5faafc`, registered as `attack()`. Only the address in slot 1 may call it, so the contract does nothing for anyone else.
+- It calls the contract in slot 0 with `0x3ccfd60b`, the selector of `withdraw()`. When the pool pays, the ETH arrives here and runs `fallback`, which calls `withdraw()` again while the pool holds more than one payment. That is the nesting students saw in 10-FO's trace, now seen from the attacker's side.
+- The last line sends everything the contract holds to the address in slot 2.
+- The tool supplied the layout and the word `Unresolved`; the names `attack` and `withdraw` come from lookups, and what the slots hold comes only from reading them on chain.
+- What to write: "the contract, callable only by one address, withdraws from the pool and calls withdraw again each time it is paid, then sends its balance to a fixed address." The confidence word comes on the next slide.
 
 **Walkthrough**
-1. Read the function line by line; ask what each `require` checks.
-2. Ask: what would a standard `transfer` do? (Move the caller's own tokens to `arg0`.) What does this one do? (Moves `arg0`'s tokens to the address in `storage[2]`, and only the address in `storage[1]` may call it.)
-3. Ask: what would you check next? (Read storage slots 1 and 2; find transactions that called it and their `Transfer` logs.)
+1. Read the first function line by line; ask what the `require` checks.
+2. Ask the slide's question. (The `fallback`'s call: each payment from the pool runs it, and it withdraws again.)
+3. Ask: what would you check next? (Read slots 0, 1 and 2 on chain; then find the transactions that called the contract, and their trace.)
 
 **Sources**
-- @solidityteam_abispecification_2026 (selector of `transfer(address,uint256)`)
+- @solidityteam_abispecification_2026 (selectors of `attack()` and `withdraw()`)
+- @fourbyte_signaturedatabase_2026
 
 :::
 
@@ -355,11 +407,56 @@ This slide applies the course confidence scale to reading contract code (outcome
 
 **Walkthrough**
 1. Read the rows top to bottom; ask what moves each to the next.
-2. Ask: decompiled code shows a fee sent to a fixed address, but no transaction has paid it yet. What do you write? (The code allows it, Moderate; no transaction shows it happened.)
-3. Likely question: "Why isn't code plus logs High?" (The decompiler can misread the code; verified source removes that failure.)
-4. Point to the micro-lab: students check selectors, read calldata and sort a decompiler's output, then assess a made-up unverified contract.
+2. Ask: the running case's decompiled code and 10-FO's trace agree, nested withdraws paying the contract. Which row, and which word? (The third: Moderate. The code says the loop can happen, the trace says it did, and the decompiler could still have misread.)
+3. Ask: decompiled code shows a fee sent to a fixed address, but no transaction has paid it yet. What do you write? (The code allows it, Moderate; no transaction shows it happened.)
+4. Likely question: "Why isn't code plus logs High?" (The decompiler can misread the code; verified source removes that failure.)
+5. Point to the micro-lab: students check selectors, read calldata and sort a decompiler's output, then assess a made-up unverified contract.
 
 **Sources**
+- @odni_icd203_2015
+
+:::
+
+## Check: read three lines, name the action {.smaller}
+
+::: {style="font-size: .85em;"}
+
+Another contract with no published source, decompiled. (Illustrative, not a real tool's output; `0x23b872dd` is the selector of `transferFrom(address,address,uint256)`. `arg0` to `arg2` are names the tool made up; the values after the selector are the arguments `transferFrom` receives: from, to and amount.)
+
+```{.text}
+function Unresolved_62c06767(address arg0, address arg1, uint256 arg2) {
+    require(msg.sender == storage[1]);
+    call(arg0, 0x23b872dd, arg1, storage[2], arg2);
+}
+```
+
+**Write one line:** what does this function do, and how sure are you from this code alone?
+
+::: {.fragment}
+**Answer:** for one caller only, the address in slot 1, it calls `transferFrom` on the token at `arg0`, moving `arg2` of `arg1`'s tokens to the fixed address in slot 2. It works only where `arg1` approved this contract: a drainer's sweep, as in the approvals lesson. **Moderate** at best from decompiled code alone; logs showing the transfers keep it Moderate, and verified source with the logs makes it **High** [@grech_elipmocadvanceddecompilation_2022; @odni_icd203_2015].
+
+**Part 2 in one line:** a decompiler gives back what the bytecode does, not what its author called it or meant, so a code read stays Moderate until verified source and the logs agree.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with a check every student answers: three lines of decompiled code, read for the action and given a confidence word. It matters here because the agent's question is "what does this contract do?", and the answer must come from the body, not a name. Emphasize that the function's name is never looked up here: the action is read from the call inside it.
+
+**Key Points**
+- Expected answer: a sweep. One caller, the token as `arg0`, the victim as `arg1`, and the destination fixed in slot 2. The `transferFrom` succeeds only up to what the victim approved, which is the approvals lesson's drainer from earlier today.
+- The confidence follows the how-sure table: decompiled code alone, Moderate at best.
+- A student who looks up `0x62c06767` will find a name; ask whether the name would change the answer (it would not: the body shows the action).
+
+**Walkthrough**
+1. Give students two minutes to write their line.
+2. Ask one student for the action and another for the confidence word, then reveal.
+3. Read part 2 in one line, then move to part 3: a sale that went in a circle.
+
+**Sources**
+- @grech_elipmocadvanceddecompilation_2022
 - @odni_icd203_2015
 
 :::
@@ -367,6 +464,8 @@ This slide applies the course confidence scale to reading contract code (outcome
 ## Wash trading: the seller on both sides {.smaller}
 
 **Bottom line:** wash trading is "executing a transaction in which the seller is on both sides of the trade" [@chainalysis_nftwashtrading_2022]. The sale changes no real ownership, but the marketplace records a price and a volume that others read as demand.
+
+::: {style="font-size: .8em;"}
 
 | Motive | What the fake sale buys | What to look for |
 | --- | --- | --- |
@@ -376,8 +475,10 @@ This slide applies the course confidence scale to reading contract code (outcome
 
 : {tbl-colwidths="[18,46,36]"}
 
-- **Reward farming:** LooksRare paid trading rewards in LOOKS "derived as a percentage of the total platform trading volume, excluding private sales", so trading with yourself earned tokens [@looksrare_tradingrewards_2026]. Its trading rewards were discontinued [@looksrare_tradingrewards_2026] [Sep 2023]{.asof}.
-- **Ask:** which motive's payoff can you see on chain?
+:::
+
+- **Reward farming:** LooksRare's rewards were "derived as a percentage of the total platform trading volume, excluding private sales", so trading with yourself paid [@looksrare_tradingrewards_2026]. They were discontinued [@looksrare_tradingrewards_2026] [Sep 2023]{.asof}.
+- **The running case:** Larva Labs said #9998's buyer "bought this punk from themself" [@hayward_cryptopunk532million_2021]. **Ask:** which payoff shows on chain?
 
 [Try it: Volume from nowhere (five-minute lab)](/assets/labs/volume-from-nowhere/index.html)
 
@@ -392,9 +493,10 @@ This slide defines NFT wash trading and its three motives (Role Concept 13). It 
 - Volume: rankings and attention follow volume.
 - Rewards: on LooksRare, a user's share of daily LOOKS was their volume divided by the platform's volume, so volume with yourself was paid; this ended, per LooksRare's docs [Sep 2023]{.asof}.
 - The slide cites only the reward rule, from LooksRare's own docs; it makes no claim about how much LooksRare volume was wash trading.
+- The running case: Larva Labs, which made CryptoPunks, said publicly the day after that the 124,457 ETH sale was a sale to the buyer's own side, made with borrowed money. The rest of part 3 checks that claim against the chain, as the code half checked the name `attack()`.
 
 **Walkthrough**
-1. Read the definition, then the three rows.
+1. Read the definition, then the three rows, then the running case.
 2. Ask the slide's question. (All three: the later sale, the volume, the reward token transfers.)
 3. Optional, five minutes: open the Volume from nowhere lab from the link on the slide. Students predict whether three rising sales show demand, become the seller who buys from themselves round three wallets, meet the term wash trade, read the same sales as an analyst, and meet a case funded by an exchange that stays Low.
 4. Likely question: "Is wash trading NFTs illegal?" (Out of scope here: the analyst characterizes the activity; the legal call is the prosecutor's.)
@@ -410,7 +512,7 @@ This slide defines NFT wash trading and its three motives (Role Concept 13). It 
 :::: {.columns}
 ::: {.column width="50%"}
 
-- **Follow the token ID** through its `Transfer` logs (05-EF): the same NFT goes A → B → C → A.
+- **Follow the token ID** through its `Transfer` logs, as in the NFT lesson: the same NFT goes A → B → C → A.
 - **Follow the payment** the other way (green): each buyer pays the seller, and the ETH or WETH stays within the group.
 - **What research found:** in the 52 largest collections, January 2018 to mid-November 2021, "3.93% of addresses, processing a total of 2.04% of sale transactions" looked like market abuse, a lower bound [@vonwachter_nftwashtrading_2022].
 - **Its shape:** "Most flagged transaction patterns alternate between a few addresses" [@vonwachter_nftwashtrading_2022].
@@ -480,9 +582,8 @@ This slide shows the core on-chain pattern of NFT wash trading: one token cyclin
 
 : {tbl-colwidths="[44,56]"}
 
-- **Analyst move:** trace the buyer's funding back, as for any account. A shared funder ties buyer and seller together; the sale is then a transfer within one group.
-
-**Ask:** buyer and seller were both funded from the same exchange. Self-financed?
+- **The running case:** #9998's buyer paid with a flash loan, repaid from the seller's proceeds in the same transaction [@hayward_cryptopunk532million_2021; @copeland_cryptopunk532million_2021].
+- **Analyst move:** trace the buyer's funding back; a shared funder makes the sale a transfer within one group. **Ask:** buyer and seller were both funded from the same exchange. Self-financed?
 
 ::: {.notes}
 
@@ -494,13 +595,17 @@ This slide gives the strongest single test for wash trading: the buyer was funde
 - The threshold of 25 was Chainalysis's choice; Chainalysis said it could not be "100% sure" that every self-financed sale was intended as a wash trade.
 - Their data covered only sales in ETH and WETH: a limit to state if you use their method.
 - Most wash traders lost money: fees and gas cost more than the payoff.
+- The running case is the test in its strongest form. The buyer's money was a flash loan, the kind 10-FO's attackers used, and it was repaid from what the seller received, inside the same transaction. No money from outside the two sides stayed in the sale; Decrypt put the cost at about \$800 in fees.
 
 **Walkthrough**
 1. Read the three checks in order.
-2. Ask the slide's question. (Not by this test: an exchange funds millions; the funder must be the seller's own.)
+2. Read the running case: ask where the buyer's 124,457 ETH came from, and where it went. (A loan; back to the lender, by way of the seller.)
+3. Ask the slide's question. (Not by this test: an exchange funds millions; the funder must be the seller's own.)
 
 **Sources**
 - @chainalysis_nftwashtrading_2022 ("Wash trading" section)
+- @hayward_cryptopunk532million_2021
+- @copeland_cryptopunk532million_2021
 
 :::
 
@@ -540,7 +645,7 @@ None
 
 ## How sure: wash trading by kinds of evidence {.smaller}
 
-**Bottom line:** count independent kinds of evidence, as on 01-FO's attribution slide. Each kind rules out a different look-alike [@odni_icd203_2015].
+**Bottom line:** count independent kinds of evidence, as for attribution. Each kind rules out a different look-alike [@odni_icd203_2015].
 
 | What you have | How sure that it is wash trading |
 | --- | --- |
@@ -551,7 +656,7 @@ None
 
 : {tbl-colwidths="[56,44]"}
 
-- **What to write:** "Wallets A, B and C, funded by one address, sold NFT #7 to each other three times on [marketplace]; we assess with moderate confidence that these sales were wash trades." Then the payoff, if you found it.
+- **What to write, for the running case:** "CryptoPunk #9998 was recorded as sold for 124,457 ETH; the buyer's flash loan was repaid from the seller's proceeds in the same transaction. We assess with moderate confidence that the sale was a wash trade." No payoff has been reported, so it stays Moderate.
 
 ::: {.notes}
 
@@ -563,44 +668,144 @@ This slide applies the course confidence scale to a wash-trading assessment (Rol
 - One word per row, never a range.
 - Paid sales rule out own-wallet moves; self-financing rules out separate parties; a payoff shows the motive.
 - Write the observations first, then the assessment with its confidence word (ICD 203 standardizes the words only; no formal memo).
+- The running case lands on the third row: a paid sale whose buyer was paid for by the seller's side. Larva Labs' statement agrees, but it reads the same transaction, so it is not a second kind of evidence. Neither source reports a later sale or reward that used the price, so the fourth row is not met.
 
 **Walkthrough**
 1. Read the rows top to bottom; ask which look-alike each row removes. (Paid sales: own-wallet moves. Self-financing: friends with their own money. Repetition and a payoff: a one-off buy-back.)
-2. Have a student say the sample sentence for the loop slide's diagram.
+2. Read the running case's sentence; ask what would raise it to High. (A payoff: a later sale or listing that leaned on the recorded price, or repeated sales of the same kind.)
+3. Have a student say the same kind of sentence for the loop slide's diagram.
 
 **Sources**
 - @odni_icd203_2015
+- @copeland_cryptopunk532million_2021
+- @hayward_cryptopunk532million_2021
 
 :::
 
-## What to carry out of this lesson {.smaller}
+## Practice: is this sale history a wash? {.smaller}
 
-- The chain stores bytecode; source exists only if someone published and verified it.
-- Exact match: the published source compiled to this exact bytecode. It says nothing about safety.
-- The first four bytes of calldata are the selector; a lookup gives a name, not proof.
-- A decompiler recovers structure, not names or intent, and can be wrong.
-- Wash trading: the seller on both sides; for price, volume or rewards.
-- On chain: a token ID in a loop, buyers self-financed by the seller's side, a payoff.
-- Say how sure, and what each kind of evidence rules out.
+::: {style="font-size: .8em;"}
 
-**Check:** decompiled code and the logs agree that a function sweeps tokens to one address. How sure, and what would raise it?
+For each history, say whether it is wash trading, what on chain shows it (or rules it out), and how sure you are (High, Moderate or Low). The values are made up.
+
+1. **NFT #41.** Wallet A sells it to B for 2 ETH, B to C for 3 ETH, C back to A for 4 ETH. B and C were first funded by A. The loop runs three times in a month. Then wallet D, funded from an exchange, buys it from A for 4.5 ETH.
+2. **NFT #12.** It moves A → B → A in one day. Neither transaction carries a payment or calls a marketplace.
+3. **NFT #88.** A sells it to B for 5 ETH; six months later B sells it back to A for 6 ETH. Each side's money comes from a different exchange.
+4. **NFT #5.** A buyer contract pays 900 ETH, borrowed with a flash loan. The seller's contract sends the 900 ETH back to the buyer's, which repays the loan, all in one transaction. No later sale is recorded.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the lesson in seven lines and hands over to the day 8 lab. It matters here because the lab opens with the one contract read of outcome 5, which uses Part 1's selector lookup and decompiled reading. Emphasize the last line: both parts end in the same kind of confidence statement.
+This slide has students apply part 3 to four sale histories, with a confidence word for each (Role Concept 13). It matters here because the analyst's job ends at an assessment that names the pattern and says how sure, and an agent will ask what else it could be. Emphasize item 2: a token that moves is not a sale.
 
 **Key Points**
-- Terms: runtime bytecode, verified source, exact match, metadata hash, function selector, signature database, decompiler, wash trading, self-financed address, reward farming.
-- Tools named: Sourcify, 4byte.directory, heimdall-rs (open source); Etherscan, Panoramix (awareness).
-- Cases and research: Chainalysis's 2022 wash-trading figures; von Wachter et al. (2022); LooksRare's volume rewards.
+- Each item matches a slide in part 3. Item 1 is the loop slide with every row of the evidence table met; item 2 is the first look-alike; item 3 is the buy-back look-alike; item 4 is the running case at a smaller figure.
+- The answers are on the next slide; keep it hidden until students have written theirs.
+- The made-up values are small on purpose; the reading, not the figures, is the exercise.
 
 **Walkthrough**
-1. Ask a student to say each line in their own words.
-2. Ask the Check. (Moderate: the decompiler can misread. Verified source, an exact match, with the same logs makes it High.)
+1. Give students three minutes in pairs to write a line for each item, with a confidence word.
+2. Take item 1 first; ask which row of the evidence table it reaches, and which fact puts it there.
+3. For item 4, ask what is missing that would raise it.
 
 **Sources**
-None
+- @chainalysis_nftwashtrading_2022
+- @odni_icd203_2015
+
+:::
+
+## Answers: the loop, the money, the word {.smaller}
+
+::: {style="font-size: .72em;"}
+
+| Item | Reading | How sure, and why | What would change it |
+| --- | --- | --- | --- |
+| **1** | Wash trading: paid sales in a loop, buyers funded by the seller's side, repeated, then a payoff when an outside buyer paid the raised price [@chainalysis_nftwashtrading_2022] | **High:** every row of the evidence table is met | **Moderate** if D proves to be funded by A too: then no outside payoff is shown yet |
+| **2** | Not wash trading: no sale was recorded, so no price or volume was faked. That the token moved is a fact the `Transfer` logs show | No wash finding; at most **Low** that the wallets are one person's | A payment or a marketplace call in either transaction would make it a sale to test |
+| **3** | Consistent with a buy-back: two real sales months apart, each paid with outside money | **Low** that it is a wash trade: only the loop fits | A shared funder for A and B, or a run of such sales, would raise it |
+| **4** | Self-financed in its strongest form: the buyer's loan was repaid from the seller's proceeds in the same transaction, as with CryptoPunk #9998 [@hayward_cryptopunk532million_2021] | **Moderate:** one party on both sides, but no payoff seen | **High** with a payoff: a later sale, listing or reward that leaned on the 900 ETH price |
+
+: {tbl-colwidths="[8,38,26,28]"}
+
+:::
+
+::: {.fragment}
+**Part 3 in one line:** a wash trade is the seller on both sides; the loop shows where to look, and the buyer's money is the evidence.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the answers to the practice, each with its confidence word and what would change it. It matters here because the feedback is where students check their own reading. Emphasize the last column: the reason for the word matters as much as the word.
+
+**Key Points**
+- Item 1 meets every row of the evidence table: paid sales, self-financing, repetition and a payoff. D's purchase is the payoff only if D's money truly came from outside, which is why the last column names D's funding.
+- Item 2 is the own-wallet look-alike. The transfers are facts; the label "wash trading" does not apply, because no sale was recorded.
+- Item 3 is the buy-back look-alike. The loop is the only thing it shares with a wash trade, and the loop alone is Low.
+- Item 4 is the running case at a smaller figure. Like #9998, it has no reported payoff, so it stays Moderate.
+- The one line closes part 3; the review comes next.
+
+**Walkthrough**
+1. Reveal the slide after students have written their lines.
+2. Read each row, and ask a pair who chose a different word to say why.
+3. Reveal the one line.
+
+**Sources**
+- @chainalysis_nftwashtrading_2022
+- @hayward_cryptopunk532million_2021
+- @odni_icd203_2015
+
+:::
+
+## Review: read the code, follow the buyer's money {.smaller}
+
+[]{#what-to-carry-out-of-this-lesson}
+
+::: {style="font-size: .72em;"}
+
+**The objective:** given a contract with no published source and an NFT's sale history, say what the contract does and whether the sales were wash trades, and how sure you are of each. Answer each question from memory, then reveal.
+
+| Question | Answer |
+| --- | --- |
+| **1.** What does the chain store for a contract, and when do you have its source? | [Bytecode only; source only if someone published it and a verifier matched it to that bytecode [@sourcify_exactmatch_2026].]{.fragment} |
+| **2.** A transaction's input is `0x9e5faafc`, and a database lists `attack()`. What do you know? | [Which function was called, with no arguments: a fact. The name is a lead, since anyone can add a name to the database [@fourbyte_signaturedatabase_2026].]{.fragment} |
+| **3.** What does a decompiler give back, and what does it not? | [Structure: calls, checks and storage. Not names or intent, and it can be wrong [@grech_elipmocadvanceddecompilation_2022].]{.fragment} |
+| **4.** Decompiled code and the logs agree a function sweeps tokens to one address. How sure? | [Moderate; High with verified source and the same logs [@odni_icd203_2015].]{.fragment} |
+| **5.** What is a wash trade, and why do it? | [The seller on both sides of a sale, to fake price, volume or rewards [@chainalysis_nftwashtrading_2022].]{.fragment} |
+| **6.** Why was CryptoPunk #9998's 124,457 ETH sale not a real price? | [The buyer's flash loan was repaid from the seller's proceeds in the same transaction [@hayward_cryptopunk532million_2021].]{.fragment} |
+| **7.** An NFT moves A → B → A with no payment. Wash trade? | [No: no sale was recorded, so nothing was faked.]{.fragment} |
+
+: {tbl-colwidths="[45,55]"}
+
+**Next:** the lab reads the contract Bybit's cold wallet was tricked into running and looks up its selectors; tomorrow opens with AML Typologies, where wash trading is one typology among many. Can you now tell the agent what the contract does, and whether the sale was real?
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reviews the lesson against its objective: seven questions, covering the three parts and the point, answered from memory before each answer appears. It matters here because recalling an answer fixes it better than hearing a summary, and the questions show whether students can now do what the opening promised. Emphasize questions 2 and 6: the name and the price are both claims, and the code and the buyer's money are the evidence.
+
+**Key Points**
+- Questions 1 to 4 cover the code half: what the chain stores, the selector, the decompiler, and the confidence word for a code read.
+- Questions 5 to 7 cover the wash half: the definition, self-financing in the running case, and the first look-alike.
+- No new facts appear here; every answer was taught on an earlier slide.
+- The lab is the cross-chain lab's Bybit contract read; 12-FO, AML Typologies, is named here and not taught.
+
+**Walkthrough**
+1. Read the objective.
+2. For each question, give students a few seconds to answer aloud or on paper, then reveal the answer.
+3. Ask the class the objective as a question: can you now say what the contract does, and whether the sale was real?
+
+**Sources**
+- @sourcify_exactmatch_2026
+- @fourbyte_signaturedatabase_2026
+- @grech_elipmocadvanceddecompilation_2022
+- @odni_icd203_2015
+- @chainalysis_nftwashtrading_2022
+- @hayward_cryptopunk532million_2021
 
 :::
 
