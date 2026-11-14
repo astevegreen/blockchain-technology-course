@@ -1,373 +1,608 @@
 {
   "lesson_id": "primitives_04_cp_asymmetric_encryption_and_digital_signatures",
-  "lesson_title": "Asymmetric Encryption & Digital Signatures",
-  "date_generated": "2026-04-26",
+  "date_generated": "2026-11-14",
   "topic": "primitives",
   "tags": [
     "primitives",
     "04-cp-asymmetric-encryption-and-digital-signatures",
-    "asymmetric-cryptography",
-    "public-key",
-    "private-key",
-    "digital-signatures",
-    "trapdoor-functions",
-    "pki",
-    "blockchain-addresses",
+    "keys",
+    "signatures",
+    "addresses",
+    "secp256k1",
+    "hashing",
     "quiz-bank"
   ],
   "metadata": {
-    "source_files": {
-      "slide_source": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd",
-      "reading_sources": [
-        "/tmp/blockchain-course-readings/text/diffie_hellman_new_directions.txt",
-        "/tmp/blockchain-course-readings/diffie_hellman_new_directions.pdf"
-      ]
-    },
-    "reading_status": "acquired",
+    "module": "primitives",
+    "lesson_file_stem": "04-CP-asymmetric_encryption_and_digital_signatures",
+    "slide_source_path": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+    "question_count": 20,
     "source_mix": {
-      "lesson_questions": 10,
-      "reading_questions": 3
-    },
-    "generation_notes": "Questions prioritize mechanism tracing, scenario application, misconception diagnosis, and trust-infrastructure comparisons. Trivia about dates, exact formulas, and named libraries is intentionally avoided."
+      "lesson_grounded_questions": 20,
+      "reading_grounded_questions": 0
+    }
   },
   "questions": [
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A company wants every employee to communicate privately with every other employee using only symmetric encryption. Why does this become difficult as the company grows?",
-      "correct_answer": "Each communicating pair needs a shared secret arranged securely in advance, so key management grows faster than the organization can handle.",
+      "question_stem": "The phone holds a key, the note \"Pay Alice 1 BTC\" and a valid signature on it. Does that prove its owner, Smith, paid Alice?",
+      "correct_answer": "No: it proves the phone's key signed that note, at High confidence; who used the key is evidence still to find.",
       "incorrect_answers": [
-        "The main scaling problem is that each employee pair must invent and maintain a different encryption algorithm, not just a different key.",
-        "Every employee must first generate a public/private key pair before a symmetric cipher can encrypt messages between coworkers.",
-        "Symmetric encryption becomes slower than public-key encryption once messages cross the open corporate network and need routing."
+        "Yes: a valid signature proves the owner approved the note, so Smith paid Alice, and High confidence fits that well.",
+        "No: a valid signature proves nothing, since anyone can forge one without the key, so the note rates only Low.",
+        "Yes: the key sits on Smith's phone, so the chain names Smith as the sender, though at Moderate confidence."
       ],
-      "explanation": "The lesson frames the key distribution problem as a scaling failure: symmetric encryption is efficient, but private communication among many dynamic pairs requires secure pre-distribution and management of many shared secrets.",
+      "explanation": "The review answers the opening case: the phone proves the key signed the note and controls two addresses, at High confidence. Who used the key is the agent's evidence to find, not something the signature shows.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "symmetric-cryptography",
-        "key-distribution",
-        "asymmetric-cryptography",
-        "lesson",
-        "slides",
-        "mechanism"
+        "lesson-synthesis",
+        "review",
+        "signature",
+        "identity",
+        "confidence-words"
       ],
-      "lesson_block": "No slide now: The Key-Distribution Crisis",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: The Key-Distribution Crisis"
+      "lesson_block": "Review: the key signs, the hash names",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Review: the key signs, the hash names"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Review: the key signs, the hash names"
     },
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "Alice wants to send Bob a confidential message using public-key encryption. Which workflow correctly matches the public/private key roles?",
-      "correct_answer": "Alice encrypts with Bob's public key, and Bob decrypts with Bob's private key.",
+      "question_stem": "A digest found on a phone is the SHA-256 of a short payment note. Why can an analyst still find the note without reversing the hash?",
+      "correct_answer": "Payment notes come from a small set of likely texts, so hashing each candidate until one matches finds it.",
       "incorrect_answers": [
-        "Alice signs with Alice's private key, and Bob verifies with Alice's public key.",
-        "Alice encrypts with Alice's public key, and Bob decrypts with Alice's private key.",
-        "Alice and Bob publish a shared session key, then both use that public key to encrypt."
+        "SHA-256 leaks a message's length and opening words, so the note can be rebuilt from those clues in its digest.",
+        "Pre-image resistance protects only long inputs, so a short note can be read straight out of its own digest.",
+        "A hash is a form of encryption, so the note comes out once the phone's key is used to decrypt the digest."
       ],
-      "explanation": "For confidentiality, the public key acts like a lock anyone can use to protect a message for Bob. Only Bob's private key can decrypt the result.",
-      "difficulty_level": 2,
+      "explanation": "A digest cannot be reversed, only matched. When the input came from a small set, an attacker hashes every candidate until one matches, which is how the note falls.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "public-key",
-        "private-key",
-        "confidentiality",
-        "lesson",
-        "slides",
-        "scenario"
+        "lesson-synthesis",
+        "hash",
+        "pre-image",
+        "guessing"
       ],
-      "lesson_block": "The Asymmetric Solution",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: The Asymmetric Solution; The Locked Mailbox Analogy"
+      "lesson_block": "You cannot run a hash backwards, only guess",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "You cannot run a hash backwards, only guess"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: You cannot run a hash backwards, only guess"
     },
     {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "A developer says, \"A digital signature is just encryption with the private key, so it keeps the message secret.\" What is the best correction?",
-      "correct_answer": "A signature is meant to prove authenticity and integrity, usually by signing a hash of the message, not to hide the message contents.",
+      "question_stem": "The digests of \"Pay Alice 1 BTC\" and \"Pay Alice 2 BTC\" share no pattern a reader can see. What does that teach about comparing IDs?",
+      "correct_answer": "Compare the whole string, or let a tool do it, because a digest says nothing about how close two inputs were.",
       "incorrect_answers": [
-        "A digital signature keeps the message secret because only the intended recipient can verify it with their private key later.",
-        "A digital signature proves signer approval, but verification requires the verifier to know the signer's private key in advance.",
-        "A digital signature should be generated over the full plaintext directly, so hashing the message first would weaken the proof."
+        "Compare the first and last few characters, because digests of nearly identical inputs almost always share a prefix.",
+        "Compare only the first characters, because a changed input alters the part of the digest that depends on it.",
+        "Compare the digests' lengths, because a one-character change in the input makes its digest longer or shorter."
       ],
-      "explanation": "The lesson emphasizes the conceptual flip between confidentiality and authenticity. Digital signatures are verified with public information and are normally applied to a message hash, so they do not provide confidentiality by themselves.",
-      "difficulty_level": 3,
-      "topic": "primitives",
-      "tags": [
-        "primitives",
-        "04-cp-asymmetric-encryption-and-digital-signatures",
-        "digital-signatures",
-        "hashing",
-        "authenticity",
-        "lesson",
-        "slides",
-        "misconception"
-      ],
-      "lesson_block": "A signature binds the key to these exact bytes",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: From Encryption to Signing; Digital Signature Workflow"
-    },
-    {
-      "id": "q4",
-      "question_type": "multiple_choice",
-      "question_stem": "Which description best captures why trapdoor functions make asymmetric cryptography possible?",
-      "correct_answer": "They are easy to compute in the public direction but infeasible to reverse unless someone has specific secret information.",
-      "incorrect_answers": [
-        "They are hard to compute in both directions until a certificate authority publishes the algorithm needed for verification.",
-        "They let two parties use the same shared secret as both the public encryption input and the private decryption input.",
-        "They make verification possible because anyone can invert the private operation after seeing a signed message and public key."
-      ],
-      "explanation": "A trapdoor function separates public computation from private inversion. The public operation can be known, while the private key or trapdoor makes reversal feasible only for the authorized holder.",
+      "explanation": "The avalanche effect means one changed bit flips about half the output bits, so similar digests do not mean similar inputs. Check the whole ID, or let the tool compare it.",
       "difficulty_level": 2,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "trapdoor-functions",
-        "public-key",
-        "private-key",
-        "lesson",
-        "slides",
-        "mechanism"
+        "lesson-synthesis",
+        "hash",
+        "avalanche",
+        "comparison"
       ],
-      "lesson_block": "No slide now: Trapdoor Functions",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Trapdoor Functions"
+      "lesson_block": "Change one character and the whole hash changes",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Change one character and the whole hash changes"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Change one character and the whole hash changes"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst checks an Ethereum address with an online \"SHA3-256\" tool and the digest does not match. What is the likely cause?",
+      "correct_answer": "Ethereum uses Keccak-256, which gives different digests from NIST's SHA3-256, so the tool used the wrong hash.",
+      "incorrect_answers": [
+        "Ethereum builds addresses with SHA-256 and then RIPEMD-160, as Bitcoin does, so no SHA3 tool can match one.",
+        "Keccak-256 and SHA3-256 are one hash under two names, so the analyst must have mistyped the address.",
+        "Ethereum hashes each address twice with Keccak-256, so a tool that hashes only once gives another digest."
+      ],
+      "explanation": "Keccak-256 is not SHA3-256: NIST changed the padding before publishing SHA3, so the two differ for the same input. A tool labelled SHA3 may mean either.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "hash",
+        "keccak",
+        "ethereum"
+      ],
+      "lesson_block": "Each chain picks its hash; Ethereum's is Keccak",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Each chain picks its hash; Ethereum's is Keccak"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Each chain picks its hash; Ethereum's is Keccak"
     },
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "A messaging app uses asymmetric cryptography to authenticate a peer and establish a shared session key, then uses symmetric encryption for the conversation. Why is this hybrid design typical?",
-      "correct_answer": "Asymmetric methods solve key exchange and authentication problems, while symmetric encryption is faster for bulk data.",
+      "question_stem": "An agent asks the analyst to decrypt a digest found on a phone to see what was paid. What is the right answer?",
+      "correct_answer": "A hash has no key to decrypt with; the input can only be found by guessing candidates and hashing each one.",
       "incorrect_answers": [
-        "Asymmetric ciphers carry the full conversation after the handshake because they avoid creating any shared session key at all.",
-        "Symmetric encryption authenticates peer identities, while asymmetric encryption provides the high-speed data channel later.",
-        "The app needs both because public-key methods can hide data but cannot help strangers establish session material securely."
+        "A hash is decrypted with the sender's public key, but that key must first be recovered from the seized phone.",
+        "A hash can be decrypted once its length is known, because a fixed length reveals the input length.",
+        "A hash can be neither undone nor matched, so a guess-and-check search will never find the original input."
       ],
-      "explanation": "The lesson warns against treating asymmetric cryptography as a full replacement for symmetric cryptography. In practice, the two are combined: public-key techniques handle scalable setup and authentication, then symmetric ciphers handle high-volume encryption.",
-      "difficulty_level": 3,
+      "explanation": "A hash is not encryption: there is no key and nothing to decrypt. Guessing works here only because payment notes come from a small set.",
+      "difficulty_level": 2,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "hybrid-encryption",
-        "symmetric-cryptography",
-        "asymmetric-cryptography",
-        "lesson",
-        "slides",
-        "tradeoff"
+        "lesson-synthesis",
+        "check",
+        "hash",
+        "encryption"
       ],
-      "lesson_block": "No slide now: Symmetric vs Asymmetric Comparison",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Symmetric vs Asymmetric Comparison"
+      "lesson_block": "Check: is a hash encryption? Can you undo it?",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Check: is a hash encryption? Can you undo it?"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Check: is a hash encryption? Can you undo it?"
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A blockchain wallet must minimize signature size, bandwidth, and verification overhead while preserving public-key security. Which choice is most appropriate?",
-      "correct_answer": "Use elliptic curve cryptography because it can provide comparable security with smaller keys and signatures than RSA.",
+      "question_stem": "Anyone can see a suspect's public key. Why can they not spend the suspect's coins with it?",
+      "correct_answer": "Going back from the public key to the private key is the discrete logarithm problem, which no known computer solves.",
       "incorrect_answers": [
-        "Use RSA because increasing key size lets RSA signatures stay smaller than ECC signatures at comparable security levels.",
-        "Use Diffie-Hellman alone because key agreement produces signatures without adding a public verification algorithm for wallets.",
-        "Use a symmetric MAC because one shared wallet key gives validators public proof that the spender approved the transaction."
+        "The public key is a hash of the private key, so spending would mean undoing that hash, which cannot be done.",
+        "The public key holds the private key in encrypted form, and only the wallet's own password can open that form.",
+        "A node refuses any spend made with a public key on view, so only the holder of the private key can ever spend it."
       ],
-      "explanation": "The lesson contrasts RSA with ECC and highlights ECC's practical advantages in size and efficiency, especially in environments such as blockchains where storage, bandwidth, and signature overhead matter.",
+      "explanation": "Going from key to public key is quick; going back is the discrete logarithm problem, infeasible for secp256k1. Whoever holds the private key can spend, and the public key does not give it up.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "ecc",
-        "rsa",
-        "blockchain-addresses",
-        "lesson",
-        "slides",
-        "application"
+        "lesson-synthesis",
+        "private-key",
+        "public-key",
+        "secp256k1"
       ],
-      "lesson_block": "Elliptic Curve Cryptography (ECC) / ECC vs RSA",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Elliptic Curve Cryptography (ECC); ECC vs RSA"
+      "lesson_block": "A private key is a number that controls coins",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "A private key is a number that controls coins"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: A private key is a number that controls coins"
     },
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "A browser rejects a site's certificate even though the public key mathematically verifies a signature. Which explanation best fits the PKI trust model?",
-      "correct_answer": "The client must also validate identity binding details such as the issuer chain, domain match, expiration, and revocation status.",
+      "question_stem": "Sony signed PlayStation 3 software with the same ECDSA nonce each time. What went wrong, and what did it expose?",
+      "correct_answer": "A nonce must never repeat; two signatures made with one nonce let the private key be worked out.",
       "incorrect_answers": [
-        "The certificate should be trusted if its public key verifies any signature, because PKI only checks private-key possession by the site.",
-        "The browser can ignore expiration and revocation when the issuer chain verifies, because those details are outside PKI.",
-        "The site must keep its public key secret until after TLS begins, because exposing it in a certificate breaks identity binding."
+        "A nonce must differ for each message; two signatures that shared one exposed only the public key.",
+        "The curve was too small; with two signatures from one nonce, the private key was found by a search.",
+        "The nonce was never hashed first, so each signature held for any message; no key was exposed."
       ],
-      "explanation": "PKI is not just possession of a public key. It is a hierarchy for binding identities to keys, and clients must validate the certificate chain and related conditions before trusting that binding.",
+      "explanation": "The algorithm was sound; the use was not. Reusing a signing nonce exposes the private key, as the PlayStation 3 case showed in 2010.",
       "difficulty_level": 4,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "pki",
-        "certificates",
-        "identity-binding",
-        "lesson",
-        "slides",
-        "scenario"
+        "lesson-synthesis",
+        "signature",
+        "ecdsa",
+        "nonce"
       ],
-      "lesson_block": "Certificates and PKI Hierarchy / Certificate Validation Process",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Certificates and PKI Hierarchy; Certificate Validation Process"
+      "lesson_block": "A signature binds the key to these exact bytes",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "A signature binds the key to these exact bytes"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: A signature binds the key to these exact bytes"
     },
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "A blockchain node receives a transaction spending from an address. What does successful signature verification establish in a blockchain context?",
-      "correct_answer": "The transaction was authorized by whoever controls the private key corresponding to that address, not that the network verified a real-world identity.",
+      "question_stem": "A transaction was signed by the key behind address X, one of an exchange's wallets. What may the analyst write?",
+      "correct_answer": "\"Signed with the key controlling address X\"; the customer who asked for the withdrawal is a separate fact.",
       "incorrect_answers": [
-        "The network has confirmed the legal identity behind the address because mining requires a certificate chain to a root authority before inclusion and finality.",
-        "The transaction is confidential from other validating peer nodes because the signature encrypts the spending details during validation by default.",
-        "Validators can reverse the spend later if the signer proves the corresponding private key was stolen before block inclusion and settlement."
+        "\"The exchange's customer sent the funds\", since a signature from an exchange wallet names that customer by name.",
+        "\"Smith sent the funds\", once the exchange confirms Smith owns that account, because the signature names him.",
+        "\"No one approved it\", since an exchange signs for its customers and a key held by a service proves nothing."
       ],
-      "explanation": "The lesson contrasts PKI identity binding with blockchain pseudonymous ownership. Blockchains verify control of the relevant private key, not the human identity behind it.",
+      "explanation": "A signature proves approval was made with the key, not who held it. A service such as an exchange holds keys and signs for its customers, so the customer is a separate fact from the exchange's records.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "blockchain-addresses",
-        "digital-signatures",
-        "pseudonymous-ownership",
-        "lesson",
-        "slides",
-        "application"
+        "lesson-synthesis",
+        "signature",
+        "identity",
+        "exchange"
       ],
       "lesson_block": "A signature authorizes; it doesn't identify",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Public Keys as Blockchain Addresses"
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "A signature authorizes; it doesn't identify"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: A signature authorizes; it doesn't identify"
     },
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "A company's TLS private key and a user's blockchain wallet private key are both stolen. Which contrast best reflects how revocation works in each system?",
-      "correct_answer": "PKI can use centralized revocation and replacement processes, while a blockchain network generally keeps accepting signatures from the stolen wallet key until assets are moved.",
+      "question_stem": "A user's wallet private key is stolen. What does the lesson say about cancelling that key?",
+      "correct_answer": "No one can cancel a stolen key; it keeps working until the coins have moved, so a theft looks like any spend.",
       "incorrect_answers": [
-        "Both systems rely on certificate revocation lists and ledger-wide notices that make future signatures from the stolen private key invalid across participating nodes after confirmation.",
-        "PKI treats a stolen private key as permanent spending authority until every affected domain transfers its linked assets to a fresh address before anything can change.",
-        "Blockchain systems blacklist stolen wallet keys through the same issuer-chain and certificate revocation process that browsers use for TLS certificates after notice."
+        "The network blacklists it once the theft is reported, and nodes then reject any later signature from it.",
+        "The owner revokes it through the wallet's issuer, as a certificate authority revokes a stolen certificate.",
+        "It lapses after the next block, because each signature is checked against a nonce that has moved on."
       ],
-      "explanation": "The lesson highlights different trust infrastructures. PKI has centralized mechanisms for revocation and reissuance, while decentralized blockchains generally treat the private key as continuing authority unless control of funds is transferred first.",
-      "difficulty_level": 4,
+      "explanation": "Blockchains have no way to revoke a stolen key. It keeps working until the coins move, and on chain a theft looks like any other signed transaction.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
         "revocation",
-        "pki",
-        "blockchain-addresses",
-        "lesson",
-        "slides",
-        "tradeoff"
+        "stolen-key",
+        "failure"
       ],
-      "lesson_block": "No slide now: Compromised Keys and Revocation Failures",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Compromised Keys and Revocation Failures"
+      "lesson_block": "Keys fail through people and bad randomness",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Keys fail through people and bad randomness"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Keys fail through people and bad randomness"
     },
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "A system using a strong signature algorithm accepts a forged token because a logic bug skips the verification step in one code path. What broader principle about cryptographic security does this illustrate?",
-      "correct_answer": "Cryptographic systems often fail through implementation logic and key-handling mistakes rather than through direct breaks of RSA or ECC mathematics.",
+      "question_stem": "The phone's signature checks, and the phone belongs to Smith. What can the analyst write, and how sure?",
+      "correct_answer": "\"Signed with the key found on Smith's phone\", High; whether Smith signed it needs evidence from outside the chain.",
       "incorrect_answers": [
-        "It shows that verification algorithms are optional safeguards when signed tokens come from a trusted public-key scheme and recognized issuer service.",
-        "It shows that the signature math is broken whenever an application accepts a forged token through a skipped code path in production traffic.",
-        "It shows that longer RSA or ECC keys would fix verification bypasses without changing the application's control flow checks around validation."
+        "\"Smith signed it\", at High confidence, since the signature checks and the phone is Smith's own to use freely.",
+        "\"Signed with the key found on Smith's phone\", at Low confidence, since anyone could have forged the check on the phone.",
+        "\"Smith signed it\", at Moderate confidence, since the phone is Smith's but others may have used its key."
       ],
-      "explanation": "The lesson's implementation-failure example emphasizes that attackers frequently bypass or misuse verification logic instead of solving the mathematical problem that protects the cryptographic primitive.",
-      "difficulty_level": 4,
+      "explanation": "The confidence word belongs to the key claim, which anyone can repeat the check for. Whether Smith signed is a separate question: the key could have been copied, shared or used by someone else.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "implementation-flaws",
-        "digital-signatures",
-        "verification",
-        "lesson",
-        "slides",
-        "misconception"
+        "lesson-synthesis",
+        "check",
+        "signature",
+        "confidence-words"
       ],
-      "lesson_block": "No slide now: Real-World Failure: The pac4j-jwt Auth Bypass",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_04-CP-asymmetric_encryption_and_digital_signatures-slides-only.qmd: Real-World Failure: The pac4j-jwt Auth Bypass"
+      "lesson_block": "Check: the phone's key signed. Who sent it?",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Check: the phone's key signed. Who sent it?"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Check: the phone's key signed. Who sent it?"
     },
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "In a Diffie-Hellman-style public-key system, why must a public key directory be protected against unauthorized modification even if everyone is allowed to read it?",
-      "correct_answer": "An attacker who changes directory entries can substitute their own public key and redirect messages meant for someone else.",
+      "question_stem": "A classic Bitcoin address has never spent. Can an analyst read its public key from the chain?",
+      "correct_answer": "No: only the hash of the key is on chain, until the address spends and the transaction shows the key.",
       "incorrect_answers": [
-        "Read access must be limited because seeing a recipient's public encryption key is enough to compute the private exponent.",
-        "Modification is harmless if old ciphertexts remain secure, because senders can safely use whichever public key is listed.",
-        "The directory primarily protects secrecy by hiding which users can receive encrypted messages from potential senders."
+        "Yes: a classic address is the public key itself in Base58Check, so the key reads from the first deposit.",
+        "No: the key stays hidden even after a spend, because nodes check the address against a hash in the block.",
+        "Yes: the Base58Check checksum encodes the public key, so an analyst can decode it with no spend at all."
       ],
-      "explanation": "The reading treats public access as acceptable, but directory integrity as critical. If an attacker can replace a public key, senders may encrypt to the attacker while believing they are encrypting to the intended recipient.",
-      "difficulty_level": 3,
+      "explanation": "A classic address is the hash160 of the public key, so it hides the key. The key and signature appear only when the address spends, and nodes hash the key to check it matches.",
+      "difficulty_level": 2,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "public-key-directory",
-        "key-substitution",
-        "identity-binding",
-        "reading",
-        "assigned-reading",
-        "scenario"
+        "lesson-synthesis",
+        "address",
+        "bitcoin",
+        "hash160"
       ],
-      "lesson_block": "Reading: Public Key Cryptography",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/diffie_hellman_new_directions.txt: Public key directory and unauthorized modification"
+      "lesson_block": "A Bitcoin address is a hash of the public key",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "A Bitcoin address is a hash of the public key"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: A Bitcoin address is a hash of the public key"
     },
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A student describes Diffie-Hellman as \"a way for Alice to directly encrypt a long message to Bob.\" What is the correct characterization?",
-      "correct_answer": "Diffie-Hellman is a public-key distribution method: Alice and Bob exchange public values and use private exponents to derive a shared key for later conventional encryption.",
+      "question_stem": "Why can an Ethereum address have no private key behind it?",
+      "correct_answer": "A contract has an address too, but its code controls it, so no private key is behind it.",
       "incorrect_answers": [
-        "Diffie-Hellman is a public-key encryption scheme where Alice applies Bob's public value directly to each plaintext block before sending it across the channel to Bob.",
-        "Diffie-Hellman is a signing method where Alice uses her private exponent to create a message-dependent proof any observer can verify later in a payment dispute, without encryption.",
-        "Diffie-Hellman requires Alice and Bob to transmit the final session key encrypted under a pre-shared symmetric key before later encrypted traffic can begin."
+        "Some addresses come from a public key alone, which a wallet can hold with no key behind it.",
+        "A fresh address is made per new payment, so most are never linked to any private key at all.",
+        "A deployer's key controls every contract's address for good, so only that key is behind each."
       ],
-      "explanation": "The reading distinguishes public-key cryptosystems from public-key distribution. Its Diffie-Hellman construction lets two parties compute the same shared key over an insecure channel without sending that key directly.",
+      "explanation": "A contract is a program stored on the chain. It has an address, but no private key controls it; its code does, so not every address has a key behind it.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "address",
+        "ethereum",
+        "contract"
+      ],
+      "lesson_block": "An Ethereum address is a hash's last 20 bytes",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "An Ethereum address is a hash's last 20 bytes"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: An Ethereum address is a hash's last 20 bytes"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "In the phone's worked example, which row is secret, and why can anyone check the rest?",
+      "correct_answer": "Only the private key; anyone with the public key can recompute the addresses and check the signature.",
+      "incorrect_answers": [
+        "Only the signature's s value; the rest follows from r and the public key, which anyone can derive alone.",
+        "The private key and the nonce; the addresses and signature need both, so only the signer can repeat them.",
+        "The Ethereum address; a Bitcoin address and a signature can be recomputed, but Keccak-256 cannot."
+      ],
+      "explanation": "Only the first row is secret. Anyone with the public key can recompute or check every other row, and no one can work back to the private key.",
       "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "diffie-hellman",
-        "key-exchange",
-        "symmetric-cryptography",
-        "reading",
-        "assigned-reading",
-        "misconception"
+        "lesson-synthesis",
+        "worked",
+        "private-key",
+        "verification"
       ],
-      "lesson_block": "Reading: Diffie-Hellman Public-Key Distribution",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/diffie_hellman_new_directions.txt: Public key distribution and Diffie-Hellman exchange"
+      "lesson_block": "Worked: one key, two addresses, one signature",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Worked: one key, two addresses, one signature"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Worked: one key, two addresses, one signature"
     },
     {
-      "id": "q13",
+      "id": "q14",
       "question_type": "multiple_choice",
-      "question_stem": "Practical public-key systems aim for computational security rather than unconditional security. What does that mean?",
-      "correct_answer": "Breaking the system may be possible in principle with enough search or a better algorithm, but is assumed infeasible under realistic resource limits.",
+      "question_stem": "A wallet app lists addresses A (Bitcoin), B (Ethereum) and C (Ethereum). A and B recompute from the phone's key; C does not. What is the finding?",
+      "correct_answer": "A and B come from the phone's key, High, since anyone can recompute them; another key controls C.",
       "incorrect_answers": [
-        "The system is secure because public algorithms are hidden, so an attacker cannot identify the mathematical problem to attack later in practice.",
-        "The system is unconditionally secure because no amount of computation or algorithmic improvement can recover finite private keys from public data or signatures.",
-        "The system avoids assumptions about hard problems by distributing every private key through a secure physical channel before public use."
+        "A, B and C all belong to the phone's owner, at High, since one wallet app holds all three addresses.",
+        "A and B come from the phone's key, Moderate, since the app only lists them; C is on another chain.",
+        "Only B comes from the phone's key, since an Ethereum one can be, but a Bitcoin one cannot."
       ],
-      "explanation": "Diffie and Hellman's framing is computational: finite-key systems are not absolutely impossible to attack, but security rests on the assumed infeasibility of reversing functions such as the discrete-log construction with available computation.",
-      "difficulty_level": 4,
+      "explanation": "Recomputing is the evidence: hash160 and Base58Check give A, the last 20 bytes of Keccak-256 give B. C matches neither, so another key controls it. High, because the arithmetic can be repeated.",
+      "difficulty_level": 3,
       "topic": "primitives",
       "tags": [
         "primitives",
         "04-cp-asymmetric-encryption-and-digital-signatures",
-        "computational-security",
-        "discrete-logarithm",
-        "one-way-functions",
-        "reading",
-        "assigned-reading",
-        "mechanism"
+        "lesson-synthesis",
+        "check",
+        "address",
+        "recompute"
       ],
-      "lesson_block": "Reading: Computational Complexity",
-      "specific_source_reading": "/tmp/blockchain-course-readings/text/diffie_hellman_new_directions.txt: Computational security and discrete logarithm assumption"
+      "lesson_block": "Check: which address came from which key?",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Check: which address came from which key?"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Check: which address came from which key?"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A node receives a signed Ethereum transaction whose value was changed after signing. What happens?",
+      "correct_answer": "The signature fails, since it covers every field, so the node refuses the transaction.",
+      "incorrect_answers": [
+        "The node accepts it, because the signature covers the sender's key and nonce, not the value.",
+        "The node accepts it, because the value is checked only against the sender's balance, no more.",
+        "The node refuses it, because a changed value gives a new nonce that the sender already used."
+      ],
+      "explanation": "The signature covers all the signed fields: to, value, nonce and chain ID. Change any field and the signature fails.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "signed-fields",
+        "transaction",
+        "verification"
+      ],
+      "lesson_block": "Signed fields: to, value, nonce and chain ID",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Signed fields: to, value, nonce and chain ID"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Signed fields: to, value, nonce and chain ID"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "In the recorded run, the signing page sends the node the signed bytes. What does the node never see?",
+      "correct_answer": "The private key: it receives only the signed bytes, checks them and returns the transaction hash.",
+      "incorrect_answers": [
+        "The nonce: the node works it out for itself from the pool, so the signed bytes leave it out entirely.",
+        "The signature: the node checks the hash alone, since the signed bytes carry only the fields.",
+        "The chain ID: the node adds it on receipt, so the signed bytes carry no mention of chain."
+      ],
+      "explanation": "Signing happens before sending. The node gets the signed bytes, never the private key, and hands back the transaction hash.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "worked",
+        "transaction",
+        "node"
+      ],
+      "lesson_block": "Worked: sign a transaction and send it to a node",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Worked: sign a transaction and send it to a node"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Worked: sign a transaction and send it to a node"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "An explorer shows an Ethereum transaction's From address. Where did it come from?",
+      "correct_answer": "Each node recovered the public key from the signature and hash, then hashed it into the address.",
+      "incorrect_answers": [
+        "The sender typed it into the From field, and the node then checked it against the signature.",
+        "The node looked it up in a table that matches each account's nonce to the sender's address.",
+        "The address is carried inside r and s, so the node reads it out, as it reads the chain ID."
+      ],
+      "explanation": "A signed Ethereum transaction does not carry the sender's address. The node recovers the public key from the signature and hash, then takes the last 20 bytes of its Keccak-256 hash.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "sender",
+        "recovery",
+        "ethereum"
+      ],
+      "lesson_block": "Ethereum works out the sender from the signature",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Ethereum works out the sender from the signature"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Ethereum works out the sender from the signature"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "Seat 39's signed transaction used nonce 1 and was mined in block 89. Someone copies its signed bytes and sends them to the node again. Which field is the reason for refusal?",
+      "correct_answer": "The nonce: nonce 1 is used, and changing it would break the signature that covers it.",
+      "incorrect_answers": [
+        "The chain ID: the copy was made for another chain, and the node checks it when it arrives.",
+        "The value: the signature lapses an hour after the block, so the value is checked again.",
+        "The nonce: nonce 1 is used, but the copier can raise it to 2, as the signature skips it."
+      ],
+      "explanation": "Nonce 1 is already used by seat 39, so the node refuses a second transaction with it, and the copier cannot change the nonce without breaking the signature.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "check",
+        "nonce",
+        "replay"
+      ],
+      "lesson_block": "Check: refused. Wrong nonce or wrong chain ID?",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Check: refused. Wrong nonce or wrong chain ID?"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Check: refused. Wrong nonce or wrong chain ID?"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "A tip says a Bitcoin address belongs to Smith. What does the tip prove, and how sure should the analyst be that Smith controls it?",
+      "correct_answer": "Nothing about Smith: an address carries no name, so Low that Smith controls it, on a tip alone.",
+      "incorrect_answers": [
+        "That Smith controls the address, at High, since a tip names the address and it is public.",
+        "That Smith controls it, at Moderate, since a tip and a public address settle most cases.",
+        "That Smith once used the address, Moderate, since a tip is one line of evidence in a case."
+      ],
+      "explanation": "An address is a hash of a public key and carries no name, so a tip alone is Low. Recomputing the address from a key found on Smith's device would make the key link High.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "answers",
+        "address",
+        "confidence-words"
+      ],
+      "lesson_block": "Answers: what each proves, and how sure",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Answers: what each proves, and how sure"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Answers: what each proves, and how sure"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "In the lab, a student says, \"I typed seat 39's address into the From field.\" What do you tell them?",
+      "correct_answer": "There is no From field to type into; the node recovered seat 39's address from the signature.",
+      "incorrect_answers": [
+        "That is allowed, but a typed From must match the signature or the node refuses the transaction.",
+        "That is allowed when the nonce matches, because From is a signed field, like the value is.",
+        "There is no From field; the node copies it from the account's previous transaction in history."
+      ],
+      "explanation": "The From was never typed; the node recovered it from the signature, so seat 39's key signed it. Which student used the seat is a record outside the chain.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "04-cp-asymmetric-encryption-and-digital-signatures",
+        "lesson-synthesis",
+        "practice",
+        "sender",
+        "signature"
+      ],
+      "lesson_block": "Practice: what key, address and signature prove",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd",
+        "anchor": "Practice: what key, address and signature prove"
+      },
+      "specific_source_lesson": "04-CP-asymmetric_encryption_and_digital_signatures.qmd: Practice: what key, address and signature prove"
     }
   ],
   "hierarchy": {
@@ -379,7 +614,7 @@
         "lectures": [
           {
             "id": "lec_asymmetric_encryption_and_digital_signatures_lesson",
-            "title": "Asymmetric Encryption & Digital Signatures - lesson slides",
+            "title": "Keys, secp256k1 and Addresses - slides",
             "enabled": true,
             "question_ids": [
               "q1",
@@ -391,21 +626,22 @@
               "q7",
               "q8",
               "q9",
-              "q10"
-            ]
-          },
-          {
-            "id": "lec_asymmetric_encryption_and_digital_signatures_reading",
-            "title": "Asymmetric Encryption & Digital Signatures - assigned reading",
-            "enabled": true,
-            "question_ids": [
+              "q10",
               "q11",
               "q12",
-              "q13"
+              "q13",
+              "q14",
+              "q15",
+              "q16",
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "lesson_title": "Keys, secp256k1 and Addresses"
 }

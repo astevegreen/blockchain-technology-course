@@ -66,11 +66,10 @@ slide index), which is never listed here.
   **Sources** lists seem one slide off (the keys a slide cites are listed under the next slide's notes). Re-pair
   each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
-- Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF,
-  06-EF and 04-CP banks (also 05-EF, whose wave regenerates it). Wave 2 has no session for the 06-EF
-  and 04-CP banks: regenerate them with `/quiz-bank` so each question traces to a visible slide, then drop the
-  label. The `specific_source_lesson` strings in the 04-EF and 04-CP banks still name old titles (the check does not
-  read them), and 04-CP q9 (PKI revocation against a stolen wallet key) rests on no visible slide. [14 Nov 2026, title check]
+- Quiz questions whose slide is hidden or gone carry the `lesson_block` "No slide now: <old title>" in the 01-EF
+  and 06-EF banks (also 05-EF, whose wave regenerates it). Wave 2 has no session for the 06-EF bank: regenerate it
+  with `/quiz-bank` so each question traces to a visible slide, then drop the label. The `specific_source_lesson`
+  strings in the 04-EF bank still name old titles (the check does not read them). [14 Nov 2026, title check]
 - `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`: the
   "Each confirmation makes reversal harder" slide quotes "somewhat arbitrary" with no citation on the slide (its notes
   credit the developer guide; the slide cites the payment-processing page). Cite the right source; run the `source`
