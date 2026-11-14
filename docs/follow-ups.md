@@ -34,6 +34,8 @@ slide index), which is never listed here.
   or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",
   "Your Turn: Read the Coin Contract", "Recognize It: ..."), as does `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:197`
   and `:223`. [13 Nov 2026, 04-EF rebuild]
+- `quizes/quiz_json/forensics_12-FO-aml_typologies_frameworks-quiz-bank.json` has no questions on the rebuilt 12-FO's
+  new slides (the part 1 and part 2 checks, the drainer answers with their confidence words, the review). [13 Nov 2026, 12-FO rebuild]
 - `quizes/quiz_json/forensics_01-FO-illicit_finance_regulation_case_studies-quiz-bank.json` has no questions on the
   rebuilt 01-FO's checks (which label to trust; a measured error rate and High), the FRE 702 slide "Courts now ask how
   reliable the method is", the BTC-e practice and answers, or the review; `quizes/lesson_synthesis/forensics_01-FO-*-synthesis.md:145`
