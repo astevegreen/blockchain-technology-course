@@ -82,8 +82,18 @@ slide index), which is never listed here.
   (outline moves from 01-BF, 03-BF and `blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd`).
   Those lessons' rebuilds must hide their copies and recall 02-BF ("Script type and prefix say what wallet paid",
   "The Merkle root commits to every transaction"). [13 Nov 2026, 02-BF rebuild]
-- How a key becomes an address (hash160, Base58Check), hidden in 04-CP as "Bitcoin address types by prefix", moves
-  to `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd` at its rebuild; 02-BF's notes point there. [13 Nov 2026, 02-BF rebuild]
+- `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:136` names the old 05-BF title "What each wallet type leaves
+  the analyst"; it is now "Each wallet type leaves different evidence" (the old anchor still lands). [13 Nov 2026, 05-BF rebuild]
+- `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd` opening notes say day 2 (Wallet Types) showed
+  that an exchange gives each customer a deposit address; the rebuilt 05-BF leaves deposit addresses, sweeps and
+  omnibus wallets to 04-FO, so the recall should not claim day 2 taught them. [13 Nov 2026, 05-BF rebuild]
+- `quizes/quiz_json/bitcoin_05-BF-wallet_types-quiz-bank.json` has two questions (keys not coins; one seed, many
+  addresses) and none on the rebuilt 05-BF's new slides: custody versus storage, the two checks (cold storage at an
+  exchange; two addresses from one seed), the worked three-address-types slide, the worked Low assessment, the
+  three-wallet practice and the review. [13 Nov 2026, 05-BF rebuild]
+- `quizes/pretest/pretest_week1-quiz-bank.json` (around line 283): the custody item's explanation says customer coins
+  "often sit pooled in omnibus accounts", which the rebuilt 05-BF no longer teaches (04-FO does); repoint that sentence
+  to 04-FO. The correct answer still traces to "Whoever holds the key controls the coins". [13 Nov 2026, 05-BF rebuild]
 - The 02-BF rebuild renamed slides that other files name: `dynamic-labs/wallet/gateway/static/lab/index.html:48` and
   `quizes/quiz_json/weekone_check-quiz-bank.json:252` ("Coinbase pays the miner: subsidy plus fees", now "A trace
   ending at a coinbase reached new coins"); `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md:135,140`,
