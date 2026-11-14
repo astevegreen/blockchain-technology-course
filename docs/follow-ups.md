@@ -64,9 +64,6 @@ slide index), which is never listed here.
   not carried into 08-EF, which teaches bridge types, not flows; it fits day 8's cross-chain trace or day 9. Its
   sources `salisu_blockchainforensicsmodern_2023` and `lin_tracktraceautomatically_2025` went with it.
   [13 Nov 2026, 08-EF rebuild]
-- `blockchain-course/assets/labs/beat-the-freeze/index.html:49` still names the old slide "Bitget: bridges moved
-  it faster than freezes"; it is now "Answers: bridges moved it faster than freezes". The old anchor still lands
-  (hidden marker), so only the label is stale. [13 Nov 2026, 08-EF rebuild]
 - `quizes/quiz_json/ethereum_03-EF-ethereum_network-quiz-bank.json:92`: `lesson_block` names "A pending
   transaction already shows the trade", now merged into "A router call names the path and the minimum out" (old
   anchor kept); the bank has no questions on the rebuilt 03-EF's checks, the paymaster slide, the bundler practice or
