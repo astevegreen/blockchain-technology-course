@@ -16,37 +16,39 @@ aci-mermaid: true
 
 ## Can these funds exit here? Liquidity decides {.smaller}
 
-**Bottom line:** a balance is worth only what someone will pay for it. On a decentralized exchange (DEX), that someone is a pool of two tokens, whose size sets how much can be sold and at what price [@adams_uniswapv2core_2020]. Before calling a balance "worth \$1 million", ask where it could be sold, how deep that market is, and who could stop the sale.
+::: {style="font-size: .85em;"}
 
-::: {style="font-size: .75em;"}
+**The case:** a pool on a decentralized exchange (DEX) holds 100 ETH and 300,000 USDC, a dollar token. A subject's wallet holds 1,000,000 of a small token, TKN, that a price site values at about \$600,000. The agent asks: is that money the subject could spend, and could it leave the chain?
 
-| Question | The answer tells you | Slide |
-| --- | --- | --- |
-| Who is on the other side of a DEX trade? | A pool of two tokens, not a person | The pool |
-| How does a pool set a price? | Its reserves: $x \cdot y = k$ | Reserves set the price |
-| Why does a big sale get a worse price? | Price impact grows with trade size | A bigger trade |
-| What does a swap leave on-chain? | `Swap` and `Sync` logs with the new reserves | Swap and Sync logs |
-| What makes a market thin? | Small reserves, one pool, a creator who can pull them | Thin market |
-| Where can funds be sold or leave the chain? | Deep pools, exchanges, OTC desks, bridges, or nowhere | Exits |
-| Can these funds exit here? | Six checks, and a confidence | Six checks |
+**This morning left off** at a swap: Account 3's 5,000 cUSD moved a 100,000 cUSD pool's price by about 10% [@adams_uniswapv2core_2020]. This lesson asks how big a trade a pool can take, in four parts:
+
+1. **A pool sets the price:** its reserves, the price they give, and the logs that record them.
+2. **Depth and thin markets:** why a small pool cannot take a large sale, and how creators exploit that.
+3. **Exits:** where funds can be sold or leave the chain, and who could stop them.
+4. **Six checks:** the question "can it exit here?" asked in order.
+
+**By the end:** given a balance and the pool it trades in, say how much of it could be sold, where it could leave the chain, and how sure you are (High, Moderate or Low).
+
+**The point to earn:** a balance is worth only what someone will pay for it; on a DEX that is a pool, and its depth caps what can be sold [@adams_uniswapv2core_2020].
 
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the liquidity lesson with its one question: can these funds exit here? It matters here because the morning lesson (03-EF) showed DEX trades in the mempool, and the next lesson moves funds across bridges; this one explains what a DEX trade is actually trading against, and why a balance's price is not the same as what it can be sold for. Emphasize that week-2 traces will ask this question at every hop.
+This slide opens the liquidity lesson with a case and one question: can these funds exit here? It matters here because the morning lesson read a swap and saw it move a pool's price, and the next lesson moves funds across bridges; this one explains what a DEX trade trades against, and why a balance's price is not what it can be sold for. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- On a DEX, the counterparty is a pool of two tokens whose reserves set the price.
-- How deep the pool is decides how much can be sold, and at what price.
-- The table is the lesson's map: the pool, its price, price impact, the logs, thin markets, exits, and the checklist.
-- The afternoon lab swaps a token on the course chain and reads the pool before and after.
+- The morning lesson (A DEX trade is visible before it lands) ended on Account 3's 5,000 cUSD trade moving a 100,000 cUSD pool's price by about 10%. That is the link back: how big a trade can a pool take?
+- The running case has two pieces. The ETH/USDC pool (100 ETH and 300,000 USDC) carries part 1's arithmetic. The TKN holding is the agent's question, which part 2 answers and part 4 works through all six checks.
+- The case's \$600,000 is the price site's figure: holding times last price. The lesson's point is that this figure is not what a sale could raise.
+- USDC is a dollar stablecoin, met on day 3; the confidence words come from the first day.
 
 **Walkthrough**
-1. Read the bottom line: a balance is worth what a market will pay for it.
-2. Walk the table row by row, naming the slide that answers each question.
-3. Point at the last row: by the end, students can say whether funds can exit where they sit, and how confident they are.
+1. Read the case and leave the agent's question open; part 4 answers it.
+2. Read the link back to this morning, then name the four parts.
+3. Read the objective aloud. Each part ends with a check every student answers, and the close asks the objective again.
+4. Time plan, 50 minutes: opening 2; part 1, a pool sets the price, 12 (check 2); part 2, depth and thin markets, 10 (check 2); part 3, exits, 10 (check 2); part 4, six checks, 6; practice 4, answers 3, review 2, next 1. The optional five-minute "What is it really worth?" lab in part 2 sits outside the plan: run it only with time in hand.
 
 **Sources**
 - @adams_uniswapv2core_2020
@@ -56,13 +58,13 @@ This slide opens the liquidity lesson with its one question: can these funds exi
 ## A DEX pool is the other side of the trade {.smaller}
 
 ::: {style="font-size: .85em;"}
-**Seen this morning in 03-EF:** a **pool** contract holds reserves of two tokens, and a trader swaps against them through a router, with no person on the other side. This design is an automated market maker (AMM), not an order book; order books come with exchanges on day 5 [@uniswap_howuniswapworks_2026; @adams_uniswapv2core_2020].
+**Seen this morning:** a **pool** contract holds two tokens, and a trader swaps against it through a router, with no person on the other side [@uniswap_howuniswapworks_2026].
 
 **New: who supplies the reserves**
 
+- The two token balances a pool holds are its **reserves**. This design is an automated market maker (AMM), not an order book; order books come with exchanges on day 5 [@uniswap_howuniswapworks_2026; @adams_uniswapv2core_2020].
 - Anyone can be a **liquidity provider (LP)** by depositing both tokens into the pool [@uniswap_howuniswapworks_2026].
 - In Uniswap v2, the LP receives ERC-20 **LP tokens**, a share of the reserves; burning them takes that share back out [@uniswap_howuniswapworks_2026; @uniswap_v2pair_2020].
-- The next slide shows how the reserves set the price.
 :::
 
 ::: {.callout-note appearance="simple"}
@@ -72,18 +74,19 @@ This slide opens the liquidity lesson with its one question: can these funds exi
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide recalls in one line what 03-EF taught this morning (a trader swaps against a pool contract, through a router) and adds what is new: who puts the reserves there. It matters here because every later slide (price, thin markets, rug pulls) follows from the pool's reserves and from who owns them. Emphasize that the LP token is the key to the reserves.
+This slide recalls in one line what the morning taught (a trader swaps against a pool contract, through a router) and adds what is new: who puts the reserves there. It matters here because every later slide (price, thin markets, rug pulls) follows from the pool's reserves and from who owns them. Emphasize that the LP token is the key to the reserves.
 
 **Key Points**
-- Recall, not re-teach: 03-EF's "A DEX swaps against a pool, not a person" covered the pool, the router and the AMM; spend seconds here, not minutes.
-- New: anyone can add both tokens to a pool and become a liquidity provider.
+- Recall, not re-teach: the morning's "A DEX swaps against a pool, not a person" covered the pool and the router; spend seconds here, not minutes.
+- The pool's two balances are its reserves, the word every later slide uses. A pool that prices trades from its reserves is an automated market maker; exchanges with order books come on day 5.
+- Anyone can add both tokens to a pool and become a liquidity provider.
 - In Uniswap v2, LPs receive fungible ERC-20 pool tokens; in v3 and v4, each LP picks a price range instead, per the Uniswap docs [31 Oct 2026]{.asof}.
 - Burning LP tokens withdraws the provider's share of both reserves.
 - Uniswap is the example because its v2 design is the simplest and most copied; other DEXs differ in detail.
 
 **Walkthrough**
-1. Ask the room what 03-EF showed this morning. (Expected answer: the trader calls a router, the tokens go into a pool contract, and the pool sends the other token out; the counterparty is code.)
-2. Define liquidity provider and LP token, the new terms.
+1. Ask the room what the morning showed. (Expected answer: the trader calls a router, the tokens go into a pool contract, and the pool sends the other token out; the counterparty is code.)
+2. Define reserves, liquidity provider and LP token, the new terms.
 3. Read the callout: the LP-token holder can empty the pool, which comes back on the rug-pull slide.
 
 **Sources**
@@ -101,7 +104,7 @@ This slide recalls in one line what 03-EF taught this morning (a trader swaps ag
 
 ::: {.column width="50%"}
 ::: {style="font-size: .85em;"}
-**A pool of ETH and USDC**
+**The case's pool of ETH and USDC**
 
 | Reserve | Amount |
 | --- | --- |
@@ -128,19 +131,19 @@ This slide recalls in one line what 03-EF taught this morning (a trader swaps ag
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide gives the one formula in the lesson. It matters here because the lab reads the reserves before and after a swap, and students need to turn two reserve numbers into a price. Emphasize the last bullet: the pool has no outside price, which is why the next slides on arbitrage and thin markets matter.
+This slide gives the one formula in the lesson. It matters here because the lab reads the reserves before and after a swap, and students need to turn two reserve numbers into a price. Emphasize the last bullet: the pool has no outside price, which is why depth decides how far one trade can move it.
 
 **Key Points**
-- The constant product rule: $x \cdot y = k$; the product of the reserves cannot fall.
-- Price is the ratio of the reserves: 300,000 USDC ÷ 100 ETH = 3,000 USDC per ETH.
-- Selling a token into the pool lowers its price; buying raises it.
-- The 0.30% fee goes to the liquidity providers.
-- The pool knows only its reserves.
+- The constant product rule says the product of the reserves cannot fall: $x \cdot y = k$.
+- So the price is the ratio of the reserves: 300,000 USDC ÷ 100 ETH = 3,000 USDC per ETH.
+- Selling a token into the pool lowers its price, and buying raises it, because the trade changes the ratio.
+- The 0.30% fee stays in the pool and goes to the liquidity providers.
+- The pool knows only its reserves; part 2 shows what keeps a deep pool near the wider market.
 
 **Walkthrough**
 1. Read the rule and the price-as-ratio sentence.
 2. Work the table: 100 ETH and 300,000 USDC give a price of 3,000.
-3. Ask the room: if someone sells ETH into the pool, which reserve grows? So which way does the price move? (Expected answer: the ETH reserve grows and the USDC reserve shrinks, so the price of ETH in USDC falls.)
+3. Walk the right column; the part 1 check asks the first bullet back.
 
 **Sources**
 - @adams_uniswapv2core_2020
@@ -177,10 +180,10 @@ Worked from the constant product with the 0.30% fee [@adams_uniswapv2core_2020]:
 This slide shows price impact with numbers students can check. It matters here because a launderer selling a large balance pays for it in price, and the size of that loss is evidence of how big the sale was against the market. Emphasize that 1 ETH and 10 ETH are the same pool; only the size changed.
 
 **Key Points**
-- Price impact: trades that are large compared with the pool's reserves move the price more.
-- Selling 1 ETH gets about 1.3% below the starting price (most of it the 0.30% fee and the pool's curve); 10 ETH gets 9.3% below.
+- Price impact means trades that are large compared with the pool's reserves move the price more.
+- Selling 1 ETH gets about 1.3% below the starting price, most of it the 0.30% fee and the pool's curve; 10 ETH gets 9.3% below.
 - After the 10 ETH sale, the pool's price has dropped from 3,000 to about 2,480, roughly 17%.
-- Arbitrage will usually pull a deep pool's price back (next slides), but the seller has already taken the loss.
+- Arbitrage will usually pull a deep pool's price back (part 2), but the seller has already taken the loss.
 - The formula is the v2 constant product with the fee taken from the input.
 
 **Walkthrough**
@@ -200,9 +203,9 @@ This slide shows price impact with numbers students can check. It matters here b
 
 :::: {.columns}
 
-::: {.column width="55%"}
+::: {.column width="48%"}
 ```solidity
-// UniswapV2Pair.sol: the pool contract's events
+// UniswapV2Pair.sol: the pool's events
 event Mint(address indexed sender,
            uint amount0, uint amount1);
 event Burn(address indexed sender,
@@ -213,19 +216,23 @@ event Swap(address indexed sender,
            uint amount0Out, uint amount1Out,
            address indexed to);
 event Sync(uint112 reserve0, uint112 reserve1);
-
-function getReserves() public view returns
-  (uint112 _reserve0, uint112 _reserve1,
-   uint32 _blockTimestampLast)
+function getReserves() ... returns
+  (uint112 _reserve0, uint112 _reserve1, ...)
 ```
 :::
 
-::: {.column width="45%"}
-::: {style="font-size: .85em;"}
-- **Seen this morning in 03-EF:** `Swap` says what went in, what came out and who got the output; the tokens' own `Transfer` logs (05-EF) show them moving in and out of the pool [@uniswap_v2pair_2020].
-- **New, `Sync`**: both reserves after the change. Divide one by the other for the new price, after scaling each by its token's `decimals()` (05-EF) [@uniswap_v2pair_2020; @adams_uniswapv2core_2020].
-- **`Mint` / `Burn`**: liquidity added or withdrawn [@uniswap_v2pair_2020].
-- **`getReserves()`**: read the reserves at any time [@uniswap_v2pair_2020].
+::: {.column width="52%"}
+::: {style="font-size: .78em;"}
+- **token0, token1:** the pool's two tokens, in a fixed order; its `token0()` and `token1()` say which is which [@uniswap_v2pair_2020].
+- **`Swap`** (this morning): amounts in and out, and who got the output. **`Sync`**, new: both reserves after every change. **`Mint` / `Burn`**: liquidity added or withdrawn. **`getReserves()`**: the reserves now [@uniswap_v2pair_2020].
+- Reserves are raw integers: divide each by 10 to the power of its token's `decimals()` (day 3, tokens) before dividing one by the other [@uniswap_v2pair_2020].
+
+**Worked: sell 1 ETH into the case's pool** (token0 USDC, 6 decimals; token1 WETH, 18)
+
+| `Sync` | reserve0 | reserve1 | Price |
+| --- | --- | --- | --- |
+| Before | 300000000000 | 100 × 10^18^ | 300,000 ÷ 100 = 3,000 |
+| After | 297038525897 | 101 × 10^18^ | 297,038.53 ÷ 101 = 2,940.98 |
 :::
 :::
 
@@ -236,20 +243,21 @@ function getReserves() public view returns
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the formula into evidence students can find. Students read `Swap` and the `Transfer` logs this morning (03-EF, "Reading a swap"); what is new here is reading the price from `Sync`, plus `Mint`, `Burn` and `getReserves()`. It matters here because the afternoon lab asks for the pool's price before and after a swap, and those prices come straight from the reserves in the `Sync` log or from `getReserves()`. Emphasize that the pool writes its own reserves into the log after every change.
+This slide turns the formula into evidence students can find, and works one price before and after from raw log values. Students read `Swap` and the `Transfer` logs this morning; what is new here is reading the price from `Sync`, plus `Mint`, `Burn` and `getReserves()`. It matters here because the afternoon lab asks for the pool's price before and after a swap, and those prices come straight from the reserves in the `Sync` log or from `getReserves()`. Emphasize the two traps the worked rows avoid: the wrong token order and unscaled integers.
 
 **Key Points**
 - `Swap` records the amounts in and out and the recipient. When a trader goes through a router, `Mint`'s `sender` and often `Swap`'s or `Burn`'s `to` are the router or the next pool, not the person: follow the tokens.
-- `Sync` records both reserves after every swap, mint or burn.
-- `Mint` and `Burn` record liquidity added and withdrawn: the rug-pull slide uses them.
-- `getReserves()` returns the reserves at the moment it is called.
-- token0 and token1 are the pool's two tokens, in a fixed order; check which is which before dividing.
-- The reserves are raw integers in each token's smallest unit: scale each by its `decimals()` (WETH 18, USDC 6) before dividing, or an ETH price in USDC comes out wrong by a factor of 10^12.
+- `Sync` records both reserves after every swap, mint or burn, and `getReserves()` returns them at the moment it is called.
+- `Mint` and `Burn` record liquidity added and withdrawn; the rug-pull slide uses them.
+- token0 and token1 are the pool's two tokens in a fixed order, and the pool's `token0()` and `token1()` functions name them. Check which is which before dividing, or the price comes out upside down.
+- The reserves are raw integers in each token's smallest unit. In the worked rows, USDC has 6 decimals, so 300000000000 is 300,000 USDC; WETH (ether in token form) has 18, so 100 × 10^18^ is 100 WETH. Divide without scaling and an ETH price in USDC comes out wrong by a factor of 10^12^.
+- The worked rows are the 1 ETH sale from the previous slide: the ETH reserve grows by the whole 1 ETH (the fee stays in the pool), the USDC reserve falls by the 2,961.47 paid out, and the price falls from 3,000 to 2,940.98.
 
 **Walkthrough**
-1. Recall `Swap` and `Transfer` from 03-EF in one sentence, then point at `Sync`, `Mint`, `Burn` and `getReserves()` and say what each records.
-2. Show how a price comes from `Sync`: reserve1 ÷ reserve0 (or the inverse) for the price of one token in the other.
-3. Connect to the lab: a `Sync` before the swap and a `Sync` after give the price before and after.
+1. Recall `Swap` and `Transfer` from this morning in one sentence, then point at `Sync`, `Mint`, `Burn` and `getReserves()` and say what each records.
+2. Define token0 and token1 and the scaling rule.
+3. Work the two rows aloud: scale reserve0 by 10^6^ and reserve1 by 10^18^, then divide USDC by WETH.
+4. Connect to the lab: a `Sync` before the swap and a `Sync` after give the price before and after.
 
 **Sources**
 - @uniswap_v2pair_2020
@@ -257,62 +265,54 @@ This slide turns the formula into evidence students can find. Students read `Swa
 
 :::
 
-## Arbitrage holds a deep pool near the market {.smaller}
+## Check: sell ETH in. Which way does the price go? {.smaller}
 
-**How:** when a pool's price drifts from the price elsewhere by more than the fee, traders buy where it is cheap and sell where it is dear. So the pool's price tends to track the market [@adams_uniswapv2core_2020].
-
-:::: {.columns}
-
-::: {.column width="50%"}
 ::: {style="font-size: .85em;"}
-**Deep pool**
 
-- Large reserves; a sale moves the price a little.
-- Arbitrage pulls it back to the market.
-- Its price is a fair reading of what the token is worth.
-:::
-:::
+Someone sells 10 ETH into the case's pool (100 ETH and 300,000 USDC). The `Sync` after the trade reads:
 
-::: {.column width="50%"}
-::: {style="font-size: .85em;"}
-**Thin pool**
+| `Sync` after | reserve0 (USDC, 6 decimals) | reserve1 (WETH, 18 decimals) |
+| --- | --- | --- |
+| Raw value | 272801673184 | 110 × 10^18^ |
 
-- Small reserves; one trade moves the price a lot.
-- The Uniswap v2 paper warns that a v1 pool's price, read by other contracts as a price feed, "is very easy to manipulate" [@adams_uniswapv2core_2020].
-- Its price is one trade's word, not the market's.
-:::
+**Write one line:** which reserve grew, which way did the price of ETH go, and what is the new price?
+
+::: {.fragment}
+**Answer:** the ETH reserve grew (100 to 110) and the USDC reserve shrank, so the price of ETH fell: 272,801.67 ÷ 110 = about **2,480 USDC**, down from 3,000 [@adams_uniswapv2core_2020; @uniswap_v2pair_2020].
+
+**Part 1 in one line:** a pool's price is the ratio of its reserves; every trade changes the ratio, and `Sync` records the new reserves.
 :::
 
-::::
-
-::: {.callout-note appearance="simple"}
-**Seen this morning:** the arbitrage between DEXs in 03-EF's MEV slide is this force at work. Price manipulation as an attack comes on day 8.
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide explains why a pool's price is usually close to the market price, and when it is not. It matters here because analysts often quote a token's DEX price as its value; that is reasonable for a deep pool and misleading for a thin one. Emphasize that arbitrage needs enough depth to be worth doing.
+This slide closes part 1 with a check every student answers: a raw `Sync` turned into a direction and a price. It matters here because the lab asks for exactly this reading, and the two mistakes it catches (no scaling, wrong order) give prices that are off by a factor of a trillion or upside down. Emphasize that the answer matches the 10 ETH column two slides back.
 
 **Key Points**
-- Arbitrageurs trade with a pool whose price is wrong by more than the fee, and their trades pull it back.
-- So a deep pool's price tracks the wider market.
-- A thin pool's price can be moved by a single trade; the Uniswap v2 paper calls the v1 price "very easy to manipulate" when other contracts use it as a price feed, which is why thin prices are unsafe to rely on.
-- Arbitrage between DEXs appeared in 03-EF as MEV; price-manipulation attacks are on day 8.
+- Expected answer: the ETH reserve grew and the USDC reserve shrank, so ETH got cheaper, at about 2,480 USDC.
+- Scaling: 272801673184 ÷ 10^6^ = 272,801.67 USDC; 110 × 10^18^ ÷ 10^18^ = 110 WETH.
+- Two wrong answers to listen for: a price near 0.0004 (USDC divided the wrong way) and a tiny number like 2.48 × 10^-9^ (raw integers divided without scaling).
+- The part's synthesis, on the slide: price is the reserves' ratio, and `Sync` records it after every trade.
 
 **Walkthrough**
-1. Read the how: price wrong by more than the fee means a profit for whoever fixes it.
-2. Contrast the columns: a deep pool's price can be trusted; a thin pool's price is a claim to check.
-3. Read the callout, linking back to the morning and forward to day 8.
+1. Read the case and the `Sync` row.
+2. Give every student a minute to write the line.
+3. Ask two or three students to read theirs; listen for the two wrong answers.
+4. Reveal the answer, then read the part 1 synthesis.
 
 **Sources**
 - @adams_uniswapv2core_2020
+- @uniswap_v2pair_2020
 
 :::
 
 ## A thin market moves on a small sale {.smaller}
 
-::: {style="font-size: .85em;"}
+[]{#arbitrage-holds-a-deep-pool-near-the-market}
+
+::: {style="font-size: .8em;"}
 
 | Sell 10 ETH into a pool priced at 3,000 | Deep: 100 ETH / 300,000 USDC | Thin: 10 ETH / 30,000 USDC |
 | --- | --- | --- |
@@ -322,11 +322,10 @@ This slide explains why a pool's price is usually close to the market price, and
 
 : {tbl-colwidths="[34,33,33]"}
 
-:::
-
 Same starting price, same sale, worked from the constant product [@adams_uniswapv2core_2020]. Only the depth differs.
 
-::: {style="font-size: .85em;"}
+**Why a deep pool tracks the market:** when its price drifts from the price elsewhere by more than the fee, traders buy where it is cheap and sell where it is dear (**arbitrage**, met this morning as MEV), which pulls it back [@adams_uniswapv2core_2020]. A thin pool's price is one trade's word. The Uniswap v2 paper warns that a v1 pool's price, read by another contract as a **price feed** (the token's value for that contract), "is very easy to manipulate" [@adams_uniswapv2core_2020].
+
 **Signs of a thin market:**
 
 - Reserves that are small next to the amount someone holds or wants to sell.
@@ -338,18 +337,19 @@ Same starting price, same sale, worked from the constant product [@adams_uniswap
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide defines a thin market by showing the same sale in two pools. It matters here because the question "can these funds exit here?" is mostly a question about depth, and the signs listed are things students can read on-chain. Emphasize that the starting prices are identical; only the reserves differ.
+This slide defines a thin market by showing the same sale in two pools, and says why a deep pool's price can be trusted and a thin one's cannot. It matters here because the question "can these funds exit here?" is mostly a question about depth, and analysts often quote a token's DEX price as its value: reasonable for a deep pool, misleading for a thin one. Emphasize that the starting prices are identical; only the reserves differ.
 
 **Key Points**
-- The same 10 ETH sale gets 9% below the price in a deep pool and 50% below in a pool one-tenth the size.
-- The thin pool's price ends near a quarter of where it started.
-- Signs of a thin market: small reserves next to the holding, one pool, a new pool, LP tokens concentrated in one address.
+- The same 10 ETH sale gets 9% below the price in a deep pool and 50% below in a pool one-tenth the size, and the thin pool's price ends near a quarter of where it started.
+- Arbitrageurs trade with a pool whose price is wrong by more than the fee, and their trades pull it back. That is why a deep pool's price tracks the wider market; the arbitrage between DEXs in the morning's MEV slide is this force at work.
+- A thin pool's price can be moved by one trade. The Uniswap v2 paper calls a v1 pool's price "very easy to manipulate" when another contract reads it as a price feed, which is why a thin price is a claim to check. Price manipulation as an attack comes on day 8.
+- The four signs of a thin market are things students can read: reserves in `Sync`, pools by searching for the token's pairs, age by the pool's first `Mint`, LP-token holders in the LP token's `Transfer` logs.
 - These signs are a reading, not a rule; a token may have deep markets elsewhere (another DEX, an exchange).
 
 **Walkthrough**
 1. Compare the columns row by row.
-2. Ask: which pool's price would you quote as the token's value? (Expected answer: the deep pool's, and only for amounts it can absorb. Both pools quote 3,000, but a seller of 10 ETH gets about 1,500 in the thin one, so its quote overstates what can be sold.)
-3. Read the four signs and say where each is found: reserves in `Sync`, pools by searching for the token's pairs, age by the first `Mint`, LP-token holders in the LP token's `Transfer` logs.
+2. Read the arbitrage paragraph: depth is what makes arbitrage worth doing, so depth is what keeps the price honest.
+3. Read the four signs and say where each is found.
 
 **Sources**
 - @adams_uniswapv2core_2020
@@ -363,23 +363,27 @@ This slide defines a thin market by showing the same sale in two pools. It matte
 
 ::: {.column width="50%"}
 ::: {style="font-size: .85em;"}
-**A token, TKN, with one pool**
+**The case's token, TKN, with one pool**
 
 | | |
 | --- | --- |
 | Pool reserves | 50,000 TKN and 10 ETH |
 | Pool price of 1 TKN | 10 ÷ 50,000 = 0.0002 ETH |
-| A wallet holds | 1,000,000 TKN |
-| Quoted value (holding × price) | **200 ETH** |
-| Selling all of it returns | **9.52 ETH** |
+| The subject's wallet holds | 1,000,000 TKN |
+
+**Before the next line: what is the holding worth?**
+
+[Quoted value (holding × price): **200 ETH**]{.fragment}
+
+[Selling all of it returns: **9.52 ETH**]{.fragment}
 
 :::
 :::
 
 ::: {.column width="50%"}
-::: {style="font-size: .85em;"}
+::: {.fragment style="font-size: .85em;"}
 - The pool holds only 10 ETH. No sale can take out more than that [@adams_uniswapv2core_2020].
-- A wallet or price site may still show the 200 ETH figure: holding times last price.
+- A wallet or price site may still show the 200 ETH figure (the case's \$600,000 at 3,000 USDC per ETH): holding times last price.
 - Selling 500 TKN (quoted at 0.1 ETH) returns 0.0987 ETH, close to the quoted price. Size is what breaks it.
 
 [Try it: What is it really worth? (five-minute lab)](/assets/labs/what-is-it-really-worth/index.html)
@@ -395,18 +399,19 @@ This slide defines a thin market by showing the same sale in two pools. It matte
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows the gap between a holding's quoted value and what it can be sold for. It matters here because agents and prosecutors will read a dollar figure as money the subject had; for an illiquid token that figure can be many times what any sale could raise. Emphasize the ceiling: a sale cannot take out more than the other reserve.
+This slide asks students to value the case's holding before showing the answer, then shows the gap between a holding's quoted value and what it can be sold for. It matters here because agents and prosecutors will read a dollar figure as money the subject had; for an illiquid token that figure can be many times what any sale could raise. Emphasize the ceiling: a sale cannot take out more than the other reserve.
 
 **Key Points**
-- Quoted value multiplies the holding by the last price; it ignores depth.
-- Selling the whole 1,000,000 TKN into a 10 ETH pool returns about 9.52 ETH, not 200.
+- The tempting answer is holding times price: 1,000,000 × 0.0002 = 200 ETH. Let the room give it before the reveal.
+- Quoted value ignores depth. Selling the whole 1,000,000 TKN into a 10 ETH pool returns about 9.52 ETH, under 5% of the quoted figure.
+- At the case's 3,000 USDC per ETH, 200 ETH is the price site's \$600,000; 9.52 ETH is about \$28,600.
 - A small sale (500 TKN) gets about 1.3% below the quoted price, mostly the fee; the gap comes from size.
-- Report units, the pool the price came from, and its depth.
+- So report units, the pool the price came from, and its depth.
 
 **Walkthrough**
-1. Work the table: holding, price, quoted value.
-2. Reveal the last row: 9.52 ETH, under 5% of the quoted figure.
-3. Read the callout and practise the wording: "1,000,000 TKN, quoted at 200 ETH in a pool holding 10 ETH."
+1. Read the table's three rows and ask: what is the holding worth? Take two or three answers.
+2. Reveal the quoted value, then the sale's 9.52 ETH.
+3. Reveal the right column and read the callout; practise the wording: "1,000,000 TKN, quoted at 200 ETH in a pool holding 10 ETH."
 4. Optional, five minutes: open the What is it really worth? lab from the link on the slide. Students predict what 5,000,000 TKN brings from a 100,000 USDC pool, sell it in ten lots, move the pool's depth, meet the word depth, and test a lawyer's claim that one small sale proves the price.
 
 **Sources**
@@ -427,20 +432,17 @@ This slide shows the gap between a holding's quoted value and what it can be sol
 1. The creator makes a token and a pool, and keeps the LP tokens.
 2. Buyers send ETH into the pool for the token.
 3. The scammer "will withdraw everything from the liquidity pool"; victims are left with worthless tokens [@xia_tradeortrick_2021].
-
-**On-chain:** liquidity added from the creator's address, many buys, then a `Burn` that takes it out [@uniswap_v2pair_2020]. Follow the LP tokens, not `Mint`'s `sender`, which is often a router.
 :::
 :::
 
 ::: {.column width="50%"}
 ::: {style="font-size: .85em;"}
-**Sale-restricted token ("honeypot")**
+**On-chain**
 
-1. The token's contract lets anyone buy.
-2. Its code blocks selling, except by the creator [@xia_tradeortrick_2021].
-3. Buyers hold a balance with a price and no exit.
-
-**On-chain:** many buys, no sells except from the creator. The token's code (04-EF) shows the rule.
+- Liquidity added from the creator's address: a `Mint`.
+- Many buys: `Swap` logs.
+- Then a `Burn` that takes the reserves out [@uniswap_v2pair_2020].
+- Follow the LP tokens, not `Mint`'s `sender`, which is often a router.
 :::
 :::
 
@@ -449,23 +451,108 @@ This slide shows the gap between a holding's quoted value and what it can be sol
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows the two ways a thin market is built to trap money. It matters here because both leave a pattern students can read: a creator who adds and then removes the liquidity, or a token that can be bought and not sold. Emphasize that "no exit" can be designed in.
+This slide shows how a thin market is built to trap money: a creator adds the liquidity, keeps the LP tokens, and takes the reserves out. It matters here because the pattern is one students can read in a pool's logs, and the next slide shows how common it became on another chain. Emphasize that the LP-token holder from part 1 is the person who can do this.
 
 **Key Points**
 - Xia et al. (2021, data from Uniswap at that time) found over 10,000 scam tokens, roughly 50% of the Uniswap tokens they studied, and at least \$16 million taken from 39,762 potential victims.
-- A rug pull: the creator holds the LP tokens and withdraws the reserves, leaving buyers with tokens nobody will buy.
-- A sale-restricted token: the contract lets the creator sell and blocks everyone else.
-- The pool's `Mint` and `Burn` logs and the token's code are the evidence.
+- In a rug pull the creator holds the LP tokens and withdraws the reserves, leaving buyers with tokens nobody will buy.
+- The pool's `Mint` and `Burn` logs are the evidence: liquidity in, many buys, liquidity out.
+- The same study also found tokens whose code blocks selling; that kind of trap comes with the exits in part 3.
 - The 50% figure is from one study of one period; quote it with its date.
 
 **Walkthrough**
 1. Read the study's finding, with its year.
-2. Walk the rug pull's three steps and its on-chain trace.
-3. Walk the sale-restricted token's three steps; link to reading a contract's code in 04-EF.
+2. Walk the rug pull's three steps, then its on-chain trace.
+3. Ask: which part 1 fact tells you who could do this? (Expected answer: who holds the LP tokens.)
 
 **Sources**
 - @xia_tradeortrick_2021
 - @uniswap_v2pair_2020
+
+:::
+
+## Cheap Solana tokens draw pump-and-dumps {.smaller}
+
+::: {style="font-size: .85em;"}
+
+**Solana** is another blockchain, where fees are often fractions of a cent per transaction [@soliduslabs_solanarugpulls_2025]; the next lesson places it among the chains. In a **pump-and-dump**, promoters hype an asset to pump its price, then dump their own holdings at that price, and buyers lose money [@investorgov_pumpanddump_2026]. A **soft rug** is liquidity withdrawn from a pool in a way that sinks the token's price [@soliduslabs_solanarugpulls_2025].
+
+- **Solidus Labs** studied tokens launched on Solana between January 2024 and March 2025 [@soliduslabs_solanarugpulls_2025]:
+  - over 7 million tokens launched on Pump.fun, a token launchpad, with at least five trades;
+  - about 98% of them showed pump-and-dump patterns;
+  - about 93% of liquidity pools on Raydium, a Solana DEX, showed signs of a "soft rug" pull.
+- Sanctions screening covers Solana too: the open-source extractor of addresses on the US Treasury's sanctions list (OFAC, taught on day 5) added SOL in May 2026 [@b10c_ofacaddresses_2026] [31 Oct 2026]{.asof}.
+- For the analyst: on Solana, a new Pump.fun token is far more often a scheme than a business.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students the scale of fraud on Solana's token launchpads, so they recognise the rug-pull pattern from the previous slide when a case involves one. It matters here because cheap token creation makes Solana a common venue for pump-and-dumps and thin, short-lived pools. Emphasize that these are one firm's figures for a stated period.
+
+**Key Points**
+- Solana is another chain; the next lesson (Layer 2s and bridges by type) places it. All students need now is that its fees are often fractions of a cent, so launching and trading tokens there costs little.
+- A pump-and-dump, in the SEC's investor glossary, is hype that pumps a price followed by the promoters dumping their own holdings at it; buyers lose money when the price falls. A soft rug, in Solidus Labs' usage, is liquidity withdrawn in a way that sinks the token's price: the previous slide's rug pull under another name.
+- Solidus Labs counted over 7 million Pump.fun tokens with at least five trades, January 2024 to March 2025.
+- About 98% of them showed pump-and-dump patterns (the report gives 98% to 98.7% in different places).
+- About 93% of Raydium pools showed soft-rug signs.
+- The open OFAC address extractor lists Solana addresses since May 2026. OFAC, the US Treasury's Office of Foreign Assets Control, and its sanctions list are taught on day 5.
+
+**Walkthrough**
+1. Define Solana, pump-and-dump and soft rug in a sentence each.
+2. Read the three figures and the period.
+3. Note the report rounds its headline figure differently in different places; quote "about 98%".
+4. Mention the extractor in one line: sanctioned addresses exist on Solana as well.
+
+**Sources**
+- @soliduslabs_solanarugpulls_2025
+- @investorgov_pumpanddump_2026
+- @b10c_ofacaddresses_2026
+
+:::
+
+## Check: which pool's price would you quote? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+A token, XYZ, trades in two pools. The subject holds 50,000 XYZ.
+
+| | Pool A | Pool B |
+| --- | --- | --- |
+| Reserves | 2,000,000 XYZ / 100 ETH | 10,000 XYZ / 1 ETH |
+| Pool price of 1 XYZ | 0.00005 ETH | 0.0001 ETH |
+| 50,000 XYZ quoted at | 2.5 ETH | 5 ETH |
+
+**Write one line:** which pool's price would you quote for the holding, and why?
+
+::: {.fragment}
+**Answer:** pool A's. Selling the 50,000 XYZ there returns about 2.43 ETH, close to its quote; in pool B, which holds 1 ETH, it returns about 0.83 ETH, not 5 [@adams_uniswapv2core_2020]. Quote the deep pool, and name it: "50,000 XYZ, quoted at 2.5 ETH in pool A, which holds 100 ETH."
+
+**Part 2 in one line:** a quoted value is holding times a pool's last price; only a pool deep enough for the holding makes that quote something a sale could raise.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with a check every student answers: two pools quote different prices, and only one is deep enough to mean anything for this holding. It matters here because the higher quote is the tempting one, and a report that uses it doubles the subject's apparent wealth. Emphasize that depth, not the higher number, decides which quote to use.
+
+**Key Points**
+- Expected answer: pool A, the deep one, because selling the holding there returns about 2.43 ETH against a 2.5 ETH quote.
+- Pool B's price is twice pool A's, but pool B holds 1 ETH; a sale of 50,000 XYZ there returns about 0.83 ETH.
+- The two prices differ because pool B is too thin for arbitrage to be worth doing, the thin-market sign "one trade's word".
+- The part's synthesis, on the slide: only depth turns a quote into something a sale could raise.
+
+**Walkthrough**
+1. Read the case and the table.
+2. Give every student a minute to write the line.
+3. Ask two or three students to read theirs; listen for "pool B, because it shows the higher price".
+4. Reveal the answer, then read the part 2 synthesis.
+
+**Sources**
+- @adams_uniswapv2core_2020
 
 :::
 
@@ -475,17 +562,17 @@ This slide shows the two ways a thin market is built to trap money. It matters h
 
 | Exit | What it needs | Who can stop it | What the trace shows |
 | --- | --- | --- | --- |
-| **Deep DEX pool** | A pool deep enough for the amount | Not the pool: its code has no freeze [@uniswap_v2pair_2020]; a freezable token's issuer can stop the token itself (05-EF) | `Swap` logs; `to` may be a router or the next pool, so follow the output to its end |
+| **Deep DEX pool** | A pool deep enough for the amount | Not the pool: its code has no freeze [@uniswap_v2pair_2020]; a freezable token's issuer can stop the token itself (day 3, tokens) | `Swap` logs; `to` may be a router or the next pool, so follow the output to its end |
 | **Centralized exchange (CEX)** | An account and a listing for the asset | The exchange, which can freeze deposits [@chainalysis_launderingnetworks_2026] | A deposit to an exchange address; the rest is off-chain (day 5) |
-| **OTC desk** | A desk willing to take the amount | The desk | Many small deposits gathered into wholesale amounts [@chainalysis_launderingnetworks_2026] (day 5) |
-| **Bridge** | A bridge that supports the token | Depends on the bridge's design (next lesson); the FBI asks bridges to block flagged funds [@fbi_bybitpsa_2025] | Funds locked or burned here, released on another chain (next lesson) |
+| **OTC desk** (a broker for large trades) | A desk willing to take the amount | The desk | Many small deposits gathered into wholesale amounts [@chainalysis_launderingnetworks_2026] (day 5) |
+| **Bridge** (moves value to another chain; next lesson) | A bridge that supports the token | Depends on the bridge's design (next lesson); the FBI asks bridges to block flagged funds [@fbi_bybitpsa_2025] | Funds locked or burned here, released on another chain (next lesson) |
 | **No exit** | (none) | (nothing to stop) | A balance with a price and no market |
 
-: {tbl-colwidths="[14,22,34,30]"}
+: {tbl-colwidths="[16,22,33,29]"}
 
 :::
 
-Chainalysis reported that pig-butchering scam proceeds were moving through centralized exchanges less and less, "potentially because exchanges can freeze funds" [@chainalysis_launderingnetworks_2026] [Jan 2026]{.asof}.
+Chainalysis reported that proceeds of crypto investment scams ("pig butchering") were moving through centralized exchanges less and less, "potentially because exchanges can freeze funds" [@chainalysis_launderingnetworks_2026] [Jan 2026]{.asof}.
 
 ::: {.notes}
 
@@ -493,10 +580,10 @@ Chainalysis reported that pig-butchering scam proceeds were moving through centr
 This slide lists the places value can leave a chain or change form, and who can stop each one. It matters here because week-2 traces end at one of these exits, and the analyst's assessment says which one and whether it could have been stopped. Emphasize the third column: an exit that someone can stop is a lead.
 
 **Key Points**
-- A deep DEX pool needs no permission; only a freezable token's issuer can stop that token.
-- Centralized exchanges can freeze deposits; Chainalysis links this to a steady decline in their use for cashing out pig-butchering scam proceeds [Jan 2026]{.asof}, as Chinese-language laundering networks took a larger share. The finding is about that one crime type, not all laundering.
-- OTC desks gather small deposits into wholesale amounts; day 5 covers exchanges and OTC.
-- Bridges move value to another chain; the next lesson (Layer 2s and bridges) covers how. The FBI's February 2025 notice asked bridges, exchanges and others to block transactions tied to the Bybit thieves.
+- A deep DEX pool needs no permission; only a freezable token's issuer can stop that token, as day 3's token lesson showed.
+- Centralized exchanges can freeze deposits. Chainalysis links this to a steady decline in their use for cashing out pig-butchering proceeds [Jan 2026]{.asof}, as Chinese-language laundering networks took a larger share. Pig butchering is the name for crypto investment scams; the finding is about that one crime type, not all laundering.
+- OTC (over-the-counter) desks gather small deposits into wholesale amounts; day 5 covers exchanges and OTC.
+- A bridge moves value to another chain; the next lesson (Layer 2s and bridges by type) covers how. The FBI's February 2025 notice asked bridges, exchanges and others to block transactions tied to the Bybit thieves.
 - Some tokens have no exit at all: the next slide.
 
 **Walkthrough**
@@ -505,6 +592,7 @@ This slide lists the places value can leave a chain or change form, and who can 
 3. Read the Chainalysis finding with its date and its scope: pig-butchering proceeds.
 
 **Sources**
+- @uniswap_v2pair_2020
 - @chainalysis_launderingnetworks_2026
 - @fbi_bybitpsa_2025
 
@@ -512,36 +600,55 @@ This slide lists the places value can leave a chain or change form, and who can 
 
 ## Some tokens have no exit {.smaller}
 
-::: {style="font-size: .85em;"}
+:::: {.columns}
 
-| Why there is no exit | How to tell | Slide |
-| --- | --- | --- |
-| No pool, or a pool too thin for the amount | Reserves in `Sync` or `getReserves()`, against the holding [@uniswap_v2pair_2020] | Quoted value |
-| Liquidity withdrawn | A `Burn` that empties the pool [@uniswap_v2pair_2020; @xia_tradeortrick_2021] | Rug pull |
-| Selling blocked by the token's code | Buys and no sells; the contract's transfer rules [@xia_tradeortrick_2021] | Rug pull |
-| The issuer froze the address | The issuer's freeze (05-EF); Tether reports over \$4.4 billion frozen [@tether_freeze344m_2026] [Apr 2026]{.asof} | 05-EF |
+::: {.column width="58%"}
+::: {style="font-size: .8em;"}
 
-: {tbl-colwidths="[28,54,18]"}
+| Why there is no exit | How to tell |
+| --- | --- |
+| No pool, or a pool too thin for the amount | Reserves in `Sync` or `getReserves()`, against the holding [@uniswap_v2pair_2020] |
+| Liquidity withdrawn | A `Burn` that empties the pool [@uniswap_v2pair_2020; @xia_tradeortrick_2021] |
+| Selling blocked by the token's code | Buys and no sells; the contract's transfer rules [@xia_tradeortrick_2021] |
+| The issuer froze the address | The issuer's freeze (day 3, tokens); Tether reports over \$4.4 billion frozen [@tether_freeze344m_2026] [Apr 2026]{.asof} |
+
+: {tbl-colwidths="[38,62]"}
 
 :::
+:::
+
+::: {.column width="42%"}
+::: {style="font-size: .8em;"}
+**Sale-restricted token ("honeypot")**
+
+1. The token's contract lets anyone buy.
+2. Its code blocks selling, except by the creator [@xia_tradeortrick_2021].
+3. Buyers hold a balance with a price and no exit.
+
+**On-chain:** many buys, no sells except from the creator. The token's code (day 3, smart contracts) shows the rule.
+:::
+:::
+
+::::
 
 **Bottom line:** a balance that cannot be sold or moved is still evidence, but it is not proceeds the subject could spend. Say which reason applies.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide collects the four reasons a balance can be stuck. It matters here because the analyst's assessment must say not just "funds are here" but "funds are here and cannot leave", with the reason. Emphasize that each reason has its own on-chain sign.
+This slide collects the four reasons a balance can be stuck, and shows the one designed in on purpose: a token that can be bought and not sold. It matters here because the analyst's assessment must say not just "funds are here" but "funds are here and cannot leave", with the reason. Emphasize that each reason has its own on-chain sign.
 
 **Key Points**
-- No market deep enough: read the reserves against the holding.
-- Liquidity withdrawn: a `Burn` that empties the pool.
-- Selling blocked: a sale-restricted token.
-- Frozen by the issuer: stablecoin freezes from 05-EF; Tether reported more than \$4.4 billion frozen with law enforcement [23 Apr 2026]{.asof}.
+- No market deep enough: read the reserves against the holding, as in part 2.
+- Liquidity withdrawn: a `Burn` that empties the pool, the rug pull.
+- Selling blocked: a sale-restricted token, often called a honeypot. Xia et al. found tokens whose contract lets anyone buy and only the creator sell; buyers hold a balance with a price and no exit. The evidence is many buys and no sells but the creator's, and the rule itself in the token's code.
+- Frozen by the issuer: stablecoin freezes from day 3; Tether reported more than \$4.4 billion frozen with law enforcement [23 Apr 2026]{.asof}.
 - A stuck balance is still evidence of what happened, but it is not money the subject could spend.
 
 **Walkthrough**
-1. Walk each row: the reason, the sign, where it was taught.
-2. Read the bottom line and practise the wording: "The 1,000,000 TKN cannot exit: its only pool was emptied by the creator's `Burn` in block N."
+1. Walk each row: the reason and the sign.
+2. Walk the honeypot's three steps and its trace; it comes back in the practice.
+3. Read the bottom line and practise the wording: "The 1,000,000 TKN cannot exit: its only pool was emptied by the creator's `Burn` in block N."
 
 **Sources**
 - @uniswap_v2pair_2020
@@ -558,9 +665,9 @@ This slide collects the four reasons a balance can be stuck. It matters here bec
 
 | Step | What happened | Why |
 | --- | --- | --- |
-| 1. Minutes after the theft | Hundreds of millions in tokens such as stETH and cmETH swapped for ETH on DEXs [@elliptic_bybit_2025] | Token issuers "in some cases" can freeze; no one can freeze ETH or bitcoin [@elliptic_bybit_2025] |
+| 1. Minutes after the theft | Hundreds of millions in tokens such as stETH and cmETH, which have issuers, swapped for ETH on DEXs [@elliptic_bybit_2025] | Token issuers "in some cases" can freeze; no one can freeze ETH or bitcoin [@elliptic_bybit_2025] |
 | 2. Choice of venue | DEXs rather than exchanges [@elliptic_bybit_2025] | "likely to avoid any asset freezing" at a centralized exchange [@elliptic_bybit_2025] |
-| 3. By 5 March 2025 | Most of the stolen ETH converted to bitcoin through eXch and other services [@elliptic_bybit_2025] | Off Ethereum, into an asset with no issuer |
+| 3. By 5 March 2025 | Most of the stolen ETH converted to bitcoin through eXch, an exchange that swapped coins anonymously, and other services [@elliptic_bybit_2025] | Off Ethereum, into an asset with no issuer |
 
 : {tbl-colwidths="[22,44,34]"}
 
@@ -571,20 +678,68 @@ The FBI asked exchanges, bridges, DeFi services and others to block transactions
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows the lesson's ideas in a real case: the thieves first moved out of tokens, which an issuer might freeze, used deep DEX pools to do it, then left Ethereum. It matters here because it shows exit choice as the launderer's first decision, and why the freezable column on the exits slide matters. Emphasize the order: tokens first, then the chain itself.
+This slide shows the lesson's ideas in a real case: the thieves first moved out of tokens, which an issuer might freeze, used deep DEX pools to do it, then left Ethereum. It matters here because it shows exit choice as the launderer's first decision, and why the "who can stop it" column on the exits slide matters. Emphasize the order: tokens first, then the chain itself.
 
 **Key Points**
 - Bybit lost about \$1.5 billion on 21 February 2025; the FBI attributed it to North Korea's TraderTraitor actors (PSA of 26 February 2025).
-- Elliptic: tokens such as stETH and cmETH were swapped for ETH within minutes, because some token issuers can freeze wallets and ETH has no issuer. Elliptic says "in some cases": do not tell students every one of these tokens could be frozen.
+- Elliptic: tokens such as stETH and cmETH were swapped for ETH within minutes, because some token issuers can freeze wallets and ETH has no issuer. Students need only that these are tokens with issuers. Elliptic says "in some cases": do not tell students every one of these tokens could be frozen.
 - DEXs were used, likely to avoid a freeze at a centralized exchange.
-- Elliptic (updated 5 March 2025): most of the ETH went on to bitcoin through eXch and other services.
+- Elliptic (updated 5 March 2025): most of the ETH went on to bitcoin through eXch and other services, which converted one coin for another.
 - Only deep pools could take hundreds of millions in a short time; a thin pool could not.
 - The day 8 lab traces Bybit and day 9 covers North Korea and Bybit in depth; this slide uses it only for exits.
 
 **Walkthrough**
 1. Give the date and size.
-2. Walk the three steps, asking at each: which exit, and who could have stopped it? (Expected answer: step 1, deep DEX pools; only a token's issuer, in some cases, before the swap. Step 2, DEXs again; no one, which is why they were chosen. Step 3, eXch and other services; those services, which the FBI asked to block the thieves' addresses.)
+2. Walk the three steps and their reasons; the part 3 check asks students to place each step on the exits table.
 3. Close: the thieves' first move was to leave anything with an issuer.
+
+**Sources**
+- @elliptic_bybit_2025
+- @fbi_bybitpsa_2025
+
+:::
+
+## Check: which exit at each Bybit step? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+Use the exits table for each step of the Bybit laundering.
+
+| Step | What happened |
+| --- | --- |
+| 1 | Stolen stETH and cmETH swapped for ETH within minutes |
+| 2 | The swaps went through DEXs, not exchanges |
+| 3 | Most of the ETH converted to bitcoin through eXch and other services |
+
+**Write one line per step:** which exit, and who could have stopped it?
+
+::: {.fragment}
+**Answer:**
+
+1. Deep DEX pools; only a token's issuer, "in some cases", and only before the swap [@elliptic_bybit_2025].
+2. DEXs again; no one, which is why they were chosen over an exchange that could freeze [@elliptic_bybit_2025].
+3. eXch and other services: exchanges (the CEX row), so they could have frozen the funds, and the FBI asked such services to block the thieves' addresses [@elliptic_bybit_2025; @fbi_bybitpsa_2025].
+
+**Part 3 in one line:** every exit is a place someone either can or cannot stop the funds; launderers pick the ones no one can.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 3 with a check every student answers: the real case's three steps placed on the exits table. It matters here because naming the exit and who could stop it is the part of the assessment an agent acts on. Emphasize that "no one could stop it" is an answer too, and the reason the venue was chosen.
+
+**Key Points**
+- Expected answers: step 1, deep DEX pools, stoppable only by a token's issuer in some cases; step 2, DEXs, stoppable by no one; step 3, eXch and other services, exchanges that could freeze (the CEX row) and that the FBI asked to block the addresses.
+- A wrong answer to listen for: "the DEX could have frozen it". A v2 pool's code has no freeze; only the token's issuer can stop that token.
+- The part's synthesis, on the slide: launderers pick exits no one can stop.
+
+**Walkthrough**
+1. Read the three steps.
+2. Give every student two minutes to write a line per step.
+3. Ask two or three students to read theirs; listen for the DEX named as able to freeze.
+4. Reveal the answer, then read the part 3 synthesis.
 
 **Sources**
 - @elliptic_bybit_2025
@@ -598,14 +753,14 @@ This slide shows the lesson's ideas in a real case: the thieves first moved out 
 
 | Check | Where to read it |
 | --- | --- |
-| 1. Which asset is it: the chain's coin, or a token? | The transfer: a value field or a token `Transfer` log (05-EF) |
+| 1. Which asset is it: the chain's coin, or a token? | The transfer: a value field or a token `Transfer` log (day 3, tokens) |
 | 2. Is there a pool, and how deep? | The pool's `Sync` log or `getReserves()` [@uniswap_v2pair_2020] |
 | 3. Is the pool deep enough for the amount held? | Reserves against the holding; price impact [@uniswap_howuniswapworks_2026] |
-| 4. Who holds the LP tokens? | The LP token's `Transfer` logs; `Mint` and `Burn` [@uniswap_v2pair_2020] |
-| 5. Can it be sold, and can it be frozen? | The token's code (04-EF); its issuer (05-EF) |
+| 4. Who holds the LP tokens? | In v2 the pool contract is itself the LP token: read its `Transfer` logs, or an explorer's holder list for the pool's address [@uniswap_v2pair_2020] |
+| 5. Can it be sold, and can it be frozen? | The token's code (day 3, smart contracts); its issuer (day 3, tokens) |
 | 6. What is the nearest exit, and who can stop it? | The exits table: DEX, exchange, OTC, bridge |
 
-: {tbl-colwidths="[46,54]"}
+: {tbl-colwidths="[42,58]"}
 
 :::
 
@@ -619,16 +774,16 @@ Checks 2 and 4 read a Uniswap v2-style pool; v3 and v4 pools work differently [@
 This slide is the takeaway students carry into week 2: six checks that answer "can these funds exit here?". It matters here because every trace in week 2 reaches a point where the funds either can leave or cannot, and the assessment has to say which and why. Emphasize that the answer carries a confidence word.
 
 **Key Points**
-- Check the asset, the pool's depth, depth against the holding, who controls the liquidity, whether the token can be sold or frozen, and the nearest exit.
-- Each check names where on-chain the answer is.
+- The checks run in order: the asset, the pool's depth, depth against the holding, who controls the liquidity, whether the token can be sold or frozen, and the nearest exit. Each names where on-chain the answer is.
+- Check 4 is the one students have not done yet. A Uniswap v2 pool contract is also the ERC-20 LP token, so its own `Transfer` logs show who received LP tokens, and an explorer's token-holder list for the pool's address shows who holds them now.
 - Checks 2 and 4 assume a Uniswap v2-style pool. Uniswap v3 and v4 positions are price ranges, not ERC-20 LP tokens, and other DEX designs differ: read that DEX's own events.
 - The course's confidence words are High, Moderate and Low.
-- The example sentence gives the exit, the evidence and the ceiling on what could be realized.
+- The example sentence gives the exit, the evidence and the ceiling on what could be realized; the next slide works all six checks on the case.
 
 **Walkthrough**
 1. Walk the checks in order; each one names a slide from today or day 3.
-2. Read the example sentence and point out its three parts: confidence, exit, limit.
-3. Tell students the week-2 traces will ask this question at each hop.
+2. Show check 4 on the explorer: open the pool's address as a token and read its holders.
+3. Read the example sentence and point out its three parts: confidence, exit, limit.
 
 **Sources**
 - @uniswap_v2pair_2020
@@ -636,20 +791,191 @@ This slide is the takeaway students carry into week 2: six checks that answer "c
 
 :::
 
-## This afternoon you swap and read the pool {.smaller}
+## Worked: the six checks on the thin TKN pool {.smaller}
+
+::: {style="font-size: .8em;"}
+
+The case: the subject holds 1,000,000 TKN; a search for TKN's pairs finds one pool.
+
+| Check | What the chain shows | Reading |
+| --- | --- | --- |
+| 1. Asset | TKN arrived in token `Transfer` logs | A token, not the chain's coin |
+| 2. Pool and depth | Latest `Sync`: 50,000 TKN and 10 ETH | One pool, holding 10 ETH |
+| 3. Deep enough? | The holding is 20 times the pool's TKN reserve | No: selling all returns about 9.52 ETH against a 200 ETH quote [@adams_uniswapv2core_2020] |
+| 4. LP holders | The pool's holder list: the creator's address holds 98% of the LP tokens | The creator could empty the pool with one `Burn` [@uniswap_v2pair_2020] |
+| 5. Sell, freeze | An ordinary ERC-20 transfer with no block and no freeze | Can be sold; no issuer can freeze it |
+| 6. Nearest exit | This pool, then ETH onward | Only this pool, and only while the creator leaves it |
+
+: {tbl-colwidths="[16,44,40]"}
+
+**Say it:** "Moderate confidence the 1,000,000 TKN could exit only through its one pool, which holds 10 ETH, so no more than about 9.5 ETH could be realized here; the creator holds 98% of the LP tokens and could empty it."
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works all six checks on the case's token before students try a second one, and answers the agent's question from the opening. It matters here because the checks are only useful when run in order to a sentence, and this is the first time students see that done. Emphasize how each row's reading feeds the sentence.
+
+**Key Points**
+- The case is made up for teaching, built on the pool numbers from part 2; the 98% LP holding is part of the made-up case.
+- Checks 1 to 3 repeat part 2: a token, one pool holding 10 ETH, and a holding far too large for it, so a full sale returns about 9.52 ETH, not the price site's 200 ETH (\$600,000).
+- Check 4 uses the previous slide's method: the pool's holder list shows the creator with 98% of the LP tokens, so the exit could vanish in one `Burn`.
+- Check 5 reads the token's code: nothing blocks a sale and no issuer can freeze it.
+- Check 6 names the only exit: this pool, and only while the creator leaves the liquidity in.
+- Moderate, not High: the reserves are a direct read, but a search for pairs can miss a pool on another DEX or an exchange listing, which would change the ceiling.
+- So the answer to the agent: the \$600,000 is not money the subject could spend; about 9.5 ETH, roughly \$28,600 at the case's ETH price, is the most a sale here could raise.
+
+**Walkthrough**
+1. Read the case.
+2. Walk the six rows in order, saying where each answer was read.
+3. Read the sentence aloud and point out the confidence word and why it is Moderate.
+4. Answer the agent's question from the opening slide in one line.
+
+**Sources**
+- @adams_uniswapv2core_2020
+- @uniswap_v2pair_2020
+
+:::
+
+## Practice: run the six checks on a second token {.smaller}
+
+::: {style="font-size: .8em;"}
+
+A made-up case. The subject holds 2,000,000 MEME.
+
+| Read from the chain | Value |
+| --- | --- |
+| How MEME arrived | Token `Transfer` logs, from the pool to the subject |
+| Pools found for MEME | One: latest `Sync` 400,000 MEME and 20 ETH (price 0.00005 ETH) |
+| The pool's LP-token holders | The creator's address holds all of them |
+| `Swap` logs | Many buys; every sale is from the creator's (the owner's) address |
+| The token's transfer rule | `if (from != pool && from != owner) revert();` (only the pool or the owner can send MEME) |
+
+**Write one line:** can the 2,000,000 MEME exit, how much could be realized, and how sure are you (High, Moderate or Low)?
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This practice slide gives students a made-up token that runs through all six checks to a different answer from the worked one: a token that can be bought and not sold. It matters here because the objective asks students to say how much of a balance could be sold and where it could leave, and here the answer is none. Emphasize that the code line, not the price, decides it.
+
+**Key Points**
+- The case is made up for practice; it joins part 2's quoted value with part 3's sale-restricted token.
+- The quote is 2,000,000 × 0.00005 = 100 ETH; even if MEME could be sold, the pool's 20 ETH would return about 16.66 ETH.
+- The `Swap` pattern (buys from many, sales only from the creator) is the honeypot sign from the no-exit slide.
+- The transfer rule reverts any transfer whose sender is neither the pool nor the owner, so the subject cannot send MEME to the pool, an exchange or a bridge. Students read the line; they do not write code.
+- Students write one line: whether it can exit, the amount, and a confidence word.
+
+**Walkthrough**
+1. Read the case and the table.
+2. Read the code line aloud in words: "MEME can move only out of the pool or from the owner."
+3. Give students four minutes to write their line.
+4. Move to the answers slide.
+
+**Sources**
+- @xia_tradeortrick_2021
+- @uniswap_v2pair_2020
+
+:::
+
+## Answers: the six checks, and the confidence word {.smaller}
+
+::: {style="font-size: .85em;"}
+
+- **Checks 1 to 3:** a token in one pool holding 20 ETH. Quoted at 100 ETH; even a sale that worked would return about 16.66 ETH [@adams_uniswapv2core_2020].
+- **Check 4:** the creator holds all the LP tokens, so it could also empty the pool [@uniswap_v2pair_2020].
+- **Check 5:** it cannot be sold. The transfer rule lets MEME move only from the pool or the owner, and the `Swap` logs agree: sales only from the creator [@xia_tradeortrick_2021].
+- **Check 6:** no exit for the subject. The rule blocks a transfer to any pool, exchange or bridge, not just this one.
+- **How sure:** High: the rule is read straight from the token's code and the logs match it, so no missed pool changes the answer.
+
+**What to say:** "High confidence the 2,000,000 MEME cannot exit: the token's code lets only the pool and its owner send it. It is quoted at 100 ETH, but the subject could realize nothing from it."
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the practice answers and models the sentence the objective asks for, with its confidence word. It matters here because a balance with a price and no exit is exactly the figure a report must not pass on as proceeds. Emphasize why this one is High and the worked case was Moderate.
+
+**Key Points**
+- The quoted value is 100 ETH, and the pool's depth would cap a sale at about 16.66 ETH; both numbers are beside the point, because no sale can happen.
+- Check 5 settles it: the code rule and the `Swap` pattern agree, the sale-restricted token Xia et al. describe.
+- Check 6 follows from the rule: since the subject cannot send MEME at all, no other pool, exchange or bridge offers an exit either.
+- High fits because it is a direct read of the code and the logs; in the worked case, Moderate fitted because a missed pool could have changed the ceiling, and here a missed pool cannot.
+- Students who answered "about 16.66 ETH" ran checks 1 to 3 and stopped; that is the reason the checks run to six.
+
+**Walkthrough**
+1. Ask two or three students to read their lines.
+2. Reveal the answers one bullet at a time.
+3. Read the model sentence aloud, confidence word included, and contrast it with the worked case's Moderate.
+
+**Sources**
+- @adams_uniswapv2core_2020
+- @uniswap_v2pair_2020
+- @xia_tradeortrick_2021
+
+:::
+
+## Review: quoted value against what can leave {.smaller}
+
+**The objective:** given a balance and the pool it trades in, say how much of it could be sold, where it could leave the chain, and how sure you are.
+
+1. A `Sync` reads 272,801.67 USDC and 110 WETH, already scaled. What is the price of ETH?
+
+   [272,801.67 ÷ 110 = about 2,480 USDC: the ratio of the reserves [@adams_uniswapv2core_2020].]{.fragment}
+
+2. A wallet holds 1,000,000 TKN at a pool price of 0.0002 ETH. Is it worth 200 ETH?
+
+   [No: 200 ETH is holding × price; the pool holds 10 ETH, so a sale returns about 9.52 ETH [@adams_uniswapv2core_2020].]{.fragment}
+
+3. Stolen tokens are swapped for ETH on a DEX within minutes. Why there?
+
+   [A token's issuer can sometimes freeze it and an exchange can freeze a deposit; no one can freeze ETH in a DEX pool [@elliptic_bybit_2025].]{.fragment}
+
+4. Which of the six checks finds who could empty the pool?
+
+   [Check 4: who holds the LP tokens, read from the pool's own `Transfer` logs or holder list [@uniswap_v2pair_2020].]{.fragment}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes the lesson by stating the objective and asking one question from each part. It matters here because the afternoon lab asks students to swap, read the pool, and say what the trade did to its price. Emphasize question 2: "holding × price" is the mistake the lesson exists to stop.
+
+**Key Points**
+- Question 1 is part 1: price as the ratio of the reserves, from `Sync`.
+- Question 2 is part 2's misconception, asked back: a quoted value is not what a sale could raise.
+- Question 3 is part 3: launderers leave anything someone can freeze.
+- Question 4 is part 4: check 4, the LP holders, and where to read them.
+
+**Walkthrough**
+1. Read the objective.
+2. Ask each question; take an answer from the room before revealing.
+3. Reveal each answer in turn.
+
+**Sources**
+- @adams_uniswapv2core_2020
+- @elliptic_bybit_2025
+- @uniswap_v2pair_2020
+
+:::
+
+## Next: this afternoon you swap and read the pool {.smaller}
+
+[]{#this-afternoon-you-swap-and-read-the-pool}
 
 | Where | What you do with today's liquidity reading |
 | --- | --- |
 | **Lab, this afternoon** | Swap a token on the course's own chain; read the pool's reserves before and after, and the price impact of your trade |
-| This morning | DEX trades in the mempool and MEV (D4 ①, 03-EF) |
-| Next lesson | Layer 2s and bridges: funds leaving one chain for another (D4 ③) |
+| Next lesson | Layer 2s and bridges by type: funds leaving one chain for another |
 | Day 5 | Exchanges, OTC desks and P2P: the exits that sit off-chain |
 | Day 8 | Oracle manipulation and flash loans: thin prices used as attacks |
 | Week 2 | Every trace asks: can these funds exit here? |
 
 : {tbl-colwidths="[24,76]"}
 
-**Bottom line:** a pool's reserves set its price and cap what can be sold. Read them before you put a value on a balance.
+**Bottom line:** a pool's reserves set its price and cap what can be sold. Read them before you put a value on a balance [@adams_uniswapv2core_2020].
 
 ::: {.notes}
 
@@ -657,9 +983,9 @@ This slide is the takeaway students carry into week 2: six checks that answer "c
 This slide links the lesson to the afternoon lab and to the rest of the course. It matters here because the lab asks students to do what the lesson described: read the reserves, swap, read them again. Emphasize the bottom line: no value without depth.
 
 **Key Points**
-- The lab swaps a token on the course chain and reads the pool before and after.
-- The morning lesson showed DEX trades from the mempool; the next lesson follows funds across bridges.
-- Day 5 covers the off-chain exits; day 8 covers oracle manipulation and flash loans.
+- The lab swaps a token on the course chain and reads the pool before and after, the part 1 check done for real.
+- The next lesson follows funds across bridges, the exit this lesson only named.
+- Day 5 covers the off-chain exits; day 8 covers oracle manipulation and flash loans, the thin prices of part 2 used as attacks.
 - Week 2 traces ask the lesson's question at every hop.
 
 **Walkthrough**
