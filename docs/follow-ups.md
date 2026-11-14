@@ -78,28 +78,21 @@ slide index), which is never listed here.
   trace to 05-EF slides hidden on 31 Oct 2026 (q8 and q9 read "No slide now: ..."); the slides rebuilt on 13 Nov 2026
   (the two checks, the Terra slide, the practice and review) have few questions.
   [11 Nov 2026, writing the Spot the fake questions; updated 13 Nov 2026, 05-EF rebuild]
-- `blockchain-course/lessons/conclusion/05-AS-future_trajectories_and_synthesis.qmd:368`: the Cambridge figure for
-  Bitcoin's electricity use (138 TWh, 0.54% of global use) cites no `Blockchain.bib` key.
-  [12 Nov 2026, second look on the "as of" conversion]
-- Five cited `Blockchain.bib` pages have no read date because their links are dead or refuse readers: dead
-  `l33_nigeria_sec_…_2024`, `l33_fsca_…_2024`, `l33_government_of_india_union_budget_…_2022`,
-  `l33_imf_imf_africa_s_digital_future_…_2024`; Reuters 401 to automated readers `l33_reuters_reuters_argentina_…_2024`.
-  Each needs a live URL (or another source) and a `urldate`. [12 Nov 2026, adding read dates (R5)]
 - **Closes when a hidden slide citing it is shown again** (no work until then). Hidden slides still cite the weak source `salisu_blockchainforensicsmodern_2023` (a low-tier journal article, W3
   in `docs/analysis/2026-11-sources-review.md`): `blockchain-course/lessons/forensics/01-FO-*.qmd` (5 uses) and
   `forensics/02-FO-*.qmd` (8 uses). Replace or pair it if those slides are ever shown.
   [12 Nov 2026, replacing weak sources on the shown slides]
-- `blockchain-course/lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.qmd:537`: the
-  Sources line "Encyclopaedia Britannica, "Keynesian economics"" has no `Blockchain.bib` key.
-  [12 Nov 2026, labelling the Ammous citations]
 
 - `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:1784` (hidden "chain hopping"
   slide, TRON callout): the UNODC claim (USDT on TRON the preferred choice of Asian crime syndicates) cites
   `cointelegraph_unodcfraud_2024` because unodc.org returned 404 on 12 Nov 2026. Swap in the UNODC report itself
-  when it loads. [12 Nov 2026, source-checking R4's narrowed claims]
-- `sec.gov` and `crsreports.congress.gov` refuse automated readers (403); `crs_cryptoregulation_2026` was read
-  through the EveryCRSReport mirror, `sec_custodybasics_2025` in a browser. Re-read both by hand before the first
-  class. [12 Nov 2026, swapping homepage citations (R4)]
+  when it loads. [12 Nov 2026, source-checking R4's narrowed claims] Still held 14 Nov 2026: the report is UNODC's
+  "Transnational Organized Crime and the Convergence of Cyber-Enabled Fraud, Underground Banking and Technological
+  Innovation in Southeast Asia" (Oct 2024), but its PDF does not load for automated readers, and the TRON wording may
+  come from UNODC's Jan 2025 casinos report instead; read both by hand. [14 Nov 2026, wave 3]
+- `blockchain-course/lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.qmd`: some slides' notes
+  **Sources** lists seem one slide off (the keys a slide cites are listed under the next slide's notes). Re-pair
+  each Sources list with its slide's citations. [14 Nov 2026, wave 3 bib fixes]
 
 - `quizes/quiz_json/forensics_13-FO-state_actors_north_korea-quiz-bank.json` has no questions on the rebuilt 13-FO's
   new slides: the check (who may say "Lazarus"), the worked Bybit five rows, the Drift answers and their confidence
