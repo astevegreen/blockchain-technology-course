@@ -35,6 +35,15 @@ slide index), which is never listed here.
   or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",
   "Your Turn: Read the Coin Contract", "Recognize It: ..."), as does `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:197`
   and `:223`. [13 Nov 2026, 04-EF rebuild]
+- `quizes/quiz_json/forensics_01-FO-illicit_finance_regulation_case_studies-quiz-bank.json` has no questions on the
+  rebuilt 01-FO's checks (which label to trust; a measured error rate and High), the FRE 702 slide "Courts now ask how
+  reliable the method is", the BTC-e practice and answers, or the review; `quizes/lesson_synthesis/forensics_01-FO-*-synthesis.md:145`
+  names the old title "Recap: every label, a source and a confidence" (now "Review: …"; the old anchor still resolves).
+  [13 Nov 2026, 01-FO rebuild]
+- 01-FO's hidden slides that the day map moves (`docs/build-spec.md:84-86`) are not yet in their new lessons:
+  "Bridges & Swaps" (both) to 08-EF, "Policy & Regulatory Response" and "Adversarial Counter-Responses to Regulation"
+  to 05-FO, the three Silk Road slides to 03-FO. Carry them over when each destination is rebuilt.
+  [13 Nov 2026, 01-FO rebuild]
 - `dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md:172` names the old 04-EF title "Upgradeability and Proxy
   Patterns"; it is now "A proxy lets the code change; ask who upgrades" (the old anchor still resolves).
   [13 Nov 2026, 04-EF rebuild]
