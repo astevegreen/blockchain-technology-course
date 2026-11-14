@@ -317,12 +317,14 @@ class AnswerFiles(unittest.TestCase):
         vm = VM_FENCED.replace("      - name: Free Disk Space", find + "      - name: Free Disk Space")
         self.assertEqual(check.unfenced_answer_files(files, pages, vm), [])
 
-    def test_the_named_runtime_keys_may_stay_on_the_vm(self) -> None:
+    def test_every_listed_lab_file_must_leave_the_vm(self) -> None:
+        # No lab file is exempt: the Bitcoin catalog, once a runtime exception, now fails like any other.
         pages = PAGES_FENCED + "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml\ndynamic-labs/p2p_trust/notes.md\n"
         files = ["dynamic-labs/lane-service/labs/bitcoin_catalog.yaml", "dynamic-labs/p2p_trust/notes.md"]
         problems = check.unfenced_answer_files(files, pages, VM_FENCED)
-        self.assertEqual(len(problems), 1)
-        self.assertIn("p2p_trust/notes.md: baked into the VM", problems[0])
+        self.assertEqual(len(problems), 2)
+        self.assertIn("bitcoin_catalog.yaml: baked into the VM", problems[0])
+        self.assertIn("p2p_trust/notes.md: baked into the VM", problems[1])
 
     def test_other_files_and_instructor_trees_are_ignored(self) -> None:
         files = ["quizes/answer_sheet.json", "dynamic-labs/bitcoin-forensics/lab.md", "tools/answer_probe.py"]

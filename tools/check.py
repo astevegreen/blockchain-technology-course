@@ -57,8 +57,6 @@ PAGES_WORKFLOW = ".github/workflows/pages.yml"
 VM_WORKFLOW = ".github/workflows/vm-build.yml"
 # The one list of what students never receive: pages.yml, vm-build.yml and student-release.yml all read it.
 STUDENT_EXCLUDE = "dynamic-labs/student-exclude.txt"
-# Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
-VM_RUNTIME_KEYS = ("dynamic-labs/lane-service/labs/bitcoin_catalog.yaml",)
 # A path with one of these words in any folder or file name is instructor-only until shown otherwise (CLAUDE.md
 # rule 1): `dynamic-labs/x/instructor/key.json` counts as much as `dynamic-labs/x/instructor_key.json`.
 INSTRUCTOR_WORDS = re.compile(r"answer|solution|instructor|seed", re.IGNORECASE)
@@ -466,7 +464,7 @@ def read_student_exclusions(root: Path | None = None) -> list[str]:
     return student_exclusions(path.read_text(encoding="utf-8")) if path.is_file() else []
 
 
-# The line of vm-build.yml's payload step that removes the student-exclude.txt list (bar VM_RUNTIME_KEYS).
+# The line of vm-build.yml's payload step that removes the student-exclude.txt list.
 VM_SHARED_REMOVAL = re.compile(r"^\s*python3? tools/student_exclude\.py remove --vm\s*$", re.M)
 
 
@@ -522,7 +520,7 @@ def instructor_named(rel: str) -> bool:
 def unfenced_answer_files(tracked: list[str], excluded: str, vm: str) -> list[str]:
     """Tracked files under the student trees that src.zip, a student image or the VM image still hold although they
     are instructor-only: files named for answers, solutions, instructors or seeds (bar STUDENT_FACING), and anything
-    under `dynamic-labs/` on the student-exclude.txt list `excluded` (it must leave the VM too, bar the runtime keys)."""
+    under `dynamic-labs/` on the student-exclude.txt list `excluded` (it must leave the VM too)."""
     zip_x = student_exclusions(excluded)
     vm_rm = vm_removals(vm, zip_x)
     problems = []
@@ -535,7 +533,7 @@ def unfenced_answer_files(tracked: list[str], excluded: str, vm: str) -> list[st
             problems.append(f"{rel}: ships in src.zip and the student images: add it to {STUDENT_EXCLUDE}, "
                             "or, if students may have it, list it in STUDENT_FACING (tools/check.py) with why")
         instructor_only = answer or (zip_excluded and rel.startswith("dynamic-labs/"))
-        if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
+        if instructor_only and not matches_any(rel, vm_rm, whole_folders=True):
             problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
     return problems
 

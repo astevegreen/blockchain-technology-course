@@ -1,10 +1,9 @@
 """Apply dynamic-labs/student-exclude.txt, the one list of instructor-only files students never receive.
 
   python3 tools/student_exclude.py zip-args              print `-x` and a pattern per line, for pages.yml's zip
-  python3 tools/student_exclude.py remove --vm           delete the listed files from dynamic-labs/ (vm-build.yml),
-                                                         keeping the runtime files the VM's labs read (VM_RUNTIME_KEYS)
+  python3 tools/student_exclude.py remove --vm           delete the listed files from dynamic-labs/ (vm-build.yml)
   python3 tools/student_exclude.py stage <context> <out> copy a student image's build context without
-                                                         the listed files, keeping VM_RUNTIME_KEYS as the VM does
+                                                         the listed files
   python3 tools/student_exclude.py stage <context> --list  print what stage would copy, one repo path per line
 
 Patterns are matched as zip -x matches them (check.matches_any): `*` crosses `/`. tools/check.py checks that every
@@ -45,20 +44,14 @@ def walk(root: Path, context: Path):
             yield path, path.relative_to(root).as_posix()
 
 
-def leaves_students(rel: str, pats: list[str]) -> bool:
-    """True when `rel` stays out of the VM and the student images: listed, and not a file the labs read at run time
-    (VM_RUNTIME_KEYS, the known gap in .claude/rules/ci.md)."""
-    return rel not in check.VM_RUNTIME_KEYS and excluded(rel, pats)
-
-
 def stage_list(root: Path, context: Path, pats: list[str]) -> list[str]:
-    return [rel for _, rel in walk(root, context) if not leaves_students(rel, pats)]
+    return [rel for _, rel in walk(root, context) if not excluded(rel, pats)]
 
 
 def stage(root: Path, context: Path, out: Path, pats: list[str]) -> int:
     count = 0
     for path, rel in walk(root, context):
-        if leaves_students(rel, pats):
+        if excluded(rel, pats):
             continue
         target = out / path.relative_to(context)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -73,7 +66,7 @@ def stage(root: Path, context: Path, out: Path, pats: list[str]) -> int:
 def remove_vm(root: Path, pats: list[str]) -> list[str]:
     removed = []
     for path, rel in list(walk(root, root / "dynamic-labs")):
-        if not leaves_students(rel, pats):
+        if not excluded(rel, pats):
             continue
         path.unlink()
         removed.append(rel)

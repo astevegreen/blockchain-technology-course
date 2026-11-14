@@ -193,8 +193,6 @@ slide index), which is never listed here.
   "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
   [11 Nov 2026, building the bridge worked example]
 - The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
-- `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` holds no solution now; it may come off
-  `student-exclude.txt` and `tools/check.py` VM_RUNTIME_KEYS. [11 Nov 2026, step 7 archive]
 - `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
   missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
   wave 3 fixes]

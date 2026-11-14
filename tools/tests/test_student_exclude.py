@@ -40,8 +40,7 @@ class EveryBuildContextIsFenced(unittest.TestCase):
                 self.assertTrue((REPO / context).is_dir(), f"{context} is in the images file but not in the repo")
                 staged = student_exclude.stage_list(REPO, REPO / context, pats)
                 self.assertTrue(staged, f"{context}: nothing staged")
-                leaked = [rel for rel in staged if student_exclude.excluded(rel, pats)
-                          and rel not in check.VM_RUNTIME_KEYS]
+                leaked = [rel for rel in staged if student_exclude.excluded(rel, pats)]
                 self.assertEqual(leaked, [], f"{context} would ship instructor files")
 
     def test_an_excluded_folder_inside_a_context_is_dropped(self):
@@ -50,10 +49,8 @@ class EveryBuildContextIsFenced(unittest.TestCase):
         staged = set(student_exclude.stage_list(REPO, REPO / "dynamic-labs", pats))
         self.assertFalse([p for p in staged if p.startswith("dynamic-labs/regression-tests/")])
         self.assertFalse([p for p in staged if "/quizes/" in p])
-        tracked = subprocess.run(["git", "ls-files", "dynamic-labs"], cwd=REPO, capture_output=True, text=True,
-                                 check=True).stdout.split()
-        kept = [p for p in check.VM_RUNTIME_KEYS if p in tracked]
-        self.assertTrue(set(kept) <= staged, "the runtime files the labs read must stay, as on the VM")
+        # The Bitcoin exercise catalog holds no solutions, so the lab service it feeds keeps it.
+        self.assertIn("dynamic-labs/lane-service/labs/bitcoin_catalog.yaml", staged)
 
     def test_the_release_workflow_stages_every_context(self):
         text = RELEASE.read_text(encoding="utf-8")
